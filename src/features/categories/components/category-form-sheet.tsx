@@ -1,0 +1,145 @@
+"use client";
+
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { FormSheet } from "@/components/shared/form-sheet";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  categorySchema,
+  type CategoryInput,
+} from "@/features/categories/schema";
+import { createCategory, updateCategory } from "@/features/categories/actions";
+import { ar } from "@/i18n/ar";
+
+type CategoryOption = { id: string; name: string };
+type CategoryRecord = {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+} | null;
+
+export function CategoryFormSheet({
+  open,
+  category,
+  categoryOptions,
+}: {
+  open: boolean;
+  category?: CategoryRecord;
+  categoryOptions: CategoryOption[];
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<CategoryInput>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: category?.name ?? "",
+      slug: category?.slug ?? "",
+      parentId: category?.parentId ?? null,
+    },
+  });
+
+  function close() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("new");
+    params.delete("edit");
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
+  }
+
+  function onSubmit(values: CategoryInput) {
+    startTransition(async () => {
+      const result = category
+        ? await updateCategory(category.id, values)
+        : await createCategory(values);
+
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(category ? "تم تحديث القسم بنجاح" : "تم إضافة القسم بنجاح");
+      close();
+    });
+  }
+
+  const parentId = watch("parentId");
+
+  return (
+    <FormSheet
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) close();
+      }}
+      title={category ? "تعديل القسم" : "إضافة قسم جديد"}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="category-name">اسم القسم</Label>
+          <Input id="category-name" {...register("name")} />
+          {errors.name && (
+            <p className="text-sm text-destructive">{errors.name.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="category-slug">الرابط (slug)</Label>
+          <Input id="category-slug" dir="ltr" {...register("slug")} />
+          {errors.slug && (
+            <p className="text-sm text-destructive">{errors.slug.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label>القسم الأب (اختياري)</Label>
+          <Select
+            value={parentId ?? "none"}
+            onValueChange={(value) =>
+              setValue("parentId", value === "none" ? null : value)
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="بدون قسم أب" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">بدون قسم أب</SelectItem>
+              {categoryOptions
+                .filter((option) => option.id !== category?.id)
+                .map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button
+          type="submit"
+          className="w-full cursor-pointer"
+          disabled={isPending}
+        >
+          {isPending ? "جاري الحفظ..." : ar.common.save}
+        </Button>
+      </form>
+    </FormSheet>
+  );
+}

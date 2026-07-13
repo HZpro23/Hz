@@ -1,0 +1,92 @@
+import Link from "next/link";
+import { Plus, Package } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
+import { DataTablePagination } from "@/components/data-table/data-table-pagination";
+import { DataTableSearch } from "@/components/data-table/data-table-search";
+import { getProductsPage, getProductById } from "@/features/products/queries";
+import { getCategoryOptions } from "@/features/categories/queries";
+import { getBrandOptions } from "@/features/brands/queries";
+import { ProductsTable } from "@/features/products/components/products-table";
+import { ProductFormSheet } from "@/features/products/components/product-form-sheet";
+import { ar } from "@/i18n/ar";
+
+export const dynamic = "force-dynamic";
+
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    page?: string;
+    q?: string;
+    new?: string;
+    edit?: string;
+  }>;
+}) {
+  const params = await searchParams;
+  const page = Math.max(1, Number(params.page) || 1);
+  const query = params.q?.trim() || undefined;
+
+  const [
+    { items, total, pageSize },
+    categoryOptions,
+    brandOptions,
+    editingProduct,
+  ] = await Promise.all([
+    getProductsPage({ query, page }),
+    getCategoryOptions(),
+    getBrandOptions(),
+    params.edit ? getProductById(params.edit) : Promise.resolve(null),
+  ]);
+
+  const isSheetOpen = params.new === "1" || Boolean(params.edit);
+
+  function buildHref(extra: Record<string, string>) {
+    const sp = new URLSearchParams();
+    if (query) sp.set("q", query);
+    if (page > 1) sp.set("page", String(page));
+    for (const [key, value] of Object.entries(extra)) sp.set(key, value);
+    return `/dashboard/products?${sp.toString()}`;
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={ar.admin.products}
+        action={
+          <Button nativeButton={false} render={<Link href={buildHref({ new: "1" })} />}>
+            <Plus className="size-4" />
+            إضافة منتج
+          </Button>
+        }
+      />
+      <DataTableSearch placeholder="ابحث بالاسم أو SKU أو الباركود..." />
+      {items.length === 0 ? (
+        <EmptyState
+          icon={Package}
+          title="لا توجد منتجات"
+          description="ابدأ بإضافة أول منتج إلى المخزون"
+        />
+      ) : (
+        <>
+          <ProductsTable data={items} />
+          <DataTablePagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            basePath="/dashboard/products"
+            searchParams={{ q: query }}
+          />
+        </>
+      )}
+      <ProductFormSheet
+        key={editingProduct?.id ?? (params.new ? "new" : "closed")}
+        open={isSheetOpen}
+        product={editingProduct}
+        categoryOptions={categoryOptions}
+        brandOptions={brandOptions}
+      />
+    </div>
+  );
+}
