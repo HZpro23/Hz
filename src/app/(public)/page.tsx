@@ -13,6 +13,8 @@ const HIGHLIGHTS = [
   { icon: Truck, label: "متابعة دقيقة للمخزون" },
 ];
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [{ items: latestProducts }, categories] = await Promise.all([
     getPublicProductsPage({ page: 1 }),

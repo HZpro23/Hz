@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/features/auth/schema";
+import { email } from "zod";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
@@ -16,19 +17,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorize: async (credentials) => {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
+        const email = parsed.data.email;
+        const password = parsed.data.password;
 
-        const admin = await prisma.admin.findUnique({
-          where: { email: parsed.data.email },
-        });
-        if (!admin) return null;
+        if (email !== process.env.SEED_ADMIN_EMAIL) return null;
+        else if (password !== process.env.SEED_ADMIN_PASSWORD) return null;
+        else if (process.env.SEED_ADMIN_ID === undefined) return null;
 
-        const isValidPassword = await bcrypt.compare(
-          parsed.data.password,
-          admin.password,
-        );
-        if (!isValidPassword) return null;
-
-        return { id: admin.id, name: admin.name, email: admin.email };
+        return {
+          id: process.env.SEED_ADMIN_ID,
+          name: process.env.SEED_ADMIN_NAME,
+          email: process.env.SEED_ADMIN_EMAIL,
+        };
       },
     }),
   ],
