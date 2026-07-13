@@ -38,11 +38,11 @@ export function ProductCard({
             <Package className="size-10 text-muted-foreground" />
           </div>
         )}
-        <span className="absolute top-2 start-2 rounded-full bg-background/90 px-2.5 py-1 text-[11px] font-medium text-foreground shadow-sm backdrop-blur">
+        <span className="absolute top-2 inset-s-2 rounded-full bg-background/90 px-2.5 py-1 text-[11px] font-medium text-foreground shadow-sm backdrop-blur">
           {product.category.name}
         </span>
         {outOfStock && (
-          <span className="absolute top-2 end-2 rounded-full bg-destructive px-2.5 py-1 text-[11px] font-medium text-destructive-foreground shadow-sm">
+          <span className="absolute top-2 inset-e-2 rounded-full bg-destructive px-2.5 py-1 text-[11px] font-medium text-destructive-foreground shadow-sm">
             نفدت الكمية
           </span>
         )}
