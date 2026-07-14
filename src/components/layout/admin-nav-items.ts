@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Receipt,
   BarChart3,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 import { ar } from "@/i18n/ar";
@@ -58,6 +59,7 @@ export const adminNavGroups: AdminNavGroup[] = [
         badgeKey: "pendingQuotes",
       },
       { href: "/dashboard/orders", label: ar.admin.orders, icon: ShoppingCart },
+      { href: "/dashboard/invoices", label: "الفواتير", icon: FileText },
     ],
   },
   {

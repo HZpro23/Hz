@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getQuoteRequestById } from "@/features/quote-requests/queries";
+import { getInvoiceById } from "@/features/invoices/queries";
 import { InvoicePrintButton } from "@/features/quote-requests/components/invoice-print-button";
 import { InvoicePdfButton } from "@/features/quote-requests/components/invoice-pdf-button";
 import { ar as arDict } from "@/i18n/ar";
@@ -19,6 +19,7 @@ const LABELS: Record<
     product: string;
     quantity: string;
     unitPrice: string;
+    lineTotal: string;
     total: string;
     thankYou: string;
     print: string;
@@ -34,6 +35,7 @@ const LABELS: Record<
     product: "المنتج",
     quantity: "الكمية",
     unitPrice: "السعر",
+    lineTotal: "الإجمالي الفرعي",
     total: "الإجمالي الكلي",
     thankYou: "شكراً لتعاملكم معنا",
     print: "طباعة / حفظ كـ PDF",
@@ -48,6 +50,7 @@ const LABELS: Record<
     product: "Produit",
     quantity: "Quantité",
     unitPrice: "Prix",
+    lineTotal: "Sous-total",
     total: "Total",
     thankYou: "Merci pour votre confiance",
     print: "Imprimer / Enregistrer en PDF",
@@ -55,7 +58,7 @@ const LABELS: Record<
   },
 };
 
-export default async function QuoteInvoicePage({
+export default async function InvoicePrintPage({
   params,
   searchParams,
 }: {
@@ -64,16 +67,18 @@ export default async function QuoteInvoicePage({
 }) {
   const { id } = await params;
   const { lang: langParam } = await searchParams;
-  const lang: Lang = langParam === "fr" ? "fr" : "ar";
+
+  const invoice = await getInvoiceById(id);
+  if (!invoice) notFound();
+
+  const lang: Lang = (langParam ?? invoice.language.toLowerCase()) === "fr" ? "fr" : "ar";
   const t = LABELS[lang];
   const dir = lang === "fr" ? "ltr" : "rtl";
 
-  const quote = await getQuoteRequestById(id);
-  if (!quote) notFound();
-
-  const invoiceNumber = `INV-${quote.id.slice(-8).toUpperCase()}`;
-  const unitPrice = quote.price ? Number(quote.price) : 0;
-  const lineTotal = unitPrice * quote.quantity;
+  const grandTotal = invoice.items.reduce(
+    (sum, item) => sum + Number(item.unitPrice) * item.quantity,
+    0,
+  );
 
   return (
     <div
@@ -83,7 +88,7 @@ export default async function QuoteInvoicePage({
       <div className="flex justify-end gap-2 print:hidden">
         <InvoicePdfButton
           targetId="invoice-card"
-          fileName={`${invoiceNumber}.pdf`}
+          fileName={`${invoice.invoiceNumber}.pdf`}
           label={t.openPdf}
         />
         <InvoicePrintButton label={t.print} />
@@ -100,10 +105,14 @@ export default async function QuoteInvoicePage({
           <div className="text-end">
             <h2 className="text-xl font-semibold">{t.title}</h2>
             <p className="text-sm text-muted-foreground">
-              {t.invoiceNumber}: <span dir="ltr">{invoiceNumber}</span>
+              {t.invoiceNumber}:{" "}
+              <span dir="ltr">{invoice.invoiceNumber}</span>
             </p>
             <p className="text-sm text-muted-foreground">
-              {t.date}: {new Date().toLocaleDateString("fr-FR")}
+              {t.date}:{" "}
+              {new Date(invoice.createdAt).toLocaleDateString(
+                lang === "fr" ? "fr-FR" : "ar-EG",
+              )}
             </p>
           </div>
         </div>
@@ -112,9 +121,9 @@ export default async function QuoteInvoicePage({
           <p className="text-sm font-medium text-muted-foreground">
             {t.billTo}
           </p>
-          <p className="font-medium">{quote.customerName}</p>
+          <p className="font-medium">{invoice.customerName}</p>
           <p className="text-sm text-muted-foreground">
-            {t.phone}: <span dir="ltr">{quote.phone}</span>
+            {t.phone}: <span dir="ltr">{invoice.customerPhone}</span>
           </p>
         </div>
 
@@ -124,22 +133,32 @@ export default async function QuoteInvoicePage({
               <th className="py-2 text-start font-medium">{t.product}</th>
               <th className="py-2 text-start font-medium">{t.quantity}</th>
               <th className="py-2 text-start font-medium">{t.unitPrice}</th>
+              <th className="py-2 text-start font-medium">{t.lineTotal}</th>
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b">
-              <td className="py-2">{quote.product?.name ?? "—"}</td>
-              <td className="py-2">{quote.quantity}</td>
-              <td className="py-2">{unitPrice.toFixed(2)}</td>
-            </tr>
+            {invoice.items.map((item) => (
+              <tr key={item.id} className="border-b">
+                <td className="py-2">{item.name}</td>
+                <td className="py-2">{item.quantity}</td>
+                <td className="py-2">{Number(item.unitPrice).toFixed(2)}</td>
+                <td className="py-2">
+                  {(Number(item.unitPrice) * item.quantity).toFixed(2)}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
 
         <div className="flex justify-end border-t pt-4">
           <p className="text-lg font-semibold">
-            {t.total}: {lineTotal.toFixed(2)}
+            {t.total}: {grandTotal.toFixed(2)}
           </p>
         </div>
+
+        {invoice.notes && (
+          <p className="text-sm text-muted-foreground">{invoice.notes}</p>
+        )}
 
         <p className="text-center text-sm text-muted-foreground">
           {t.thankYou}

@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { generateInvoiceForQuote } from "@/features/invoices/actions";
 
 export function InvoiceLanguageDialog({ quoteId }: { quoteId: string }) {
   const [open, setOpen] = useState(false);
@@ -29,35 +30,25 @@ export function InvoiceLanguageDialog({ quoteId }: { quoteId: string }) {
         <DialogHeader>
           <DialogTitle>لغة الفاتورة</DialogTitle>
           <DialogDescription>
-            اختر اللغة التي تريد إنشاء الفاتورة بها
+            اختر اللغة التي تريد إنشاء الفاتورة بها، ويمكنك بعد ذلك تعديل
+            المنتجات والأسعار وإضافة أو حذف منتجات من الفاتورة.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
-          <Button
-            nativeButton={false}
-            render={
-              <a
-                href={`/dashboard/quote-requests/${quoteId}/invoice?lang=ar`}
-                target="_blank"
-                rel="noreferrer"
-              />
-            }
-          >
-            العربية
-          </Button>
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={
-              <a
-                href={`/dashboard/quote-requests/${quoteId}/invoice?lang=fr`}
-                target="_blank"
-                rel="noreferrer"
-              />
-            }
-          >
-            Français
-          </Button>
+          <form action={generateInvoiceForQuote.bind(null, quoteId, "AR")}>
+            <Button type="submit" className="w-full cursor-pointer">
+              العربية
+            </Button>
+          </form>
+          <form action={generateInvoiceForQuote.bind(null, quoteId, "FR")}>
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full cursor-pointer"
+            >
+              Français
+            </Button>
+          </form>
         </div>
       </DialogContent>
     </Dialog>
