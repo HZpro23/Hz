@@ -140,7 +140,7 @@ export default async function InventoryPage({
                       </TableCell>
                       <TableCell>
                         {new Date(movement.createdAt).toLocaleDateString(
-                          "en-US",
+                          "fr-FR",
                         )}
                       </TableCell>
                     </TableRow>

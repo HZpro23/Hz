@@ -53,7 +53,7 @@ export const orderColumns: ColumnDef<OrderRow>[] = [
     id: "createdAt",
     header: "التاريخ",
     cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("en-US"),
+      new Date(row.original.createdAt).toLocaleDateString("fr-FR"),
   },
   {
     id: "actions",

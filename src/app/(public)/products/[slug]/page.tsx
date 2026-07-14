@@ -47,19 +47,21 @@ export default async function ProductDetailPage({
             <h2 className="font-medium">المواصفات</h2>
             <dl className="grid grid-cols-2 gap-y-1 text-sm">
               <dt className="text-muted-foreground">SKU</dt>
-              <dd dir="ltr" className="text-start">
+              <dd dir="rlt" className="text-start">
                 {product.sku}
               </dd>
               {product.barcode && (
                 <>
                   <dt className="text-muted-foreground">الباركود</dt>
-                  <dd dir="ltr" className="text-start">
+                  <dd dir="rtl" className="text-start">
                     {product.barcode}
                   </dd>
                 </>
               )}
               <dt className="text-muted-foreground">القسم</dt>
-              <dd>{product.category.name}</dd>
+              <dd dir="rtl" className="text-start">
+                {product.category.name}
+              </dd>
             </dl>
           </div>
 

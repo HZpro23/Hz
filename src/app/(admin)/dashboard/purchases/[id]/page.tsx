@@ -112,7 +112,7 @@ export default async function PurchaseOrderDetailPage({
               )}
               <p>
                 <span className="text-muted-foreground">التاريخ: </span>
-                {new Date(order.createdAt).toLocaleDateString("en-US")}
+                {new Date(order.createdAt).toLocaleDateString("fr-FR")}
               </p>
             </CardContent>
           </Card>
@@ -129,7 +129,7 @@ export default async function PurchaseOrderDetailPage({
               {order.receivedAt && (
                 <p className="text-xs text-muted-foreground">
                   تم الاستلام في{" "}
-                  {new Date(order.receivedAt).toLocaleDateString("en-US")}
+                  {new Date(order.receivedAt).toLocaleDateString("fr-FR")}
                 </p>
               )}
             </CardContent>

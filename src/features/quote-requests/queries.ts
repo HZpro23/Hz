@@ -7,12 +7,20 @@ export const QUOTE_REQUESTS_PAGE_SIZE = 10;
 export async function getQuoteRequestsPage({
   query,
   status,
+  from,
+  to,
   page,
 }: {
   query?: string;
   status?: QuoteStatus;
+  from?: string;
+  to?: string;
   page: number;
 }) {
+  const createdAtFilter: Prisma.DateTimeFilter = {};
+  if (from) createdAtFilter.gte = new Date(`${from}T00:00:00.000Z`);
+  if (to) createdAtFilter.lte = new Date(`${to}T23:59:59.999Z`);
+
   const where: Prisma.QuoteRequestWhereInput = {
     ...(query
       ? {
@@ -23,6 +31,7 @@ export async function getQuoteRequestsPage({
         }
       : {}),
     ...(status ? { status } : {}),
+    ...(from || to ? { createdAt: createdAtFilter } : {}),
   };
 
   const [items, total] = await Promise.all([

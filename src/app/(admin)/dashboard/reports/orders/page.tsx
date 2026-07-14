@@ -65,7 +65,7 @@ export default async function OrdersReportPage() {
                 </Badge>
               </TableCell>
               <TableCell>
-                {new Date(order.createdAt).toLocaleDateString("en-US")}
+                {new Date(order.createdAt).toLocaleDateString("fr-FR")}
               </TableCell>
             </TableRow>
           ))}

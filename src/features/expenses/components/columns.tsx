@@ -45,7 +45,7 @@ export function getExpenseColumns(
       id: "date",
       header: "التاريخ",
       cell: ({ row }) =>
-        new Date(row.original.date).toLocaleDateString("en-US"),
+        new Date(row.original.date).toLocaleDateString("fr-FR"),
     },
     {
       id: "actions",

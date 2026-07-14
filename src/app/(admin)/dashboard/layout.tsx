@@ -19,11 +19,13 @@ export default async function DashboardLayout({
         lowStock={stats.lowStockCount}
       />
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 print:hidden">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-4" />
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4">{children}</main>
+        <main className="flex flex-1 flex-col gap-4 p-4 print:p-0">
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

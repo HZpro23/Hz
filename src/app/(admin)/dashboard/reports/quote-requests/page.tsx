@@ -67,7 +67,7 @@ export default async function QuoteRequestsReportPage() {
                 </Badge>
               </TableCell>
               <TableCell>
-                {new Date(quote.createdAt).toLocaleDateString("en-US")}
+                {new Date(quote.createdAt).toLocaleDateString("fr-FR")}
               </TableCell>
             </TableRow>
           ))}

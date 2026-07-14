@@ -129,8 +129,16 @@
   }
 }
 
+@page {
+  margin: 12mm;
+}
+
 @media print {
   html {
     font-family: Tahoma, Arial, sans-serif;
+  }
+
+  [data-slot="sidebar"] {
+    display: none !important;
   }
 }

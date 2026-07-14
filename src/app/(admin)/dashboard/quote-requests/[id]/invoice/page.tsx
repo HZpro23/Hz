@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getQuoteRequestById } from "@/features/quote-requests/queries";
 import { InvoicePrintButton } from "@/features/quote-requests/components/invoice-print-button";
+import { InvoicePdfButton } from "@/features/quote-requests/components/invoice-pdf-button";
 import { ar as arDict } from "@/i18n/ar";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ const LABELS: Record<
     total: string;
     thankYou: string;
     print: string;
+    openPdf: string;
   }
 > = {
   ar: {
@@ -35,6 +37,7 @@ const LABELS: Record<
     total: "الإجمالي الكلي",
     thankYou: "شكراً لتعاملكم معنا",
     print: "طباعة / حفظ كـ PDF",
+    openPdf: "فتح كملف PDF",
   },
   fr: {
     title: "Facture",
@@ -48,6 +51,7 @@ const LABELS: Record<
     total: "Total",
     thankYou: "Merci pour votre confiance",
     print: "Imprimer / Enregistrer en PDF",
+    openPdf: "Ouvrir en PDF",
   },
 };
 
@@ -72,12 +76,23 @@ export default async function QuoteInvoicePage({
   const lineTotal = unitPrice * quote.quantity;
 
   return (
-    <div dir={dir} className="mx-auto max-w-2xl space-y-6 p-6">
-      <div className="flex justify-end print:hidden">
+    <div
+      dir={dir}
+      className="mx-auto max-w-2xl space-y-6 p-6 print:max-w-none print:p-0"
+    >
+      <div className="flex justify-end gap-2 print:hidden">
+        <InvoicePdfButton
+          targetId="invoice-card"
+          fileName={`${invoiceNumber}.pdf`}
+          label={t.openPdf}
+        />
         <InvoicePrintButton label={t.print} />
       </div>
 
-      <div className="space-y-8 rounded-xl border bg-card p-8">
+      <div
+        id="invoice-card"
+        className="space-y-8 rounded-xl border bg-card p-8 print:rounded-none print:border-none print:p-0"
+      >
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold">{arDict.siteName}</h1>
@@ -88,8 +103,7 @@ export default async function QuoteInvoicePage({
               {t.invoiceNumber}: <span dir="ltr">{invoiceNumber}</span>
             </p>
             <p className="text-sm text-muted-foreground">
-              {t.date}:{" "}
-              {new Date().toLocaleDateString(lang === "fr" ? "fr-FR" : "ar-EG")}
+              {t.date}: {new Date().toLocaleDateString("fr-FR")}
             </p>
           </div>
         </div>
