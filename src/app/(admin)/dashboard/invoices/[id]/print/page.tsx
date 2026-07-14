@@ -71,7 +71,8 @@ export default async function InvoicePrintPage({
   const invoice = await getInvoiceById(id);
   if (!invoice) notFound();
 
-  const lang: Lang = (langParam ?? invoice.language.toLowerCase()) === "fr" ? "fr" : "ar";
+  const lang: Lang =
+    (langParam ?? invoice.language.toLowerCase()) === "fr" ? "fr" : "ar";
   const t = LABELS[lang];
   const dir = lang === "fr" ? "ltr" : "rtl";
 
@@ -83,7 +84,7 @@ export default async function InvoicePrintPage({
   return (
     <div
       dir={dir}
-      className="mx-auto max-w-2xl space-y-6 p-6 print:max-w-none print:p-0"
+      className="mx-auto  space-y-6 p-6 print:max-w-none print:p-0"
     >
       <div className="flex justify-end gap-2 print:hidden">
         <InvoicePdfButton
@@ -105,14 +106,11 @@ export default async function InvoicePrintPage({
           <div className="text-end">
             <h2 className="text-xl font-semibold">{t.title}</h2>
             <p className="text-sm text-muted-foreground">
-              {t.invoiceNumber}:{" "}
-              <span dir="ltr">{invoice.invoiceNumber}</span>
+              {t.invoiceNumber}: <span dir="ltr">{invoice.invoiceNumber}</span>
             </p>
             <p className="text-sm text-muted-foreground">
               {t.date}:{" "}
-              {new Date(invoice.createdAt).toLocaleDateString(
-                lang === "fr" ? "fr-FR" : "ar-EG",
-              )}
+              {new Date(invoice.createdAt).toLocaleDateString("fr-FR")}
             </p>
           </div>
         </div>
@@ -127,30 +125,58 @@ export default async function InvoicePrintPage({
           </p>
         </div>
 
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full border-collapse text-sm border border-gray-200">
           <thead>
             <tr className="border-b text-start">
-              <th className="py-2 text-start font-medium">{t.product}</th>
-              <th className="py-2 text-start font-medium">{t.quantity}</th>
-              <th className="py-2 text-start font-medium">{t.unitPrice}</th>
-              <th className="py-2 text-start font-medium">{t.lineTotal}</th>
+              <th className="px-3 py-2 text-start font-medium border border-gray-200">
+                <span className="block truncate max-w-[10ch]">{t.product}</span>
+              </th>
+              <th className="px-3 py-2 text-start font-medium border border-gray-200">
+                <span className="block truncate max-w-[10ch]">
+                  {t.quantity}
+                </span>
+              </th>
+              <th className="px-3 py-2 text-start font-medium border border-gray-200">
+                <span className="block truncate max-w-[10ch]">
+                  {t.unitPrice}
+                </span>
+              </th>
+              <th className="px-3 py-2 text-start font-medium border border-gray-200">
+                <span className="block truncate max-w-[10ch]">
+                  {t.lineTotal}
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {invoice.items.map((item) => (
               <tr key={item.id} className="border-b">
-                <td className="py-2">{item.name}</td>
-                <td className="py-2">{item.quantity}</td>
-                <td className="py-2">{Number(item.unitPrice).toFixed(2)}</td>
-                <td className="py-2">
-                  {(Number(item.unitPrice) * item.quantity).toFixed(2)}
+                <td className="px-3 py-2 border border-gray-200">
+                  <span className="block truncate max-w-[25ch]">
+                    {item.name}
+                  </span>
+                </td>
+                <td className="px-3 py-2 border border-gray-200">
+                  <span className="block truncate max-w-[15ch]">
+                    {item.quantity}
+                  </span>
+                </td>
+                <td className="px-3 py-2 border border-gray-200">
+                  <span className="block truncate max-w-[15ch]">
+                    {Number(item.unitPrice).toFixed(2)}
+                  </span>
+                </td>
+                <td className="px-3 py-2 border border-gray-200">
+                  <span className="block truncate max-w-[15ch]">
+                    {(Number(item.unitPrice) * item.quantity).toFixed(2)}
+                  </span>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        <div className="flex justify-end border-t pt-4">
+        <div className="flex justify-start border-t pt-4">
           <p className="text-lg font-semibold">
             {t.total}: {grandTotal.toFixed(2)}
           </p>
