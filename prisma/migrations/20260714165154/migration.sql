@@ -1,6 +1,3 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateEnum
 CREATE TYPE "ProductStatus" AS ENUM ('ACTIVE', 'INACTIVE');
 
@@ -104,6 +101,7 @@ CREATE TABLE "QuoteRequest" (
     "id" TEXT NOT NULL,
     "customerName" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
+    "email" TEXT,
     "quantity" INTEGER NOT NULL,
     "notes" TEXT,
     "productId" TEXT,
@@ -203,23 +201,6 @@ CREATE TABLE "Expense" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Expense_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "SiteSettings" (
-    "id" TEXT NOT NULL DEFAULT 'singleton',
-    "siteName" TEXT NOT NULL DEFAULT 'متجرنا',
-    "phone" TEXT,
-    "whatsapp" TEXT,
-    "email" TEXT,
-    "address" TEXT,
-    "aboutText" TEXT,
-    "facebookUrl" TEXT,
-    "instagramUrl" TEXT,
-    "logoPublicId" TEXT,
-    "logoUrl" TEXT,
-
-    CONSTRAINT "SiteSettings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -326,4 +307,3 @@ ALTER TABLE "PurchaseOrderItem" ADD CONSTRAINT "PurchaseOrderItem_purchaseOrderI
 
 -- AddForeignKey
 ALTER TABLE "PurchaseOrderItem" ADD CONSTRAINT "PurchaseOrderItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
