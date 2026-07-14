@@ -51,8 +51,8 @@ export default async function InventoryReportPage() {
           {products.map((product) => (
             <TableRow key={product.id}>
               <TableCell className="font-medium">{product.name}</TableCell>
-              <TableCell dir="ltr" className="text-muted-foreground">
-                {product.sku}
+              <TableCell className="text-muted-foreground">
+                <span dir="ltr">{product.sku}</span>
               </TableCell>
               <TableCell>{product.category.name}</TableCell>
               <TableCell>{product.brand?.name ?? "—"}</TableCell>

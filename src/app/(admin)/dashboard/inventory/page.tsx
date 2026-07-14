@@ -1,10 +1,5 @@
 import { AlertTriangle, Boxes } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -65,7 +60,7 @@ export default async function InventoryPage({
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow dir="rtl">
                   <TableHead>المنتج</TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>الكمية الحالية</TableHead>
@@ -74,12 +69,12 @@ export default async function InventoryPage({
               </TableHeader>
               <TableBody>
                 {lowStockProducts.map((product) => (
-                  <TableRow key={product.id}>
+                  <TableRow key={product.id} dir="rtl">
                     <TableCell className="font-medium">
                       {product.name}
                     </TableCell>
-                    <TableCell dir="ltr" className="text-muted-foreground">
-                      {product.sku}
+                    <TableCell className="text-muted-foreground">
+                      <span dir="rtl">{product.sku}</span>
                     </TableCell>
                     <TableCell className="font-medium text-destructive">
                       {product.quantity.toLocaleString("ar")}
@@ -110,7 +105,7 @@ export default async function InventoryPage({
             <>
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow dir="rtl">
                     <TableHead>المنتج</TableHead>
                     <TableHead>النوع</TableHead>
                     <TableHead>الكمية</TableHead>
@@ -120,11 +115,14 @@ export default async function InventoryPage({
                 </TableHeader>
                 <TableBody>
                   {items.map((movement) => (
-                    <TableRow key={movement.id}>
+                    <TableRow key={movement.id} dir="rtl">
                       <TableCell>
                         <div>
                           <p className="font-medium">{movement.product.name}</p>
-                          <p dir="ltr" className="text-xs text-muted-foreground">
+                          <p
+                            dir="rtl"
+                            className="text-xs text-muted-foreground"
+                          >
                             {movement.product.sku}
                           </p>
                         </div>
@@ -142,7 +140,7 @@ export default async function InventoryPage({
                       </TableCell>
                       <TableCell>
                         {new Date(movement.createdAt).toLocaleDateString(
-                          "ar-EG",
+                          "en-US",
                         )}
                       </TableCell>
                     </TableRow>

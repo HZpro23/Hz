@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 export async function getDashboardStats() {
   const [totalProducts, totalCustomers, pendingQuoteRequests, activeOrders, lowStockRows] =
     await Promise.all([
-      prisma.product.count(),
-      prisma.customer.count(),
+      prisma.product.count({ where: {} }),
+      prisma.customer.count({ where: {} }),
       prisma.quoteRequest.count({ where: { status: "PENDING" } }),
       prisma.order.count({ where: { status: { in: ["PENDING", "PROCESSING"] } } }),
       prisma.$queryRaw<

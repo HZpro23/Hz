@@ -17,13 +17,14 @@ export type QuoteRequestRow = {
   product: { name: string } | null;
 };
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
-  PENDING: "secondary",
-  QUOTED: "default",
-  SENT: "default",
-  ACCEPTED: "default",
-  REJECTED: "destructive",
-};
+const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> =
+  {
+    PENDING: "secondary",
+    QUOTED: "default",
+    SENT: "default",
+    ACCEPTED: "default",
+    REJECTED: "destructive",
+  };
 
 export const quoteRequestColumns: ColumnDef<QuoteRequestRow>[] = [
   { accessorKey: "customerName", header: "العميل" },
@@ -55,7 +56,7 @@ export const quoteRequestColumns: ColumnDef<QuoteRequestRow>[] = [
     id: "createdAt",
     header: "التاريخ",
     cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("ar-EG"),
+      new Date(row.original.createdAt).toLocaleDateString("en-US"),
   },
   {
     id: "actions",
@@ -64,7 +65,8 @@ export const quoteRequestColumns: ColumnDef<QuoteRequestRow>[] = [
       <Button
         variant="ghost"
         size="icon-sm"
-        nativeButton={false} render={<Link href={`/dashboard/quote-requests/${row.original.id}`} />}
+        nativeButton={false}
+        render={<Link href={`/dashboard/quote-requests/${row.original.id}`} />}
       >
         <Eye className="size-4" />
       </Button>

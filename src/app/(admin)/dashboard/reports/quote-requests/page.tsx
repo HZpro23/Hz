@@ -28,7 +28,8 @@ export default async function QuoteRequestsReportPage() {
           <Button
             variant="outline"
             className="print:hidden"
-            nativeButton={false} render={<Link href="/dashboard/reports" />}
+            nativeButton={false}
+            render={<Link href="/dashboard/reports" />}
           >
             <ArrowRight className="size-4" />
             رجوع
@@ -54,7 +55,9 @@ export default async function QuoteRequestsReportPage() {
               <TableCell className="font-medium">
                 {quote.customerName}
               </TableCell>
-              <TableCell dir="ltr">{quote.phone}</TableCell>
+              <TableCell>
+                <span dir="ltr">{quote.phone}</span>
+              </TableCell>
               <TableCell>{quote.product?.name ?? "غير محدد"}</TableCell>
               <TableCell>{quote.quantity.toLocaleString("ar")}</TableCell>
               <TableCell>{quote.price ? String(quote.price) : "—"}</TableCell>
@@ -64,7 +67,7 @@ export default async function QuoteRequestsReportPage() {
                 </Badge>
               </TableCell>
               <TableCell>
-                {new Date(quote.createdAt).toLocaleDateString("ar-EG")}
+                {new Date(quote.createdAt).toLocaleDateString("en-US")}
               </TableCell>
             </TableRow>
           ))}

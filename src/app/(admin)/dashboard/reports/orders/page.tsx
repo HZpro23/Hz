@@ -28,7 +28,8 @@ export default async function OrdersReportPage() {
           <Button
             variant="outline"
             className="print:hidden"
-            nativeButton={false} render={<Link href="/dashboard/reports" />}
+            nativeButton={false}
+            render={<Link href="/dashboard/reports" />}
           >
             <ArrowRight className="size-4" />
             رجوع
@@ -50,9 +51,13 @@ export default async function OrdersReportPage() {
         <TableBody>
           {orders.map((order) => (
             <TableRow key={order.id}>
-              <TableCell dir="ltr">{order.orderNumber}</TableCell>
+              <TableCell>
+                <span dir="ltr">{order.orderNumber}</span>
+              </TableCell>
               <TableCell>{order.customer.name}</TableCell>
-              <TableCell dir="ltr">{order.customer.phone}</TableCell>
+              <TableCell>
+                <span dir="ltr">{order.customer.phone}</span>
+              </TableCell>
               <TableCell>{String(order.total)}</TableCell>
               <TableCell>
                 <Badge variant="secondary">
@@ -60,7 +65,7 @@ export default async function OrdersReportPage() {
                 </Badge>
               </TableCell>
               <TableCell>
-                {new Date(order.createdAt).toLocaleDateString("ar-EG")}
+                {new Date(order.createdAt).toLocaleDateString("en-US")}
               </TableCell>
             </TableRow>
           ))}

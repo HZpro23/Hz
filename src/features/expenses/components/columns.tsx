@@ -26,7 +26,8 @@ export function getExpenseColumns(
       header: "الفئة",
       cell: ({ row }) => (
         <Badge variant="secondary">
-          {EXPENSE_CATEGORY_LABELS[row.original.category] ?? row.original.category}
+          {EXPENSE_CATEGORY_LABELS[row.original.category] ??
+            row.original.category}
         </Badge>
       ),
     },
@@ -43,7 +44,8 @@ export function getExpenseColumns(
     {
       id: "date",
       header: "التاريخ",
-      cell: ({ row }) => new Date(row.original.date).toLocaleDateString("ar-EG"),
+      cell: ({ row }) =>
+        new Date(row.original.date).toLocaleDateString("en-US"),
     },
     {
       id: "actions",
@@ -53,7 +55,8 @@ export function getExpenseColumns(
           <Button
             variant="ghost"
             size="icon-sm"
-            nativeButton={false} render={<Link href={editHref(row.original.id)} />}
+            nativeButton={false}
+            render={<Link href={editHref(row.original.id)} />}
           >
             <Pencil className="size-4" />
           </Button>

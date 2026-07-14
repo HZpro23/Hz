@@ -16,11 +16,12 @@ export type PurchaseOrderRow = {
   supplier: { name: string };
 };
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
-  PENDING: "secondary",
-  RECEIVED: "default",
-  CANCELLED: "destructive",
-};
+const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> =
+  {
+    PENDING: "secondary",
+    RECEIVED: "default",
+    CANCELLED: "destructive",
+  };
 
 export const purchaseOrderColumns: ColumnDef<PurchaseOrderRow>[] = [
   {
@@ -43,7 +44,8 @@ export const purchaseOrderColumns: ColumnDef<PurchaseOrderRow>[] = [
     header: "الحالة",
     cell: ({ row }) => (
       <Badge variant={STATUS_VARIANT[row.original.status] ?? "secondary"}>
-        {PURCHASE_ORDER_STATUS_LABELS[row.original.status] ?? row.original.status}
+        {PURCHASE_ORDER_STATUS_LABELS[row.original.status] ??
+          row.original.status}
       </Badge>
     ),
   },
@@ -51,7 +53,7 @@ export const purchaseOrderColumns: ColumnDef<PurchaseOrderRow>[] = [
     id: "createdAt",
     header: "التاريخ",
     cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("ar-EG"),
+      new Date(row.original.createdAt).toLocaleDateString("en-US"),
   },
   {
     id: "actions",
@@ -60,7 +62,8 @@ export const purchaseOrderColumns: ColumnDef<PurchaseOrderRow>[] = [
       <Button
         variant="ghost"
         size="icon-sm"
-        nativeButton={false} render={<Link href={`/dashboard/purchases/${row.original.id}`} />}
+        nativeButton={false}
+        render={<Link href={`/dashboard/purchases/${row.original.id}`} />}
       >
         <Eye className="size-4" />
       </Button>

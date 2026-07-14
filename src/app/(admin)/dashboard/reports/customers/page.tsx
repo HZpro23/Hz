@@ -48,8 +48,12 @@ export default async function CustomersReportPage() {
           {customers.map((customer) => (
             <TableRow key={customer.id}>
               <TableCell className="font-medium">{customer.name}</TableCell>
-              <TableCell dir="ltr">{customer.phone}</TableCell>
-              <TableCell dir="ltr">{customer.email ?? "—"}</TableCell>
+              <TableCell>
+                <span dir="ltr">{customer.phone}</span>
+              </TableCell>
+              <TableCell>
+                <span dir="ltr">{customer.email ?? "—"}</span>
+              </TableCell>
               <TableCell>{customer.ordersCount.toLocaleString("ar")}</TableCell>
               <TableCell>{customer.totalSpent.toLocaleString("ar")}</TableCell>
             </TableRow>

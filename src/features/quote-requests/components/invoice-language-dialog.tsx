@@ -19,11 +19,7 @@ export function InvoiceLanguageDialog({ quoteId }: { quoteId: string }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button
-            variant="outline"
-            className="cursor-pointer"
-            nativeButton={false}
-          >
+          <Button variant="outline" className="cursor-pointer">
             <FileText className="size-4" />
             توليد فاتورة
           </Button>

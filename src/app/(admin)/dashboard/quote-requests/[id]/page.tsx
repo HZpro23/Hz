@@ -49,7 +49,8 @@ export default async function QuoteRequestDetailPage({
         action={
           <Button
             variant="outline"
-            nativeButton={false} render={<Link href="/dashboard/quote-requests" />}
+            nativeButton={false}
+            render={<Link href="/dashboard/quote-requests" />}
           >
             <ArrowRight className="size-4" />
             رجوع
@@ -74,7 +75,9 @@ export default async function QuoteRequestDetailPage({
               </p>
               {quote.email && (
                 <p>
-                  <span className="text-muted-foreground">البريد الإلكتروني: </span>
+                  <span className="text-muted-foreground">
+                    البريد الإلكتروني:{" "}
+                  </span>
                   <span dir="ltr">{quote.email}</span>
                 </p>
               )}
@@ -90,7 +93,7 @@ export default async function QuoteRequestDetailPage({
               )}
               <p>
                 <span className="text-muted-foreground">تاريخ الطلب: </span>
-                {new Date(quote.createdAt).toLocaleDateString("ar-EG")}
+                {new Date(quote.createdAt).toLocaleDateString("en-US")}
               </p>
             </CardContent>
           </Card>
@@ -152,19 +155,27 @@ export default async function QuoteRequestDetailPage({
                 <MessageCircle className="size-4" />
                 إرسال عبر واتساب
               </Button>
-              <Button variant="outline" nativeButton={false} render={<a href={`tel:${quote.phone}`} />}>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<a href={`tel:${quote.phone}`} />}
+              >
                 <Phone className="size-4" />
                 الاتصال بالعميل
               </Button>
               {quote.order ? (
                 <Button
                   variant="secondary"
-                  nativeButton={false} render={<Link href={`/dashboard/orders/${quote.order.id}`} />}
+                  nativeButton={false}
+                  render={<Link href={`/dashboard/orders/${quote.order.id}`} />}
                 >
                   عرض الطلب المرتبط
                 </Button>
               ) : quote.status === "ACCEPTED" ? (
-                <ConvertToOrderButton quoteId={quote.id} disabled={outOfStock} />
+                <ConvertToOrderButton
+                  quoteId={quote.id}
+                  disabled={outOfStock}
+                />
               ) : null}
             </CardContent>
           </Card>

@@ -16,12 +16,13 @@ export type OrderRow = {
   customer: { name: string; phone: string };
 };
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
-  PENDING: "secondary",
-  PROCESSING: "default",
-  COMPLETED: "default",
-  CANCELLED: "destructive",
-};
+const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> =
+  {
+    PENDING: "secondary",
+    PROCESSING: "default",
+    COMPLETED: "default",
+    CANCELLED: "destructive",
+  };
 
 export const orderColumns: ColumnDef<OrderRow>[] = [
   {
@@ -52,7 +53,7 @@ export const orderColumns: ColumnDef<OrderRow>[] = [
     id: "createdAt",
     header: "التاريخ",
     cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("ar-EG"),
+      new Date(row.original.createdAt).toLocaleDateString("en-US"),
   },
   {
     id: "actions",
@@ -61,7 +62,8 @@ export const orderColumns: ColumnDef<OrderRow>[] = [
       <Button
         variant="ghost"
         size="icon-sm"
-        nativeButton={false} render={<Link href={`/dashboard/orders/${row.original.id}`} />}
+        nativeButton={false}
+        render={<Link href={`/dashboard/orders/${row.original.id}`} />}
       >
         <Eye className="size-4" />
       </Button>

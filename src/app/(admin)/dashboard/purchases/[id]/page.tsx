@@ -1,12 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -40,7 +35,8 @@ export default async function PurchaseOrderDetailPage({
         action={
           <Button
             variant="outline"
-            nativeButton={false} render={<Link href="/dashboard/purchases" />}
+            nativeButton={false}
+            render={<Link href="/dashboard/purchases" />}
           >
             <ArrowRight className="size-4" />
             رجوع
@@ -70,12 +66,17 @@ export default async function PurchaseOrderDetailPage({
                       <TableCell>
                         <div>
                           <p className="font-medium">{item.product.name}</p>
-                          <p dir="ltr" className="text-xs text-muted-foreground">
+                          <p
+                            dir="ltr"
+                            className="text-xs text-muted-foreground"
+                          >
                             {item.product.sku}
                           </p>
                         </div>
                       </TableCell>
-                      <TableCell>{item.quantity.toLocaleString("ar")}</TableCell>
+                      <TableCell>
+                        {item.quantity.toLocaleString("ar")}
+                      </TableCell>
                       <TableCell>{String(item.unitCost)}</TableCell>
                       <TableCell>
                         {(Number(item.unitCost) * item.quantity).toLocaleString(
@@ -111,7 +112,7 @@ export default async function PurchaseOrderDetailPage({
               )}
               <p>
                 <span className="text-muted-foreground">التاريخ: </span>
-                {new Date(order.createdAt).toLocaleDateString("ar-EG")}
+                {new Date(order.createdAt).toLocaleDateString("en-US")}
               </p>
             </CardContent>
           </Card>
@@ -128,7 +129,7 @@ export default async function PurchaseOrderDetailPage({
               {order.receivedAt && (
                 <p className="text-xs text-muted-foreground">
                   تم الاستلام في{" "}
-                  {new Date(order.receivedAt).toLocaleDateString("ar-EG")}
+                  {new Date(order.receivedAt).toLocaleDateString("en-US")}
                 </p>
               )}
             </CardContent>

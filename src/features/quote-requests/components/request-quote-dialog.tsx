@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -59,6 +59,7 @@ export function RequestQuoteDialog({
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const clearTimerRef = useRef<number | null>(null);
 
   const {
     register,
@@ -93,22 +94,47 @@ export function RequestQuoteDialog({
     startTransition(async () => {
       const result = await submitQuoteRequest(values);
       if (result?.error) return;
+
+      reset();
       writeStoredContact({
         customerName: values.customerName,
         phone: values.phone,
         email: values.email,
       });
       setSubmitted(true);
-      reset();
     });
   }
+
+  useEffect(() => {
+    return () => {
+      if (clearTimerRef.current) {
+        window.clearTimeout(clearTimerRef.current);
+        clearTimerRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
+        // clear any pending timer when toggling
+        if (clearTimerRef.current) {
+          window.clearTimeout(clearTimerRef.current);
+          clearTimerRef.current = null;
+        }
+
         setOpen(next);
-        if (!next) setSubmitted(false);
+        if (!next) {
+          // Wait for the dialog close animation to finish before clearing
+          // the success state so the success message doesn't swap to the
+          // form during the close animation.
+          clearTimerRef.current = window.setTimeout(() => {
+            setSubmitted(false);
+            reset();
+            clearTimerRef.current = null;
+          }, 300);
+        }
       }}
     >
       <DialogTrigger render={trigger} />
@@ -158,9 +184,7 @@ export function RequestQuoteDialog({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="quote-email">
-                  البريد الإلكتروني (اختياري)
-                </Label>
+                <Label htmlFor="quote-email">البريد الإلكتروني (اختياري)</Label>
                 <Input
                   id="quote-email"
                   type="email"

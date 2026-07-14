@@ -51,14 +51,7 @@ export function getProductColumns(
     {
       accessorKey: "name",
       header: "اسم المنتج",
-      cell: ({ row }) => (
-        <div>
-          <p className="font-medium">{row.original.name}</p>
-          <p dir="ltr" className="text-xs text-muted-foreground">
-            {row.original.sku}
-          </p>
-        </div>
-      ),
+      cell: ({ row }) => <p className="font-medium">{row.original.name}</p>,
     },
     {
       id: "category",
@@ -86,7 +79,9 @@ export function getProductColumns(
       id: "status",
       header: "الحالة",
       cell: ({ row }) => (
-        <Badge variant={row.original.status === "ACTIVE" ? "default" : "secondary"}>
+        <Badge
+          variant={row.original.status === "ACTIVE" ? "default" : "secondary"}
+        >
           {ar.statusLabels.productStatus[row.original.status]}
         </Badge>
       ),
@@ -99,7 +94,8 @@ export function getProductColumns(
           <Button
             variant="ghost"
             size="icon-sm"
-            nativeButton={false} render={<Link href={editHref(row.original.id)} />}
+            nativeButton={false}
+            render={<Link href={editHref(row.original.id)} />}
           >
             <Pencil className="size-4" />
           </Button>

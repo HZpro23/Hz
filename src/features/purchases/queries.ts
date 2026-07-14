@@ -11,7 +11,7 @@ export async function getPurchaseOrdersPage({ page }: { page: number }) {
       skip: (page - 1) * PURCHASE_ORDERS_PAGE_SIZE,
       take: PURCHASE_ORDERS_PAGE_SIZE,
     }),
-    prisma.purchaseOrder.count(),
+    prisma.purchaseOrder.count({ where: {} }),
   ]);
 
   return { items, total, pageSize: PURCHASE_ORDERS_PAGE_SIZE };

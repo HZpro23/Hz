@@ -108,7 +108,7 @@ export default async function OrderDetailPage({
               </p>
               <p>
                 <span className="text-muted-foreground">تاريخ الطلب: </span>
-                {new Date(order.createdAt).toLocaleDateString("ar-EG")}
+                {new Date(order.createdAt).toLocaleDateString("en-US")}
               </p>
             </CardContent>
           </Card>
