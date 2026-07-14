@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -10,6 +11,13 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [session, stats] = await Promise.all([auth(), getDashboardStats()]);
+
+  // Defense in depth: proxy.ts already guards /dashboard/**, but this
+  // layout re-checks auth close to the render so any route added under
+  // (admin) is protected even if the proxy matcher is ever misconfigured.
+  if (!session?.user) {
+    redirect("/login");
+  }
 
   return (
     <SidebarProvider>
