@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { deleteExpense } from "@/features/expenses/actions";
 import { EXPENSE_CATEGORY_LABELS } from "@/features/expenses/schema";
+import { formatCurrency } from "@/lib/currency";
 
 export type ExpenseRow = {
   id: string;
@@ -34,7 +35,7 @@ export function getExpenseColumns(
     {
       id: "amount",
       header: "المبلغ",
-      cell: ({ row }) => String(row.original.amount),
+      cell: ({ row }) => formatCurrency(row.original.amount),
     },
     {
       id: "description",

@@ -37,7 +37,14 @@ const REPORT_BUILDERS: Record<string, () => Promise<ReportPayload>> = {
   orders: async () => {
     const orders = await getOrdersReportData();
     return {
-      headers: ["رقم الطلب", "العميل", "الهاتف", "الإجمالي", "الحالة", "التاريخ"],
+      headers: [
+        "رقم الطلب",
+        "العميل",
+        "الهاتف",
+        "الإجمالي (درهم)",
+        "الحالة",
+        "التاريخ",
+      ],
       rows: orders.map((order) => [
         order.orderNumber,
         order.customerName,
@@ -56,7 +63,7 @@ const REPORT_BUILDERS: Record<string, () => Promise<ReportPayload>> = {
         "الهاتف",
         "البريد الإلكتروني",
         "عدد الطلبات",
-        "إجمالي المشتريات",
+        "إجمالي المشتريات (درهم)",
       ],
       rows: customers.map((customer) => [
         customer.name,

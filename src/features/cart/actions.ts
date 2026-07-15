@@ -65,12 +65,12 @@ export async function createOrderFromCart(
     let total = 0;
     const orderItems = validatedData.items.map((item) => {
       const product = products.find((p) => p.id === item.productId)!;
-      const lineTotal = Number(product.price || 0) * item.quantity;
+      const lineTotal = Number(product.price1 || 0) * item.quantity;
       total += lineTotal;
       return {
         productId: item.productId,
         quantity: item.quantity,
-        price: product.price || 0,
+        price: product.price1 || 0,
       };
     });
 

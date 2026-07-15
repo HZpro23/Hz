@@ -6,6 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ORDER_STATUS_LABELS } from "@/features/orders/schema";
+import { formatCurrency } from "@/lib/currency";
 
 export type OrderRow = {
   id: string;
@@ -38,7 +39,7 @@ export const orderColumns: ColumnDef<OrderRow>[] = [
   {
     id: "total",
     header: "الإجمالي",
-    cell: ({ row }) => String(row.original.total),
+    cell: ({ row }) => formatCurrency(row.original.total),
   },
   {
     id: "status",

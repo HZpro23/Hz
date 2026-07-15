@@ -3,6 +3,7 @@ import { getInvoiceById } from "@/features/invoices/queries";
 import { InvoicePrintButton } from "@/features/invoices/components/invoice-print-button";
 import { InvoicePdfButton } from "@/features/invoices/components/invoice-pdf-button";
 import { ar as arDict } from "@/i18n/ar";
+import { formatCurrency } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -142,7 +143,7 @@ export default async function InvoicePrintPage({
                 </span>
               </th>
               <th className="px-3 py-2 text-start font-medium border border-gray-200">
-                <span className="block truncate max-w-[10ch]">
+                <span className="block truncate max-w-[15ch]">
                   {t.lineTotal}
                 </span>
               </th>
@@ -163,12 +164,12 @@ export default async function InvoicePrintPage({
                 </td>
                 <td className="px-3 py-2 border border-gray-200">
                   <span className="block truncate max-w-[15ch]">
-                    {Number(item.unitPrice).toFixed(2)}
+                    {formatCurrency(Number(item.unitPrice), lang)}
                   </span>
                 </td>
                 <td className="px-3 py-2 border border-gray-200">
                   <span className="block truncate max-w-[15ch]">
-                    {(Number(item.unitPrice) * item.quantity).toFixed(2)}
+                    {formatCurrency(Number(item.unitPrice) * item.quantity, lang)}
                   </span>
                 </td>
               </tr>
@@ -178,7 +179,7 @@ export default async function InvoicePrintPage({
 
         <div className="flex justify-start border-t pt-4">
           <p className="text-lg font-semibold">
-            {t.total}: {grandTotal.toFixed(2)}
+            {t.total}: {formatCurrency(grandTotal, lang)}
           </p>
         </div>
 

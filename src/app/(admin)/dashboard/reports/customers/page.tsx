@@ -12,6 +12,7 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { getCustomersReportData } from "@/features/reports/queries";
 import { ReportExportButtons } from "@/features/reports/components/report-export-buttons";
+import { formatCurrency } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,7 @@ export default async function CustomersReportPage() {
                 <span dir="ltr">{customer.email ?? "—"}</span>
               </TableCell>
               <TableCell>{customer.ordersCount.toLocaleString("ar")}</TableCell>
-              <TableCell>{customer.totalSpent.toLocaleString("ar")}</TableCell>
+              <TableCell>{formatCurrency(customer.totalSpent)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

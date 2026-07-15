@@ -34,6 +34,7 @@ import {
   INVOICE_LANGUAGE_LABELS,
 } from "@/features/invoices/schema";
 import { createInvoice, updateInvoice } from "@/features/invoices/actions";
+import { formatCurrency } from "@/lib/currency";
 
 type ProductOption = { id: string; name: string; sku: string };
 
@@ -320,7 +321,7 @@ export function InvoiceForm({
       </div>
 
       <div className="flex items-center justify-between border-t pt-4">
-        <p className="font-medium">الإجمالي: {total.toFixed(2)}</p>
+        <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
         <Button type="submit" disabled={isPending} className="cursor-pointer">
           {isPending
             ? "جاري الحفظ..."

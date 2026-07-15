@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { deleteInvoice } from "@/features/invoices/actions";
 import { INVOICE_LANGUAGE_LABELS } from "@/features/invoices/schema";
+import { formatCurrency } from "@/lib/currency";
 
 export type InvoiceRow = {
   id: string;
@@ -43,7 +44,7 @@ export const invoiceColumns: ColumnDef<InvoiceRow>[] = [
   {
     id: "total",
     header: "الإجمالي",
-    cell: ({ row }) => row.original.total.toFixed(2),
+    cell: ({ row }) => formatCurrency(row.original.total),
   },
   {
     id: "language",

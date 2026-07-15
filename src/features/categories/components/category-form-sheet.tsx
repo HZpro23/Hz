@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { FormSheet } from "@/components/shared/form-sheet";
@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CloudinaryUploader } from "@/components/shared/cloudinary-uploader";
 import {
   categorySchema,
   type CategoryInput,
@@ -29,6 +30,8 @@ type CategoryRecord = {
   name: string;
   slug: string;
   parentId: string | null;
+  imagePublicId: string | null;
+  imageSecureUrl: string | null;
 } | null;
 
 export function CategoryFormSheet({
@@ -47,6 +50,7 @@ export function CategoryFormSheet({
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     watch,
@@ -57,6 +61,13 @@ export function CategoryFormSheet({
       name: category?.name ?? "",
       slug: category?.slug ?? "",
       parentId: category?.parentId ?? null,
+      image:
+        category?.imagePublicId && category?.imageSecureUrl
+          ? {
+              publicId: category.imagePublicId,
+              secureUrl: category.imageSecureUrl,
+            }
+          : null,
     },
   });
 
@@ -95,6 +106,20 @@ export function CategoryFormSheet({
       title={category ? "تعديل القسم" : "إضافة قسم جديد"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label>صورة القسم</Label>
+          <Controller
+            control={control}
+            name="image"
+            render={({ field }) => (
+              <CloudinaryUploader
+                value={field.value ? [field.value] : []}
+                onChange={(images) => field.onChange(images[0] ?? null)}
+                maxImages={1}
+              />
+            )}
+          />
+        </div>
         <div className="space-y-2">
           <Label htmlFor="category-name">اسم القسم</Label>
           <Input id="category-name" {...register("name")} />

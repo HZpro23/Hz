@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { FolderTree } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { getPublicCategoriesWithCounts } from "@/features/categories/queries";
@@ -20,9 +21,21 @@ export default async function CategoriesPage() {
             <Link
               key={category.id}
               href={`/products?category=${category.slug}`}
-              className="flex flex-col items-center gap-2 rounded-xl border bg-card p-6 text-center transition-colors hover:bg-muted/50"
+              className="flex flex-col items-center gap-3 rounded-xl border bg-card p-6 text-center transition-colors hover:bg-muted/50"
             >
-              <FolderTree className="size-8 text-muted-foreground" />
+              <div className="relative flex size-16 items-center justify-center overflow-hidden rounded-full bg-muted">
+                {category.imageSecureUrl ? (
+                  <Image
+                    src={category.imageSecureUrl}
+                    alt={category.name}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                ) : (
+                  <FolderTree className="size-8 text-muted-foreground" />
+                )}
+              </div>
               <span className="font-medium">{category.name}</span>
               <span className="text-xs text-muted-foreground">
                 {category._count.products.toLocaleString("ar")} منتج

@@ -50,6 +50,7 @@ export async function getPublicCategoriesWithCounts() {
       id: true,
       name: true,
       slug: true,
+      imageSecureUrl: true,
       _count: { select: { products: { where: { status: "ACTIVE" } } } },
     },
   });

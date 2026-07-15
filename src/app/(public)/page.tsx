@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { FolderTree, Sparkles, ShieldCheck, Truck, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -97,8 +98,18 @@ export default async function HomePage() {
                 href={`/products?category=${category.slug}`}
                 className="group flex flex-col items-center gap-3 rounded-2xl border bg-card p-5 text-center shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
               >
-                <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <FolderTree className="size-5" />
+                <div className="relative flex size-11 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  {category.imageSecureUrl ? (
+                    <Image
+                      src={category.imageSecureUrl}
+                      alt={category.name}
+                      fill
+                      className="object-cover"
+                      sizes="44px"
+                    />
+                  ) : (
+                    <FolderTree className="size-5" />
+                  )}
                 </div>
                 <span className="text-sm font-medium">{category.name}</span>
               </Link>

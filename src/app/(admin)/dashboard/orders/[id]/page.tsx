@@ -72,7 +72,9 @@ export default async function OrderDetailPage({
                   price: Number(item.price),
                   product: {
                     ...item.product,
-                    price: Number(item.product.price),
+                    price1: Number(item.product.price1),
+                    price2: Number(item.product.price2),
+                    price3: Number(item.product.price3),
                   },
                 }))}
               />
@@ -91,6 +93,7 @@ export default async function OrderDetailPage({
                   render={
                     <Link href={`/dashboard/invoices/${order.invoice.id}`} />
                   }
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   عرض الفاتورة
                 </Button>

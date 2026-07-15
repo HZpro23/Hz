@@ -83,7 +83,14 @@ export default async function ProductsPage({
       <ProductFormSheet
         key={editingProduct?.id ?? (params.new ? "new" : "closed")}
         open={isSheetOpen}
-        product={editingProduct}
+        product={
+          editingProduct && {
+            ...editingProduct,
+            price1: Number(editingProduct.price1),
+            price2: Number(editingProduct.price2),
+            price3: Number(editingProduct.price3),
+          }
+        }
         categoryOptions={categoryOptions}
         brandOptions={brandOptions}
       />

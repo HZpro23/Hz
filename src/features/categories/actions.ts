@@ -21,6 +21,8 @@ export async function createCategory(input: unknown): Promise<ActionResult> {
         name: parsed.data.name,
         slug: parsed.data.slug,
         parentId: parsed.data.parentId || null,
+        imagePublicId: parsed.data.image?.publicId ?? null,
+        imageSecureUrl: parsed.data.image?.secureUrl ?? null,
       },
     });
   } catch (error) {
@@ -31,6 +33,8 @@ export async function createCategory(input: unknown): Promise<ActionResult> {
   }
 
   revalidatePath("/dashboard/categories");
+  revalidatePath("/categories");
+  revalidatePath("/");
   return { success: true };
 }
 
@@ -55,6 +59,8 @@ export async function updateCategory(
         name: parsed.data.name,
         slug: parsed.data.slug,
         parentId: parsed.data.parentId || null,
+        imagePublicId: parsed.data.image?.publicId ?? null,
+        imageSecureUrl: parsed.data.image?.secureUrl ?? null,
       },
     });
   } catch (error) {
@@ -65,6 +71,8 @@ export async function updateCategory(
   }
 
   revalidatePath("/dashboard/categories");
+  revalidatePath("/categories");
+  revalidatePath("/");
   return { success: true };
 }
 

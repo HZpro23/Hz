@@ -21,6 +21,7 @@ import {
   type PurchaseOrderOutput,
 } from "@/features/purchases/schema";
 import { createPurchaseOrder } from "@/features/purchases/actions";
+import { formatCurrency } from "@/lib/currency";
 
 type Option = { id: string; name: string };
 type ProductOption = { id: string; name: string; sku: string };
@@ -175,7 +176,7 @@ export function PurchaseOrderForm({
       </div>
 
       <div className="flex items-center justify-between border-t pt-4">
-        <p className="font-medium">الإجمالي: {total.toLocaleString("ar")}</p>
+        <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
         <Button type="submit" className="cursor-pointer" disabled={isPending}>
           {isPending ? "جاري الحفظ..." : "إنشاء أمر الشراء"}
         </Button>

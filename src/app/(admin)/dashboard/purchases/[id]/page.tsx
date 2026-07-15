@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { getPurchaseOrderById } from "@/features/purchases/queries";
 import { PurchaseOrderActions } from "@/features/purchases/components/purchase-order-actions";
 import { PURCHASE_ORDER_STATUS_LABELS } from "@/features/purchases/schema";
+import { formatCurrency } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -77,18 +78,16 @@ export default async function PurchaseOrderDetailPage({
                       <TableCell>
                         {item.quantity.toLocaleString("ar")}
                       </TableCell>
-                      <TableCell>{String(item.unitCost)}</TableCell>
+                      <TableCell>{formatCurrency(Number(item.unitCost))}</TableCell>
                       <TableCell>
-                        {(Number(item.unitCost) * item.quantity).toLocaleString(
-                          "ar",
-                        )}
+                        {formatCurrency(Number(item.unitCost) * item.quantity)}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
               <div className="mt-4 flex justify-end text-sm font-medium">
-                الإجمالي الكلي: {String(order.total)}
+                الإجمالي الكلي: {formatCurrency(Number(order.total))}
               </div>
             </CardContent>
           </Card>

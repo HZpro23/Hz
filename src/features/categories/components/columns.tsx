@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import Image from "next/image";
+import { Pencil, FolderTree } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
@@ -11,6 +12,7 @@ export type CategoryRow = {
   id: string;
   name: string;
   slug: string;
+  imageSecureUrl: string | null;
   parent: { name: string } | null;
   _count: { products: number; children: number };
 };
@@ -19,6 +21,26 @@ export function getCategoryColumns(
   editHref: (id: string) => string,
 ): ColumnDef<CategoryRow>[] {
   return [
+    {
+      id: "image",
+      header: "",
+      cell: ({ row }) =>
+        row.original.imageSecureUrl ? (
+          <div className="relative size-10 overflow-hidden rounded-md border">
+            <Image
+              src={row.original.imageSecureUrl}
+              alt={row.original.name}
+              fill
+              className="object-cover"
+              sizes="40px"
+            />
+          </div>
+        ) : (
+          <div className="flex size-10 items-center justify-center rounded-md bg-muted">
+            <FolderTree className="size-4 text-muted-foreground" />
+          </div>
+        ),
+    },
     { accessorKey: "name", header: "الاسم" },
     {
       accessorKey: "slug",

@@ -7,6 +7,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -24,6 +31,16 @@ import {
   ProductDetailsDialog,
   type OrderItemProduct,
 } from "@/features/orders/components/product-details-dialog";
+import { formatCurrency } from "@/lib/currency";
+
+const CUSTOM_PRICE = "سعر مخصص";
+
+function priceTierLabel(price: number, product: OrderItemProduct) {
+  if (price === product.price1) return "السعر الأول";
+  if (price === product.price2) return "السعر الثاني";
+  if (price === product.price3) return "السعر الثالث";
+  return CUSTOM_PRICE;
+}
 
 export function OrderItemsPriceForm({
   orderId,
@@ -40,7 +57,7 @@ export function OrderItemsPriceForm({
 }) {
   const [isPending, startTransition] = useTransition();
 
-  const { control, register, handleSubmit, watch } = useForm<
+  const { control, register, handleSubmit, watch, setValue } = useForm<
     OrderItemPricesInput,
     unknown,
     OrderItemPricesOutput
@@ -84,7 +101,8 @@ export function OrderItemsPriceForm({
         <TableBody>
           {fields.map((field, index) => {
             const item = items[index];
-            const price = Number(watchedItems?.[index]?.price ?? item.price) || 0;
+            const price =
+              Number(watchedItems?.[index]?.price ?? item.price) || 0;
             return (
               <TableRow key={field.id}>
                 <TableCell className="font-medium">
@@ -92,15 +110,47 @@ export function OrderItemsPriceForm({
                 </TableCell>
                 <TableCell>{item.quantity.toLocaleString("ar")}</TableCell>
                 <TableCell>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    className="w-28"
-                    {...register(`items.${index}.price`)}
-                  />
+                  <div className="flex flex-col gap-1.5">
+                    <Select
+                      value={priceTierLabel(price, item.product)}
+                      onValueChange={(label) => {
+                        if (label === "السعر الأول") {
+                          setValue(`items.${index}.price`, item.product.price1);
+                        } else if (label === "السعر الثاني") {
+                          setValue(`items.${index}.price`, item.product.price2);
+                        } else if (label === "السعر الثالث") {
+                          setValue(`items.${index}.price`, item.product.price3);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-36">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="السعر الأول">
+                          ({formatCurrency(item.product.price1)})
+                        </SelectItem>
+                        <SelectItem value="السعر الثاني">
+                          ({formatCurrency(item.product.price2)})
+                        </SelectItem>
+                        <SelectItem value="السعر الثالث">
+                          ({formatCurrency(item.product.price3)})
+                        </SelectItem>
+                        <SelectItem value={CUSTOM_PRICE}>
+                          {CUSTOM_PRICE}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      className="w-28"
+                      {...register(`items.${index}.price`)}
+                    />
+                  </div>
                 </TableCell>
-                <TableCell>{(price * item.quantity).toFixed(2)}</TableCell>
+                <TableCell>{formatCurrency(price * item.quantity)}</TableCell>
                 <TableCell>
                   <ProductDetailsDialog product={item.product} />
                 </TableCell>
@@ -110,7 +160,7 @@ export function OrderItemsPriceForm({
         </TableBody>
       </Table>
       <div className="flex items-center justify-between border-t pt-4">
-        <p className="font-medium">الإجمالي الكلي: {total.toFixed(2)}</p>
+        <p className="font-medium">الإجمالي الكلي: {formatCurrency(total)}</p>
         <Button type="submit" disabled={isPending} className="cursor-pointer">
           {isPending ? "جاري الحفظ..." : "حفظ الأسعار"}
         </Button>

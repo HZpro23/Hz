@@ -6,6 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PURCHASE_ORDER_STATUS_LABELS } from "@/features/purchases/schema";
+import { formatCurrency } from "@/lib/currency";
 
 export type PurchaseOrderRow = {
   id: string;
@@ -37,7 +38,7 @@ export const purchaseOrderColumns: ColumnDef<PurchaseOrderRow>[] = [
   {
     id: "total",
     header: "الإجمالي",
-    cell: ({ row }) => String(row.original.total),
+    cell: ({ row }) => formatCurrency(row.original.total),
   },
   {
     id: "status",

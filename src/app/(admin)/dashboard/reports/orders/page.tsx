@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { getOrdersReportData } from "@/features/reports/queries";
 import { ReportExportButtons } from "@/features/reports/components/report-export-buttons";
 import { ORDER_STATUS_LABELS } from "@/features/orders/schema";
+import { formatCurrency } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,7 @@ export default async function OrdersReportPage() {
               <TableCell>
                 <span dir="ltr">{order.customerPhone}</span>
               </TableCell>
-              <TableCell>{String(order.total)}</TableCell>
+              <TableCell>{formatCurrency(Number(order.total))}</TableCell>
               <TableCell>
                 <Badge variant="secondary">
                   {ORDER_STATUS_LABELS[order.status]}

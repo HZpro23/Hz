@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/currency";
 
 export type OrderItemProduct = {
   name: string;
@@ -20,7 +21,9 @@ export type OrderItemProduct = {
   barcode: string | null;
   description: string | null;
   quantity: number;
-  price: number;
+  price1: number;
+  price2: number;
+  price3: number;
   category: { name: string };
   brand: { name: string } | null;
   images: { secureUrl: string }[];
@@ -86,8 +89,12 @@ export function ProductDetailsDialog({
                 <dd className="text-start">{product.brand.name}</dd>
               </>
             )}
-            <dt className="text-muted-foreground">السعر الحالي</dt>
-            <dd className="text-start">{product.price.toFixed(2)}</dd>
+            <dt className="text-muted-foreground">السعر الأول</dt>
+            <dd className="text-start">{formatCurrency(product.price1)}</dd>
+            <dt className="text-muted-foreground">السعر الثاني</dt>
+            <dd className="text-start">{formatCurrency(product.price2)}</dd>
+            <dt className="text-muted-foreground">السعر الثالث</dt>
+            <dd className="text-start">{formatCurrency(product.price3)}</dd>
             <dt className="text-muted-foreground">المخزون</dt>
             <dd className="text-start">
               <Badge variant={outOfStock ? "destructive" : "secondary"}>

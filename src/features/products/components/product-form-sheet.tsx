@@ -43,6 +43,9 @@ type ProductRecord = {
   brandId: string | null;
   quantity: number;
   minStockLevel: number;
+  price1: number;
+  price2: number;
+  price3: number;
   status: "ACTIVE" | "INACTIVE";
   images: UploadedImage[];
 } | null;
@@ -80,6 +83,9 @@ export function ProductFormSheet({
       brandId: product?.brandId ?? null,
       quantity: product?.quantity ?? 1,
       minStockLevel: product?.minStockLevel ?? 0,
+      price1: product?.price1 ?? 0,
+      price2: product?.price2 ?? 0,
+      price3: product?.price3 ?? 0,
       status: product?.status ?? "ACTIVE",
       images: product?.images ?? [],
     },
@@ -255,6 +261,54 @@ export function ProductFormSheet({
             {errors.minStockLevel && (
               <p className="text-sm text-destructive">
                 {errors.minStockLevel.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="product-price1">السعر الأول</Label>
+            <Input
+              id="product-price1"
+              type="number"
+              min={0}
+              step="0.01"
+              {...register("price1")}
+            />
+            {errors.price1 && (
+              <p className="text-sm text-destructive">
+                {errors.price1.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="product-price2">السعر الثاني</Label>
+            <Input
+              id="product-price2"
+              type="number"
+              min={0}
+              step="0.01"
+              {...register("price2")}
+            />
+            {errors.price2 && (
+              <p className="text-sm text-destructive">
+                {errors.price2.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="product-price3">السعر الثالث</Label>
+            <Input
+              id="product-price3"
+              type="number"
+              min={0}
+              step="0.01"
+              {...register("price3")}
+            />
+            {errors.price3 && (
+              <p className="text-sm text-destructive">
+                {errors.price3.message}
               </p>
             )}
           </div>

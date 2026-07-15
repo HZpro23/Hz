@@ -8,6 +8,7 @@ import { getExpensesPage, getExpenseById } from "@/features/expenses/queries";
 import { ExpensesTable } from "@/features/expenses/components/expenses-table";
 import { ExpenseFormSheet } from "@/features/expenses/components/expense-form-sheet";
 import { ar } from "@/i18n/ar";
+import { formatCurrency } from "@/lib/currency";
 import type { ExpenseCategory } from "@/generated/prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export default async function ExpensesPage({
     <div className="space-y-6">
       <PageHeader
         title={ar.admin.expenses}
-        description={`إجمالي المصروفات: ${String(totalAmount)}`}
+        description={`إجمالي المصروفات: ${formatCurrency(Number(totalAmount))}`}
         action={
           <Button nativeButton={false} render={<Link href={buildHref({ new: "1" })} />}>
             <Plus className="size-4" />
