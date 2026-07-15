@@ -17,6 +17,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Combobox,
+  useComboboxFilter,
+  ComboboxValue,
+  ComboboxTrigger,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxEmpty,
+  ComboboxList,
+  ComboboxItem,
+} from "@/components/ui/combobox";
+import {
   invoiceSchema,
   type InvoiceInput,
   type InvoiceOutput,
@@ -25,6 +36,53 @@ import {
 import { createInvoice, updateInvoice } from "@/features/invoices/actions";
 
 type ProductOption = { id: string; name: string; sku: string };
+
+const NONE_PRODUCT: ProductOption = { id: "", name: "بدون منتج محدد", sku: "" };
+
+function productLabel(product: ProductOption) {
+  return product.id ? `${product.name} (${product.sku})` : product.name;
+}
+
+function ProductPickerField({
+  value,
+  onChange,
+  products,
+}: {
+  value: string;
+  onChange: (product: ProductOption | null) => void;
+  products: ProductOption[];
+}) {
+  const { contains } = useComboboxFilter();
+  const items = [NONE_PRODUCT, ...products];
+  const selected = items.find((item) => item.id === value) ?? NONE_PRODUCT;
+
+  return (
+    <Combobox
+      items={items}
+      value={selected}
+      onValueChange={(product: ProductOption | null) => onChange(product)}
+      isItemEqualToValue={(a: ProductOption, b: ProductOption) => a.id === b.id}
+      itemToStringValue={(item: ProductOption) => item.id}
+      itemToStringLabel={productLabel}
+      filter={contains}
+    >
+      <ComboboxTrigger className="w-full">
+        <ComboboxValue />
+      </ComboboxTrigger>
+      <ComboboxContent>
+        <ComboboxInput placeholder="ابحث بالاسم أو SKU..." />
+        <ComboboxEmpty>لا توجد نتائج</ComboboxEmpty>
+        <ComboboxList>
+          {(item: ProductOption) => (
+            <ComboboxItem key={item.id} value={item}>
+              {productLabel(item)}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  );
+}
 
 type InvoiceRecord = {
   id: string;
@@ -197,37 +255,21 @@ export function InvoiceForm({
               className="grid grid-cols-1 items-end gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto_auto_auto]"
             >
               <div className="space-y-1">
-                <Label className="text-xs">اختر من المنتجات (اختياري)</Label>
+                <Label className="text-xs">اختر من المنتجات</Label>
                 <Controller
                   control={control}
                   name={`items.${index}.productId`}
                   render={({ field: productField }) => (
-                    <Select
-                      value={productField.value || "none"}
-                      onValueChange={(value) => {
-                        productField.onChange(value === "none" ? "" : value);
-                        if (value !== "none") {
-                          const product = products.find(
-                            (item) => item.id === value,
-                          );
-                          if (product) {
-                            setValue(`items.${index}.name`, product.name);
-                          }
+                    <ProductPickerField
+                      value={productField.value ?? ""}
+                      products={products}
+                      onChange={(product) => {
+                        productField.onChange(product?.id ?? "");
+                        if (product?.id) {
+                          setValue(`items.${index}.name`, product.name);
                         }
                       }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="بدون منتج محدد" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">بدون منتج محدد</SelectItem>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} ({product.sku})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   )}
                 />
               </div>
