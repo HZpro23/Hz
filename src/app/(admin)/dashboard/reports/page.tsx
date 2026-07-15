@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Boxes, ShoppingCart, Users, MessageSquareText } from "lucide-react";
+import { Boxes, ShoppingCart, Users } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { ar } from "@/i18n/ar";
 
@@ -21,12 +21,6 @@ const REPORTS = [
     icon: Users,
     title: "تقرير العملاء",
     description: "العملاء وعدد طلباتهم وإجمالي مشترياتهم",
-  },
-  {
-    href: "/dashboard/reports/quote-requests",
-    icon: MessageSquareText,
-    title: "تقرير طلبات عرض السعر",
-    description: "جميع طلبات عروض الأسعار وحالتها",
   },
 ];
 

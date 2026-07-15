@@ -35,7 +35,7 @@ export async function createInvoice(input: unknown): Promise<ActionResult> {
         customerPhone: parsed.data.customerPhone,
         customerEmail: parsed.data.customerEmail || null,
         notes: parsed.data.notes || null,
-        quoteRequestId: parsed.data.quoteRequestId || null,
+        orderId: parsed.data.orderId || null,
         total: computeTotal(parsed.data.items),
         items: {
           create: parsed.data.items.map((item) => ({
@@ -108,47 +108,43 @@ export async function deleteInvoice(id: string): Promise<ActionResult> {
   return { success: true };
 }
 
-export async function getOrCreateInvoiceForQuote(
-  quoteRequestId: string,
+export async function getOrCreateInvoiceForOrder(
+  orderId: string,
   language: InvoiceLanguage,
 ): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { error: "غير مصرح" };
 
   const existing = await prisma.invoice.findUnique({
-    where: { quoteRequestId },
+    where: { orderId },
   });
 
   if (existing) {
     redirect(`/dashboard/invoices/${existing.id}`);
   }
 
-  const quote = await prisma.quoteRequest.findUnique({
-    where: { id: quoteRequestId },
-    include: { product: true },
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: { include: { product: true } } },
   });
-  if (!quote) return { error: "الطلب غير موجود" };
-
-  const unitPrice = quote.price ? Number(quote.price) : 0;
+  if (!order) return { error: "الطلب غير موجود" };
 
   const invoice = await prisma.invoice.create({
     data: {
       invoiceNumber: generateInvoiceNumber(),
       language,
-      customerName: quote.customerName,
-      customerPhone: quote.phone,
-      customerEmail: quote.email || null,
-      quoteRequestId: quote.id,
-      total: unitPrice * quote.quantity,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      customerEmail: order.customerEmail,
+      orderId: order.id,
+      total: order.total,
       items: {
-        create: [
-          {
-            productId: quote.product?.id ?? null,
-            name: quote.product?.name ?? "منتج",
-            quantity: quote.quantity,
-            unitPrice,
-          },
-        ],
+        create: order.items.map((item) => ({
+          productId: item.productId,
+          name: item.product.name,
+          quantity: item.quantity,
+          unitPrice: item.price,
+        })),
       },
     },
   });
@@ -158,11 +154,11 @@ export async function getOrCreateInvoiceForQuote(
 }
 
 // Thin wrapper for use directly as a <form action>: form actions must
-// return void | Promise<void>, while getOrCreateInvoiceForQuote returns
+// return void | Promise<void>, while getOrCreateInvoiceForOrder returns
 // an ActionResult on the (non-redirecting) error path.
-export async function generateInvoiceForQuote(
-  quoteRequestId: string,
+export async function generateInvoiceForOrder(
+  orderId: string,
   language: InvoiceLanguage,
 ) {
-  await getOrCreateInvoiceForQuote(quoteRequestId, language);
+  await getOrCreateInvoiceForOrder(orderId, language);
 }

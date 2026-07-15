@@ -23,7 +23,7 @@ export const ar = {
     categories: "الأقسام",
     about: "من نحن",
     contact: "اتصل بنا",
-    requestQuote: "طلب عرض سعر",
+    cart: "السلة",
   },
   admin: {
     dashboard: "لوحة التحكم",
@@ -31,7 +31,6 @@ export const ar = {
     categories: "الأقسام",
     brands: "العلامات التجارية",
     customers: "العملاء",
-    quoteRequests: "طلبات عرض السعر",
     orders: "الطلبات",
     inventory: "المخزون",
     suppliers: "الموردون",
@@ -43,7 +42,6 @@ export const ar = {
   dashboardCards: {
     totalProducts: "إجمالي المنتجات",
     totalCustomers: "إجمالي العملاء",
-    quoteRequests: "طلبات عرض السعر",
     orders: "الطلبات",
     lowStockProducts: "المنتجات منخفضة المخزون",
   },
@@ -53,13 +51,6 @@ export const ar = {
       PROCESSING: "قيد المعالجة",
       COMPLETED: "مكتمل",
       CANCELLED: "ملغي",
-    },
-    quote: {
-      PENDING: "قيد الانتظار",
-      QUOTED: "تم التسعير",
-      SENT: "تم الإرسال",
-      ACCEPTED: "مقبول",
-      REJECTED: "مرفوض",
     },
     purchaseOrder: {
       PENDING: "قيد الانتظار",

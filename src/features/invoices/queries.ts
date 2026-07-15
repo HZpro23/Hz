@@ -41,11 +41,7 @@ export async function getInvoiceById(id: string) {
       items: {
         include: { product: { select: { name: true, sku: true } } },
       },
-      quoteRequest: { select: { id: true } },
+      order: { select: { id: true } },
     },
   });
-}
-
-export async function getInvoiceByQuoteRequestId(quoteRequestId: string) {
-  return prisma.invoice.findUnique({ where: { quoteRequestId } });
 }

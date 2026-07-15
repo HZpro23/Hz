@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { orderItemPricesSchema } from "@/features/orders/schema";
 import type { OrderStatus } from "@/generated/prisma/client";
 
 type ActionResult = { error?: string; success?: boolean };
@@ -75,6 +76,48 @@ export async function updateOrderStatus(
   revalidatePath(`/dashboard/orders/${id}`);
   revalidatePath("/dashboard/products");
   revalidatePath("/dashboard/inventory");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function updateOrderItemPrices(
+  orderId: string,
+  input: unknown,
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+
+  const parsed = orderItemPricesSchema.safeParse(input);
+  if (!parsed.success) return { error: "الرجاء التحقق من البيانات المدخلة" };
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true },
+  });
+  if (!order) return { error: "الطلب غير موجود" };
+
+  const priceById = new Map(
+    parsed.data.items.map((item) => [item.id, item.price]),
+  );
+  const total = order.items.reduce(
+    (sum, item) => sum + (priceById.get(item.id) ?? Number(item.price)) * item.quantity,
+    0,
+  );
+
+  await prisma.$transaction([
+    ...order.items
+      .filter((item) => priceById.has(item.id))
+      .map((item) =>
+        prisma.orderItem.update({
+          where: { id: item.id },
+          data: { price: priceById.get(item.id)! },
+        }),
+      ),
+    prisma.order.update({ where: { id: orderId }, data: { total } }),
+  ]);
+
+  revalidatePath("/dashboard/orders");
+  revalidatePath(`/dashboard/orders/${orderId}`);
   revalidatePath("/dashboard");
   return { success: true };
 }

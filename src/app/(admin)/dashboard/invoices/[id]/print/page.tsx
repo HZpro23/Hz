@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getInvoiceById } from "@/features/invoices/queries";
-import { InvoicePrintButton } from "@/features/quote-requests/components/invoice-print-button";
-import { InvoicePdfButton } from "@/features/quote-requests/components/invoice-pdf-button";
+import { InvoicePrintButton } from "@/features/invoices/components/invoice-print-button";
+import { InvoicePdfButton } from "@/features/invoices/components/invoice-pdf-button";
 import { ar as arDict } from "@/i18n/ar";
 
 export const dynamic = "force-dynamic";

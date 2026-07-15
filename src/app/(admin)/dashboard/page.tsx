@@ -1,10 +1,4 @@
-import {
-  Package,
-  Users,
-  MessageSquareText,
-  ShoppingCart,
-  AlertTriangle,
-} from "lucide-react";
+import { Package, Users, ShoppingCart, AlertTriangle } from "lucide-react";
 import { StatCard } from "@/components/shared/stat-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { ar } from "@/i18n/ar";
@@ -21,7 +15,7 @@ export default async function DashboardPage() {
         title={ar.admin.dashboard}
         description="نظرة عامة سريعة على أداء متجرك اليوم"
       />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title={ar.dashboardCards.totalProducts}
           value={stats.totalProducts}
@@ -31,11 +25,6 @@ export default async function DashboardPage() {
           title={ar.dashboardCards.totalCustomers}
           value={stats.totalCustomers}
           icon={Users}
-        />
-        <StatCard
-          title={ar.dashboardCards.quoteRequests}
-          value={stats.pendingQuoteRequests}
-          icon={MessageSquareText}
         />
         <StatCard
           title={ar.dashboardCards.orders}

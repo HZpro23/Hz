@@ -33,7 +33,7 @@ type InvoiceRecord = {
   customerPhone: string;
   customerEmail: string | null;
   notes: string | null;
-  quoteRequestId: string | null;
+  orderId: string | null;
   items: {
     productId: string | null;
     name: string;
@@ -45,11 +45,11 @@ type InvoiceRecord = {
 export function InvoiceForm({
   invoice,
   products,
-  quoteRequestId,
+  orderId,
 }: {
   invoice?: InvoiceRecord;
   products: ProductOption[];
-  quoteRequestId?: string;
+  orderId?: string;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -68,7 +68,7 @@ export function InvoiceForm({
       customerPhone: invoice?.customerPhone ?? "",
       customerEmail: invoice?.customerEmail ?? "",
       notes: invoice?.notes ?? "",
-      quoteRequestId: invoice?.quoteRequestId ?? quoteRequestId ?? "",
+      orderId: invoice?.orderId ?? orderId ?? "",
       items: invoice?.items.length
         ? invoice.items.map((item) => ({
             productId: item.productId ?? "",

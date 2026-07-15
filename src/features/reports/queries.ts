@@ -13,7 +13,6 @@ export async function getInventoryReportData() {
 
 export async function getOrdersReportData() {
   return prisma.order.findMany({
-    include: { customer: { select: { name: true, phone: true } } },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -35,11 +34,4 @@ export async function getCustomersReportData() {
       0,
     ),
   }));
-}
-
-export async function getQuoteRequestsReportData() {
-  return prisma.quoteRequest.findMany({
-    include: { product: { select: { name: true } } },
-    orderBy: { createdAt: "desc" },
-  });
 }

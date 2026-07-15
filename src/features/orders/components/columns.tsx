@@ -13,7 +13,7 @@ export type OrderRow = {
   total: number;
   status: string;
   createdAt: Date;
-  customer: { name: string; phone: string };
+  customerName: string;
 };
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> =
@@ -33,7 +33,7 @@ export const orderColumns: ColumnDef<OrderRow>[] = [
   {
     id: "customer",
     header: "العميل",
-    cell: ({ row }) => row.original.customer.name,
+    cell: ({ row }) => row.original.customerName,
   },
   {
     id: "total",

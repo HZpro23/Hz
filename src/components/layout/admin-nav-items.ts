@@ -4,7 +4,6 @@ import {
   FolderTree,
   Tags,
   Users,
-  MessageSquareText,
   ShoppingCart,
   Boxes,
   Truck,
@@ -16,7 +15,7 @@ import {
 } from "lucide-react";
 import { ar } from "@/i18n/ar";
 
-export type AdminNavBadgeKey = "pendingQuotes" | "lowStock";
+export type AdminNavBadgeKey = "pendingOrders" | "lowStock";
 
 export type AdminNavItem = {
   href: string;
@@ -53,12 +52,11 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       { href: "/dashboard/customers", label: ar.admin.customers, icon: Users },
       {
-        href: "/dashboard/quote-requests",
-        label: ar.admin.quoteRequests,
-        icon: MessageSquareText,
-        badgeKey: "pendingQuotes",
+        href: "/dashboard/orders",
+        label: ar.admin.orders,
+        icon: ShoppingCart,
+        badgeKey: "pendingOrders",
       },
-      { href: "/dashboard/orders", label: ar.admin.orders, icon: ShoppingCart },
       { href: "/dashboard/invoices", label: "الفواتير", icon: FileText },
     ],
   },

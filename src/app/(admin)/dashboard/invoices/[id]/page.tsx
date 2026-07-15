@@ -60,7 +60,7 @@ export default async function InvoiceEditPage({
             customerPhone: invoice.customerPhone,
             customerEmail: invoice.customerEmail,
             notes: invoice.notes,
-            quoteRequestId: invoice.quoteRequestId,
+            orderId: invoice.orderId,
             items: invoice.items.map((item) => ({
               productId: item.productId,
               name: item.name,

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store } from "lucide-react";
+import { Store, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ar } from "@/i18n/ar";
+import { CartBadge } from "@/features/cart/components/cart-badge";
 
 const links = [
   { href: "/", label: ar.publicNav.home },
@@ -26,25 +27,37 @@ export function PublicNav() {
           </span>
           <span className="tracking-tight">{ar.siteName}</span>
         </Link>
-        <nav className="hidden items-center gap-1 text-sm md:flex">
-          {links.map((link) => {
-            const isActive =
-              link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "rounded-lg px-3 py-2 font-medium transition-colors",
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
+        <nav className="flex items-center gap-1 text-sm">
+          <div className="hidden items-center gap-1 md:flex">
+            {links.map((link) => {
+              const isActive =
+                link.href === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "rounded-lg px-3 py-2 font-medium transition-colors",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+          <Link
+            href="/cart"
+            className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            title={ar.publicNav.cart}
+          >
+            <ShoppingCart className="size-5" />
+            <CartBadge />
+          </Link>
         </nav>
       </div>
     </header>

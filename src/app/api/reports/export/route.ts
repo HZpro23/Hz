@@ -5,10 +5,8 @@ import {
   getInventoryReportData,
   getOrdersReportData,
   getCustomersReportData,
-  getQuoteRequestsReportData,
 } from "@/features/reports/queries";
 import { ORDER_STATUS_LABELS } from "@/features/orders/schema";
-import { QUOTE_STATUS_LABELS } from "@/features/quote-requests/schema";
 
 type ReportPayload = { headers: string[]; rows: (string | number)[][] };
 
@@ -42,8 +40,8 @@ const REPORT_BUILDERS: Record<string, () => Promise<ReportPayload>> = {
       headers: ["رقم الطلب", "العميل", "الهاتف", "الإجمالي", "الحالة", "التاريخ"],
       rows: orders.map((order) => [
         order.orderNumber,
-        order.customer.name,
-        order.customer.phone,
+        order.customerName,
+        order.customerPhone,
         Number(order.total),
         ORDER_STATUS_LABELS[order.status] ?? order.status,
         order.createdAt.toISOString().slice(0, 10),
@@ -66,29 +64,6 @@ const REPORT_BUILDERS: Record<string, () => Promise<ReportPayload>> = {
         customer.email ?? "",
         customer.ordersCount,
         customer.totalSpent,
-      ]),
-    };
-  },
-  "quote-requests": async () => {
-    const quotes = await getQuoteRequestsReportData();
-    return {
-      headers: [
-        "اسم العميل",
-        "الهاتف",
-        "المنتج",
-        "الكمية",
-        "السعر",
-        "الحالة",
-        "التاريخ",
-      ],
-      rows: quotes.map((quote) => [
-        quote.customerName,
-        quote.phone,
-        quote.product?.name ?? "",
-        quote.quantity,
-        quote.price ? Number(quote.price) : "",
-        QUOTE_STATUS_LABELS[quote.status] ?? quote.status,
-        quote.createdAt.toISOString().slice(0, 10),
       ]),
     };
   },

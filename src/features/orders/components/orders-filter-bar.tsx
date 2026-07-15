@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { QUOTE_STATUS_LABELS } from "@/features/quote-requests/schema";
+import { ORDER_STATUS_LABELS } from "@/features/orders/schema";
 
-export function QuoteRequestsFilterBar() {
+const ALL_STATUSES = "جميع الحالات";
+
+export function OrdersFilterBar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -33,18 +35,18 @@ export function QuoteRequestsFilterBar() {
       <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground">الحالة</Label>
         <Select
-          value={searchParams.get("status") ?? "all"}
+          value={searchParams.get("status") ?? ALL_STATUSES}
           onValueChange={(value) => {
             if (!value) return;
-            updateParam("status", value === "all" ? "" : value);
+            updateParam("status", value === ALL_STATUSES ? "" : value);
           }}
         >
           <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder="جميع الحالات" />
+            <SelectValue placeholder={ALL_STATUSES} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">جميع الحالات</SelectItem>
-            {Object.values(QUOTE_STATUS_LABELS).map((label) => (
+            <SelectItem value={ALL_STATUSES}>{ALL_STATUSES}</SelectItem>
+            {Object.values(ORDER_STATUS_LABELS).map((label) => (
               <SelectItem key={label} value={label}>
                 {label}
               </SelectItem>

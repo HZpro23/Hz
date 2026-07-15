@@ -78,7 +78,7 @@ export function ProductFormSheet({
       description: product?.description ?? "",
       categoryId: product?.categoryId ?? "",
       brandId: product?.brandId ?? null,
-      quantity: product?.quantity ?? 0,
+      quantity: product?.quantity ?? 1,
       minStockLevel: product?.minStockLevel ?? 0,
       status: product?.status ?? "ACTIVE",
       images: product?.images ?? [],

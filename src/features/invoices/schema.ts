@@ -22,7 +22,7 @@ export const invoiceSchema = z.object({
     .union([z.email({ error: "البريد الإلكتروني غير صحيح" }), z.literal("")])
     .optional(),
   notes: z.string().optional(),
-  quoteRequestId: z.string().optional(),
+  orderId: z.string().optional(),
   items: z
     .array(invoiceItemSchema)
     .min(1, { error: "أضف منتجاً واحداً على الأقل" }),

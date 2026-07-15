@@ -33,16 +33,16 @@ import { cn } from "@/lib/utils";
 
 export function AppSidebar({
   adminName,
-  pendingQuotes,
+  pendingOrders,
   lowStock,
 }: {
   adminName: string;
-  pendingQuotes: number;
+  pendingOrders: number;
   lowStock: number;
 }) {
   const pathname = usePathname();
   const badgeValues: Record<string, number> = {
-    pendingQuotes,
+    pendingOrders,
     lowStock,
   };
 

@@ -34,7 +34,13 @@ export async function getProductsPage({
     Promise.all([
       prisma.product.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          name: true,
+          sku: true,
+          quantity: true,
+          minStockLevel: true,
+          status: true,
           category: { select: { name: true } },
           brand: { select: { name: true } },
           images: { orderBy: { position: "asc" }, take: 1 },
@@ -53,7 +59,20 @@ export async function getProductsPage({
 export async function getProductById(id: string) {
   return prisma.product.findUnique({
     where: { id },
-    include: { images: { orderBy: { position: "asc" } } },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      sku: true,
+      barcode: true,
+      description: true,
+      categoryId: true,
+      brandId: true,
+      quantity: true,
+      minStockLevel: true,
+      status: true,
+      images: { orderBy: { position: "asc" } },
+    },
   });
 }
 

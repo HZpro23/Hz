@@ -54,9 +54,9 @@ export default async function OrdersReportPage() {
               <TableCell>
                 <span dir="ltr">{order.orderNumber}</span>
               </TableCell>
-              <TableCell>{order.customer.name}</TableCell>
+              <TableCell>{order.customerName}</TableCell>
               <TableCell>
-                <span dir="ltr">{order.customer.phone}</span>
+                <span dir="ltr">{order.customerPhone}</span>
               </TableCell>
               <TableCell>{String(order.total)}</TableCell>
               <TableCell>

@@ -23,7 +23,7 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <AppSidebar
         adminName={session?.user?.name ?? ""}
-        pendingQuotes={stats.pendingQuoteRequests}
+        pendingOrders={stats.pendingOrders}
         lowStock={stats.lowStockCount}
       />
       <SidebarInset>

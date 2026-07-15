@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RequestQuoteDialog } from "@/features/quote-requests/components/request-quote-dialog";
+import { AddToCartButton } from "@/features/cart/components/add-to-cart-button";
 
 export function ProductCard({
   product,
@@ -61,14 +61,11 @@ export function ProductCard({
             نفدت الكمية
           </Button>
         ) : (
-          <RequestQuoteDialog
+          <AddToCartButton
+            size="sm"
             productId={product.id}
             productName={product.name}
-            trigger={
-              <Button size="sm" className="w-full cursor-pointer">
-                طلب عرض سعر
-              </Button>
-            }
+            className="w-full"
           />
         )}
       </div>

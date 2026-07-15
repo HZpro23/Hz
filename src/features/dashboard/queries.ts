@@ -2,11 +2,11 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 
 export async function getDashboardStats() {
-  const [totalProducts, totalCustomers, pendingQuoteRequests, activeOrders, lowStockRows] =
+  const [totalProducts, totalCustomers, pendingOrders, activeOrders, lowStockRows] =
     await Promise.all([
       prisma.product.count({ where: {} }),
       prisma.customer.count({ where: {} }),
-      prisma.quoteRequest.count({ where: { status: "PENDING" } }),
+      prisma.order.count({ where: { status: "PENDING" } }),
       prisma.order.count({ where: { status: { in: ["PENDING", "PROCESSING"] } } }),
       prisma.$queryRaw<
         { count: bigint }[]
@@ -16,7 +16,7 @@ export async function getDashboardStats() {
   return {
     totalProducts,
     totalCustomers,
-    pendingQuoteRequests,
+    pendingOrders,
     activeOrders,
     lowStockCount: Number(lowStockRows[0]?.count ?? 0),
   };

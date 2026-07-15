@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getProductBySlug } from "@/features/products/queries";
 import { ProductGallery } from "@/features/products/components/public/product-gallery";
-import { RequestQuoteDialog } from "@/features/quote-requests/components/request-quote-dialog";
+import { AddToCartButton } from "@/features/cart/components/add-to-cart-button";
 
 export const dynamic = "force-dynamic";
 
@@ -71,18 +71,13 @@ export default async function ProductDetailPage({
                 نفدت الكمية، هذا المنتج غير متوفر حالياً
               </p>
               <Button size="lg" className="w-full sm:w-auto" disabled>
-                طلب عرض سعر
+                نفدت الكمية
               </Button>
             </div>
           ) : (
-            <RequestQuoteDialog
+            <AddToCartButton
               productId={product.id}
               productName={product.name}
-              trigger={
-                <Button size="lg" className="w-full sm:w-auto cursor-pointer">
-                  طلب عرض سعر
-                </Button>
-              }
             />
           )}
         </div>

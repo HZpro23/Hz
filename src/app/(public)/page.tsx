@@ -9,7 +9,7 @@ import { ar } from "@/i18n/ar";
 
 const HIGHLIGHTS = [
   { icon: ShieldCheck, label: "منتجات موثوقة وأصلية" },
-  { icon: Zap, label: "رد سريع على طلبات الأسعار" },
+  { icon: Zap, label: "تأكيد سريع للطلبات" },
   { icon: Truck, label: "متابعة دقيقة للمخزون" },
 ];
 
@@ -44,8 +44,8 @@ export default async function HomePage() {
             {ar.siteName}
           </h1>
           <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            تصفح كتالوج منتجاتنا واطلب عرض سعر مخصص، وسيتواصل معك فريقنا في
-            أقرب وقت.
+            تصفح كتالوج منتجاتنا وأضف ما يعجبك إلى السلة، وسيتواصل معك فريقنا
+            لتأكيد الطلب والسعر في أقرب وقت.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Button
