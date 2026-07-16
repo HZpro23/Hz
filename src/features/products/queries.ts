@@ -134,6 +134,22 @@ export async function getProductSelectOptions() {
   });
 }
 
+/** Product options carrying the three price tiers, for pickers that let the
+ * admin choose one of the product's prices or type a custom price. */
+export async function getProductPickerOptions() {
+  return prisma.product.findMany({
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      sku: true,
+      price1: true,
+      price2: true,
+      price3: true,
+    },
+  });
+}
+
 export async function getLowStockProducts() {
   return prisma.$queryRaw<
     {

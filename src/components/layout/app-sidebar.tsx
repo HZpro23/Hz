@@ -15,6 +15,7 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -43,6 +44,7 @@ export function AppSidebar({
   unpaidInvoices: number;
 }) {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
   const badgeValues: Record<string, number> = {
     pendingOrders,
     lowStock,
@@ -87,7 +89,10 @@ export function AppSidebar({
                           "data-active:bg-primary/10 data-active:text-primary data-active:hover:bg-primary/15 data-active:hover:text-primary",
                         )}
                         render={
-                          <Link href={item.href}>
+                          <Link
+                            href={item.href}
+                            onClick={() => setOpenMobile(false)}
+                          >
                             <item.icon />
                             <span>{item.label}</span>
                           </Link>

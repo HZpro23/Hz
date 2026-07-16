@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { getProductPickerOptions } from "@/features/products/queries";
 import { getCustomerOptions } from "@/features/customers/queries";
-import { InvoiceForm } from "@/features/invoices/components/invoice-form";
+import { OrderForm } from "@/features/orders/components/order-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewInvoicePage() {
+export default async function NewOrderPage() {
   const [productRows, customers] = await Promise.all([
     getProductPickerOptions(),
     getCustomerOptions(),
@@ -25,21 +25,19 @@ export default async function NewInvoicePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="إنشاء فاتورة جديدة"
+        title="إنشاء طلب جديد"
         action={
           <Button
             variant="outline"
             nativeButton={false}
-            render={<Link href="/dashboard/invoices" />}
+            render={<Link href="/dashboard/orders" />}
           >
             <ArrowRight className="size-4" />
             رجوع
           </Button>
         }
       />
-      <div className="max-w-3xl">
-        <InvoiceForm products={products} customers={customers} />
-      </div>
+      <OrderForm products={products} customers={customers} />
     </div>
   );
 }

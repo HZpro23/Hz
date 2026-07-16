@@ -33,7 +33,9 @@ export default async function DashboardLayout({
           <Separator orientation="vertical" className="h-4" />
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 print:p-0">
-          {children}
+          <div className="w-full lg:mx-auto lg:max-w-350">
+            {children}
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>

@@ -1,15 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import {
   orderItemsSchema,
   reassignOrderCustomerSchema,
+  createOrderSchema,
 } from "@/features/orders/schema";
 import type { OrderStatus } from "@/generated/prisma/client";
 
 type ActionResult = { error?: string; success?: boolean };
+
+function generateOrderNumber(): string {
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.random().toString(36).substring(2, 5).toUpperCase();
+  return `ORD-${timestamp}-${random}`;
+}
 
 const VALID_STATUSES: OrderStatus[] = [
   "PENDING",
@@ -156,6 +164,68 @@ export async function reassignOrderCustomer(
   revalidatePath("/dashboard/orders");
   revalidatePath(`/dashboard/orders/${orderId}`);
   return { success: true };
+}
+
+export async function createOrder(input: unknown): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+
+  const parsed = createOrderSchema.safeParse(input);
+  if (!parsed.success) return { error: "الرجاء التحقق من البيانات المدخلة" };
+
+  const customer = await prisma.customer.findUnique({
+    where: { id: parsed.data.customerId },
+  });
+  if (!customer) return { error: "العميل غير موجود" };
+
+  const products = await prisma.product.findMany({
+    where: { id: { in: parsed.data.items.map((item) => item.productId) } },
+  });
+  const productById = new Map(products.map((product) => [product.id, product]));
+
+  for (const item of parsed.data.items) {
+    const product = productById.get(item.productId);
+    if (!product) return { error: "أحد المنتجات غير موجود" };
+    if (item.quantity > product.quantity) {
+      return {
+        error: `الكمية المطلوبة من "${product.name}" أكبر من الكمية المتوفرة في المخزون`,
+      };
+    }
+  }
+
+  const total = parsed.data.items.reduce(
+    (sum, item) => sum + item.quantity * item.price,
+    0,
+  );
+
+  let orderId: string;
+  try {
+    const order = await prisma.order.create({
+      data: {
+        orderNumber: generateOrderNumber(),
+        customerId: customer.id,
+        customerName: customer.name,
+        customerPhone: customer.phone,
+        customerEmail: customer.email,
+        notes: parsed.data.notes || null,
+        total,
+        items: {
+          create: parsed.data.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+        },
+      },
+    });
+    orderId = order.id;
+  } catch {
+    return { error: "حدث خطأ أثناء إنشاء الطلب" };
+  }
+
+  revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/orders/${orderId}`);
 }
 
 export async function deleteOrder(id: string): Promise<ActionResult> {

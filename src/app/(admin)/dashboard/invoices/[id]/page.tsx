@@ -4,7 +4,7 @@ import { ArrowRight, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { getInvoiceById } from "@/features/invoices/queries";
-import { getProductSelectOptions } from "@/features/products/queries";
+import { getProductPickerOptions } from "@/features/products/queries";
 import { getCustomerOptions } from "@/features/customers/queries";
 import { InvoiceForm } from "@/features/invoices/components/invoice-form";
 import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
@@ -21,13 +21,22 @@ export default async function InvoiceEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [invoice, products, customers] = await Promise.all([
+  const [invoice, productRows, customers] = await Promise.all([
     getInvoiceById(id),
-    getProductSelectOptions(),
+    getProductPickerOptions(),
     getCustomerOptions(),
   ]);
 
   if (!invoice) notFound();
+
+  const products = productRows.map((product) => ({
+    id: product.id,
+    name: product.name,
+    sku: product.sku,
+    price1: Number(product.price1),
+    price2: Number(product.price2),
+    price3: Number(product.price3),
+  }));
 
   const total = Number(invoice.total);
   const paidAmount = Number(invoice.paidAmount);

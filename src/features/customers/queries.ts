@@ -86,7 +86,14 @@ export async function getCustomersPage({
 export async function getCustomerOptions() {
   return prisma.customer.findMany({
     orderBy: { name: "asc" },
-    select: { id: true, name: true, phone: true, email: true },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      email: true,
+      address: true,
+      notes: true,
+    },
   });
 }
 

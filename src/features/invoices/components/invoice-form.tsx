@@ -41,12 +41,74 @@ import {
 } from "@/features/customers/components/customer-picker";
 import { PaymentFieldsSection } from "@/features/invoices/components/payment-fields";
 
-type ProductOption = { id: string; name: string; sku: string };
+type ProductOption = {
+  id: string;
+  name: string;
+  sku: string;
+  price1: number;
+  price2: number;
+  price3: number;
+};
 
-const NONE_PRODUCT: ProductOption = { id: "", name: "بدون منتج محدد", sku: "" };
+const NONE_PRODUCT: ProductOption = {
+  id: "",
+  name: "بدون منتج محدد",
+  sku: "",
+  price1: 0,
+  price2: 0,
+  price3: 0,
+};
+
+const CUSTOM_PRICE = "سعر مخصص";
 
 function productLabel(product: ProductOption) {
   return product.id ? `${product.name} (${product.sku})` : product.name;
+}
+
+function priceTierLabel(price: number, product: ProductOption) {
+  if (price === product.price1) return "السعر الأول";
+  if (price === product.price2) return "السعر الثاني";
+  if (price === product.price3) return "السعر الثالث";
+  return CUSTOM_PRICE;
+}
+
+function PriceTierField({
+  price,
+  product,
+  onChange,
+}: {
+  price: number;
+  product: ProductOption | undefined;
+  onChange: (price: number) => void;
+}) {
+  if (!product?.id) return null;
+
+  return (
+    <Select
+      value={priceTierLabel(price, product)}
+      onValueChange={(label) => {
+        if (label === "السعر الأول") onChange(product.price1);
+        else if (label === "السعر الثاني") onChange(product.price2);
+        else if (label === "السعر الثالث") onChange(product.price3);
+      }}
+    >
+      <SelectTrigger className="w-full">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="السعر الأول">
+          ({formatCurrency(product.price1)})
+        </SelectItem>
+        <SelectItem value="السعر الثاني">
+          ({formatCurrency(product.price2)})
+        </SelectItem>
+        <SelectItem value="السعر الثالث">
+          ({formatCurrency(product.price3)})
+        </SelectItem>
+        <SelectItem value={CUSTOM_PRICE}>{CUSTOM_PRICE}</SelectItem>
+      </SelectContent>
+    </Select>
+  );
 }
 
 function ProductPickerField({
@@ -143,8 +205,7 @@ export function InvoiceForm({
       paymentMethod:
         (invoice?.paymentMethod as InvoiceOutput["paymentMethod"]) ?? "CASH",
       paymentStatus:
-        (invoice?.paymentStatus as InvoiceOutput["paymentStatus"]) ??
-        "UNPAID",
+        (invoice?.paymentStatus as InvoiceOutput["paymentStatus"]) ?? "UNPAID",
       paidAmount: invoice?.paidAmount ?? 0,
       items: invoice?.items.length
         ? invoice.items.map((item) => ({
@@ -158,6 +219,9 @@ export function InvoiceForm({
   });
 
   const paymentStatus = watch("paymentStatus");
+  const productsById = new Map(
+    products.map((product) => [product.id, product]),
+  );
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
   const items = watch("items");
@@ -270,7 +334,7 @@ export function InvoiceForm({
           {fields.map((field, index) => (
             <div
               key={field.id}
-              className="grid grid-cols-1 items-end gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto_auto_auto]"
+              className="grid grid-cols-1 items-start gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto_auto_auto]"
             >
               <div className="space-y-1">
                 <Label className="text-xs">اختر من المنتجات</Label>
@@ -285,6 +349,7 @@ export function InvoiceForm({
                         productField.onChange(product?.id ?? "");
                         if (product?.id) {
                           setValue(`items.${index}.name`, product.name);
+                          setValue(`items.${index}.unitPrice`, product.price1);
                         }
                       }}
                     />
@@ -311,24 +376,36 @@ export function InvoiceForm({
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">السعر</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  className="w-24"
-                  {...register(`items.${index}.unitPrice`)}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <PriceTierField
+                    price={Number(items?.[index]?.unitPrice) || 0}
+                    product={productsById.get(items?.[index]?.productId ?? "")}
+                    onChange={(price) =>
+                      setValue(`items.${index}.unitPrice`, price)
+                    }
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    className="w-24"
+                    {...register(`items.${index}.unitPrice`)}
+                  />
+                </div>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="cursor-pointer"
-                disabled={fields.length === 1}
-                onClick={() => remove(index)}
-              >
-                <Trash2 className="size-4" />
-              </Button>
+              <div className="space-y-1">
+                <Label className="hidden text-xs sm:block">&nbsp;</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="cursor-pointer"
+                  disabled={fields.length === 1}
+                  onClick={() => remove(index)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>

@@ -82,7 +82,7 @@ export const ar = {
     paymentMethod: {
       CASH: "نقداً",
       BANK_TRANSFER: "تحويل بنكي",
-      CREDIT_CARD: "بطاقة ائتمان",
+      CREDIT_CARD: "شيك",
       OTHER: "أخرى",
     },
     debtStatus: {

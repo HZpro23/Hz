@@ -1,6 +1,8 @@
-import { ShoppingCart } from "lucide-react";
+import Link from "next/link";
+import { Plus, ShoppingCart } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
 import { DataTableSearch } from "@/components/data-table/data-table-search";
 import { getOrdersPage } from "@/features/orders/queries";
@@ -45,7 +47,15 @@ export default async function OrdersPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title={ar.admin.orders} />
+      <PageHeader
+        title={ar.admin.orders}
+        action={
+          <Button nativeButton={false} render={<Link href="/dashboard/orders/new" />}>
+            <Plus className="size-4" />
+            إنشاء طلب
+          </Button>
+        }
+      />
       <div className="space-y-3">
         <DataTableSearch placeholder="ابحث برقم الطلب أو اسم العميل أو الهاتف..." />
         <OrdersFilterBar />

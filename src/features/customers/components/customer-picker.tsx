@@ -31,6 +31,8 @@ export type CustomerOption = {
   name: string;
   phone: string;
   email?: string | null;
+  address?: string | null;
+  notes?: string | null;
 };
 
 const NONE_CUSTOMER: CustomerOption = { id: "", name: "اختر عميلاً...", phone: "" };
@@ -81,6 +83,8 @@ export function CustomerPicker({
         name,
         phone,
         email: email || null,
+        address: null,
+        notes: null,
       };
       setOptions((prev) => [newCustomer, ...prev]);
       onChange(newCustomer);
@@ -91,42 +95,54 @@ export function CustomerPicker({
 
   return (
     <>
-      <Combobox
-        items={[NONE_CUSTOMER, ...filtered]}
-        value={selected}
-        onValueChange={(customer: CustomerOption | null) => onChange(customer)}
-        isItemEqualToValue={(a: CustomerOption, b: CustomerOption) =>
-          a.id === b.id
-        }
-        itemToStringValue={(item: CustomerOption) => item.id}
-        itemToStringLabel={customerLabel}
-        onInputValueChange={setQuery}
-        filter={null}
-      >
-        <ComboboxTrigger className="w-full">
-          <ComboboxValue />
-        </ComboboxTrigger>
-        <ComboboxContent>
-          <ComboboxInput placeholder={ar.customers.searchCustomerPlaceholder} />
-          <ComboboxEmpty>
-            <button
-              type="button"
-              className="flex w-full items-center justify-center gap-1.5 py-1 text-primary"
-              onClick={() => setCreateOpen(true)}
-            >
-              <UserPlus className="size-4" />
-              {ar.customers.createNewCustomer}
-            </button>
-          </ComboboxEmpty>
-          <ComboboxList>
-            {(item: CustomerOption) => (
-              <ComboboxItem key={item.id} value={item}>
-                {customerLabel(item)}
-              </ComboboxItem>
-            )}
-          </ComboboxList>
-        </ComboboxContent>
-      </Combobox>
+      <div className="flex gap-2">
+        <Combobox
+          items={[NONE_CUSTOMER, ...filtered]}
+          value={selected}
+          onValueChange={(customer: CustomerOption | null) => onChange(customer)}
+          isItemEqualToValue={(a: CustomerOption, b: CustomerOption) =>
+            a.id === b.id
+          }
+          itemToStringValue={(item: CustomerOption) => item.id}
+          itemToStringLabel={customerLabel}
+          onInputValueChange={setQuery}
+          filter={null}
+        >
+          <ComboboxTrigger className="w-full flex-1">
+            <ComboboxValue />
+          </ComboboxTrigger>
+          <ComboboxContent>
+            <ComboboxInput placeholder={ar.customers.searchCustomerPlaceholder} />
+            <ComboboxEmpty>
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-1.5 py-1 text-primary"
+                onClick={() => setCreateOpen(true)}
+              >
+                <UserPlus className="size-4" />
+                {ar.customers.createNewCustomer}
+              </button>
+            </ComboboxEmpty>
+            <ComboboxList>
+              {(item: CustomerOption) => (
+                <ComboboxItem key={item.id} value={item}>
+                  {customerLabel(item)}
+                </ComboboxItem>
+              )}
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="shrink-0 cursor-pointer"
+          onClick={() => setCreateOpen(true)}
+          title={ar.customers.createNewCustomer}
+        >
+          <UserPlus className="size-4" />
+        </Button>
+      </div>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
