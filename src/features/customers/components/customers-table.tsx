@@ -6,6 +6,7 @@ import {
   getCustomerColumns,
   type CustomerRow,
 } from "@/features/customers/components/columns";
+import { deleteCustomers } from "@/features/customers/actions";
 
 export function CustomersTable({ data }: { data: CustomerRow[] }) {
   const pathname = usePathname();
@@ -18,5 +19,11 @@ export function CustomersTable({ data }: { data: CustomerRow[] }) {
     return `${pathname}?${params.toString()}`;
   }
 
-  return <DataTable columns={getCustomerColumns(editHref)} data={data} />;
+  return (
+    <DataTable
+      columns={getCustomerColumns(editHref)}
+      data={data}
+      onDeleteSelected={deleteCustomers}
+    />
+  );
 }

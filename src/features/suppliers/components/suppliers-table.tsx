@@ -6,6 +6,7 @@ import {
   getSupplierColumns,
   type SupplierRow,
 } from "@/features/suppliers/components/columns";
+import { deleteSuppliers } from "@/features/suppliers/actions";
 
 export function SuppliersTable({ data }: { data: SupplierRow[] }) {
   const pathname = usePathname();
@@ -18,5 +19,11 @@ export function SuppliersTable({ data }: { data: SupplierRow[] }) {
     return `${pathname}?${params.toString()}`;
   }
 
-  return <DataTable columns={getSupplierColumns(editHref)} data={data} />;
+  return (
+    <DataTable
+      columns={getSupplierColumns(editHref)}
+      data={data}
+      onDeleteSelected={deleteSuppliers}
+    />
+  );
 }

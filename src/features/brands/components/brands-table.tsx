@@ -6,6 +6,7 @@ import {
   getBrandColumns,
   type BrandRow,
 } from "@/features/brands/components/columns";
+import { deleteBrands } from "@/features/brands/actions";
 
 export function BrandsTable({ data }: { data: BrandRow[] }) {
   const pathname = usePathname();
@@ -18,5 +19,11 @@ export function BrandsTable({ data }: { data: BrandRow[] }) {
     return `${pathname}?${params.toString()}`;
   }
 
-  return <DataTable columns={getBrandColumns(editHref)} data={data} />;
+  return (
+    <DataTable
+      columns={getBrandColumns(editHref)}
+      data={data}
+      onDeleteSelected={deleteBrands}
+    />
+  );
 }

@@ -72,6 +72,7 @@ export async function getOrderById(id: string) {
         },
       },
       invoice: { select: { id: true } },
+      customer: true,
     },
   });
 }

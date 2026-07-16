@@ -64,3 +64,27 @@ export async function deleteSupplier(id: string): Promise<ActionResult> {
   revalidatePath("/dashboard/suppliers");
   return { success: true };
 }
+
+export async function deleteSuppliers(ids: string[]): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+  if (ids.length === 0) return { success: true };
+
+  let failedCount = 0;
+  for (const id of ids) {
+    try {
+      await prisma.supplier.delete({ where: { id } });
+    } catch {
+      failedCount++;
+    }
+  }
+
+  revalidatePath("/dashboard/suppliers");
+
+  if (failedCount > 0) {
+    return {
+      error: `تعذر حذف ${failedCount} من الموردين لارتباطهم بأوامر شراء سابقة`,
+    };
+  }
+  return { success: true };
+}

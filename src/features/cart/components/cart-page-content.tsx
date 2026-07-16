@@ -21,17 +21,45 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { createOrderFromCart } from "../actions";
 
+const CUSTOMER_INFO_STORAGE_KEY = "hz-customer-info";
+
+type StoredCustomerInfo = {
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+};
+
+function getInitialFormData() {
+  const empty = {
+    customerName: "",
+    customerPhone: "",
+    customerEmail: "",
+    notes: "",
+  };
+  if (typeof window === "undefined") return empty;
+  try {
+    const raw = localStorage.getItem(CUSTOMER_INFO_STORAGE_KEY);
+    if (!raw) return empty;
+    return { ...empty, ...(JSON.parse(raw) as StoredCustomerInfo) };
+  } catch {
+    return empty;
+  }
+}
+
+function saveStoredCustomerInfo(info: StoredCustomerInfo) {
+  try {
+    localStorage.setItem(CUSTOMER_INFO_STORAGE_KEY, JSON.stringify(info));
+  } catch {
+    // ignore write failures (e.g. private browsing storage limits)
+  }
+}
+
 export function CartPageContent() {
   const router = useRouter();
   const { cart, removeItem, updateQuantity, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState({
-    customerName: "",
-    customerPhone: "",
-    customerEmail: "",
-    notes: "",
-  });
+  const [formData, setFormData] = useState(getInitialFormData);
 
   if (cart.items.length === 0) {
     return (
@@ -73,6 +101,11 @@ export function CartPageContent() {
       });
 
       if (result.success) {
+        saveStoredCustomerInfo({
+          customerName: formData.customerName,
+          customerPhone: formData.customerPhone,
+          customerEmail: formData.customerEmail,
+        });
         clearCart();
         router.push(`/order-confirmation/${result.orderId}`);
       } else {

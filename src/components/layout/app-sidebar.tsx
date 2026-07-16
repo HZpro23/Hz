@@ -35,15 +35,18 @@ export function AppSidebar({
   adminName,
   pendingOrders,
   lowStock,
+  unpaidInvoices,
 }: {
   adminName: string;
   pendingOrders: number;
   lowStock: number;
+  unpaidInvoices: number;
 }) {
   const pathname = usePathname();
   const badgeValues: Record<string, number> = {
     pendingOrders,
     lowStock,
+    unpaidInvoices,
   };
 
   return (
@@ -93,7 +96,8 @@ export function AppSidebar({
                       {!!badgeValue && badgeValue > 0 && (
                         <SidebarMenuBadge
                           className={cn(
-                            item.badgeKey === "lowStock"
+                            item.badgeKey === "lowStock" ||
+                              item.badgeKey === "unpaidInvoices"
                               ? "bg-destructive/15 text-destructive"
                               : "bg-primary/15 text-primary",
                           )}

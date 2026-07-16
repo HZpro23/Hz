@@ -6,6 +6,7 @@ import {
   getExpenseColumns,
   type ExpenseRow,
 } from "@/features/expenses/components/columns";
+import { deleteExpenses } from "@/features/expenses/actions";
 
 export function ExpensesTable({ data }: { data: ExpenseRow[] }) {
   const pathname = usePathname();
@@ -18,5 +19,11 @@ export function ExpensesTable({ data }: { data: ExpenseRow[] }) {
     return `${pathname}?${params.toString()}`;
   }
 
-  return <DataTable columns={getExpenseColumns(editHref)} data={data} />;
+  return (
+    <DataTable
+      columns={getExpenseColumns(editHref)}
+      data={data}
+      onDeleteSelected={deleteExpenses}
+    />
+  );
 }

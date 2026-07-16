@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { getInvoiceById } from "@/features/invoices/queries";
 import { getProductSelectOptions } from "@/features/products/queries";
+import { getCustomerOptions } from "@/features/customers/queries";
 import { InvoiceForm } from "@/features/invoices/components/invoice-form";
+import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
+import { RecordPaymentDialog } from "@/features/invoices/components/record-payment-dialog";
+import { PaymentHistory } from "@/features/invoices/components/payment-history";
+import { formatCurrency } from "@/lib/currency";
+import { ar } from "@/i18n/ar";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +21,17 @@ export default async function InvoiceEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [invoice, products] = await Promise.all([
+  const [invoice, products, customers] = await Promise.all([
     getInvoiceById(id),
     getProductSelectOptions(),
+    getCustomerOptions(),
   ]);
 
   if (!invoice) notFound();
+
+  const total = Number(invoice.total);
+  const paidAmount = Number(invoice.paidAmount);
+  const remaining = Math.max(0, total - paidAmount);
 
   return (
     <div className="space-y-6">
@@ -51,25 +62,54 @@ export default async function InvoiceEditPage({
           </div>
         }
       />
-      <div className="max-w-3xl">
-        <InvoiceForm
-          invoice={{
-            id: invoice.id,
-            language: invoice.language,
-            customerName: invoice.customerName,
-            customerPhone: invoice.customerPhone,
-            customerEmail: invoice.customerEmail,
-            notes: invoice.notes,
-            orderId: invoice.orderId,
-            items: invoice.items.map((item) => ({
-              productId: item.productId,
-              name: item.name,
-              quantity: item.quantity,
-              unitPrice: Number(item.unitPrice),
-            })),
-          }}
-          products={products}
-        />
+
+      <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
+        <PaymentStatusBadge status={invoice.paymentStatus} />
+        <p className="text-sm">
+          <span className="text-muted-foreground">
+            {ar.invoices.remainingBalance}:{" "}
+          </span>
+          <span className="font-medium">{formatCurrency(remaining)}</span>
+        </p>
+        {remaining > 0 && (
+          <RecordPaymentDialog invoiceId={invoice.id} remaining={remaining} />
+        )}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="max-w-3xl lg:col-span-2">
+          <InvoiceForm
+            invoice={{
+              id: invoice.id,
+              language: invoice.language,
+              customerId: invoice.customerId,
+              customerName: invoice.customerName,
+              customerPhone: invoice.customerPhone,
+              customerEmail: invoice.customerEmail,
+              notes: invoice.notes,
+              orderId: invoice.orderId,
+              paymentMethod: invoice.paymentMethod,
+              paymentStatus: invoice.paymentStatus,
+              paidAmount,
+              items: invoice.items.map((item) => ({
+                productId: item.productId,
+                name: item.name,
+                quantity: item.quantity,
+                unitPrice: Number(item.unitPrice),
+              })),
+            }}
+            products={products}
+            customers={customers}
+          />
+        </div>
+        <div>
+          <PaymentHistory
+            payments={invoice.payments.map((payment) => ({
+              ...payment,
+              amount: Number(payment.amount),
+            }))}
+          />
+        </div>
       </div>
     </div>
   );

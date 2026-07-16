@@ -139,3 +139,36 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
   revalidatePath("/products");
   return { success: true };
 }
+
+export async function deleteProducts(ids: string[]): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+  if (ids.length === 0) return { success: true };
+
+  const products = await prisma.product.findMany({
+    where: { id: { in: ids } },
+    include: { images: true },
+  });
+
+  let failedCount = 0;
+  for (const product of products) {
+    try {
+      await prisma.product.delete({ where: { id: product.id } });
+      await Promise.all(
+        product.images.map((image) => destroyCloudinaryAsset(image.publicId)),
+      );
+    } catch {
+      failedCount++;
+    }
+  }
+
+  revalidatePath("/dashboard/products");
+  revalidatePath("/products");
+
+  if (failedCount > 0) {
+    return {
+      error: `تعذر حذف ${failedCount} من المنتجات لارتباطها بطلبات أو فواتير سابقة`,
+    };
+  }
+  return { success: true };
+}

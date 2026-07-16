@@ -77,3 +77,27 @@ export async function deleteBrand(id: string): Promise<ActionResult> {
   revalidatePath("/dashboard/brands");
   return { success: true };
 }
+
+export async function deleteBrands(ids: string[]): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+  if (ids.length === 0) return { success: true };
+
+  let failedCount = 0;
+  for (const id of ids) {
+    try {
+      await prisma.brand.delete({ where: { id } });
+    } catch {
+      failedCount++;
+    }
+  }
+
+  revalidatePath("/dashboard/brands");
+
+  if (failedCount > 0) {
+    return {
+      error: `تعذر حذف ${failedCount} من العلامات التجارية لارتباطها بمنتجات`,
+    };
+  }
+  return { success: true };
+}

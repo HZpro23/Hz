@@ -6,6 +6,7 @@ import {
   getCategoryColumns,
   type CategoryRow,
 } from "@/features/categories/components/columns";
+import { deleteCategories } from "@/features/categories/actions";
 
 export function CategoriesTable({ data }: { data: CategoryRow[] }) {
   const pathname = usePathname();
@@ -18,5 +19,11 @@ export function CategoriesTable({ data }: { data: CategoryRow[] }) {
     return `${pathname}?${params.toString()}`;
   }
 
-  return <DataTable columns={getCategoryColumns(editHref)} data={data} />;
+  return (
+    <DataTable
+      columns={getCategoryColumns(editHref)}
+      data={data}
+      onDeleteSelected={deleteCategories}
+    />
+  );
 }

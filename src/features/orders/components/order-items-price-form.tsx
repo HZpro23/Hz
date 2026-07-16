@@ -22,11 +22,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  orderItemPricesSchema,
-  type OrderItemPricesInput,
-  type OrderItemPricesOutput,
+  orderItemsSchema,
+  type OrderItemsInput,
+  type OrderItemsOutput,
 } from "@/features/orders/schema";
-import { updateOrderItemPrices } from "@/features/orders/actions";
+import { updateOrderItems } from "@/features/orders/actions";
 import {
   ProductDetailsDialog,
   type OrderItemProduct,
@@ -58,13 +58,17 @@ export function OrderItemsPriceForm({
   const [isPending, startTransition] = useTransition();
 
   const { control, register, handleSubmit, watch, setValue } = useForm<
-    OrderItemPricesInput,
+    OrderItemsInput,
     unknown,
-    OrderItemPricesOutput
+    OrderItemsOutput
   >({
-    resolver: zodResolver(orderItemPricesSchema),
+    resolver: zodResolver(orderItemsSchema),
     defaultValues: {
-      items: items.map((item) => ({ id: item.id, price: item.price })),
+      items: items.map((item) => ({
+        id: item.id,
+        price: item.price,
+        quantity: item.quantity,
+      })),
     },
   });
 
@@ -72,17 +76,19 @@ export function OrderItemsPriceForm({
   const watchedItems = watch("items");
   const total = items.reduce((sum, item, index) => {
     const price = Number(watchedItems?.[index]?.price ?? item.price) || 0;
-    return sum + price * item.quantity;
+    const quantity =
+      Number(watchedItems?.[index]?.quantity ?? item.quantity) || 0;
+    return sum + price * quantity;
   }, 0);
 
-  function onSubmit(values: OrderItemPricesOutput) {
+  function onSubmit(values: OrderItemsOutput) {
     startTransition(async () => {
-      const result = await updateOrderItemPrices(orderId, values);
+      const result = await updateOrderItems(orderId, values);
       if (result?.error) {
         toast.error(result.error);
         return;
       }
-      toast.success("تم تحديث الأسعار بنجاح");
+      toast.success("تم تحديث الطلب بنجاح");
     });
   }
 
@@ -103,12 +109,21 @@ export function OrderItemsPriceForm({
             const item = items[index];
             const price =
               Number(watchedItems?.[index]?.price ?? item.price) || 0;
+            const quantity =
+              Number(watchedItems?.[index]?.quantity ?? item.quantity) || 0;
             return (
               <TableRow key={field.id}>
                 <TableCell className="font-medium">
                   {item.productName}
                 </TableCell>
-                <TableCell>{item.quantity.toLocaleString("ar")}</TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    min={1}
+                    className="w-20"
+                    {...register(`items.${index}.quantity`)}
+                  />
+                </TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1.5">
                     <Select
@@ -150,7 +165,7 @@ export function OrderItemsPriceForm({
                     />
                   </div>
                 </TableCell>
-                <TableCell>{formatCurrency(price * item.quantity)}</TableCell>
+                <TableCell>{formatCurrency(price * quantity)}</TableCell>
                 <TableCell>
                   <ProductDetailsDialog product={item.product} />
                 </TableCell>

@@ -2,9 +2,14 @@
 
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { normalizeArabicName, isFullName } from "@/lib/arabic-name";
 
 const createOrderFromCartSchema = z.object({
-  customerName: z.string().min(1, "الاسم مطلوب").trim(),
+  customerName: z
+    .string()
+    .min(1, "الاسم مطلوب")
+    .trim()
+    .refine(isFullName, "الرجاء إدخال الاسم الكامل (الاسم واللقب)"),
   customerPhone: z.string().min(8, "رقم الهاتف غير صحيح").trim(),
   customerEmail: z
     .string()
@@ -74,15 +79,18 @@ export async function createOrderFromCart(
       };
     });
 
-    // Create or find customer
+    // Create or find customer — only reuse an existing customer when the
+    // (normalized) name is an exact match, to avoid creating duplicates.
+    const normalizedName = normalizeArabicName(validatedData.customerName);
     let customer = await prisma.customer.findFirst({
-      where: { phone: validatedData.customerPhone },
+      where: { nameNormalized: normalizedName },
     });
 
     if (!customer) {
       customer = await prisma.customer.create({
         data: {
           name: validatedData.customerName,
+          nameNormalized: normalizedName,
           phone: validatedData.customerPhone,
           email: validatedData.customerEmail || null,
         },

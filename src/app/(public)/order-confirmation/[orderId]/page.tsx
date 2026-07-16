@@ -64,7 +64,7 @@ export default async function OrderConfirmationPage({
               </div>
               <div>
                 <dt className="text-muted-foreground">التاريخ</dt>
-                <dd>{new Date(order.createdAt).toLocaleDateString("ar-EG")}</dd>
+                <dd>{new Date(order.createdAt).toLocaleDateString("fr-FR")}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">الحالة</dt>

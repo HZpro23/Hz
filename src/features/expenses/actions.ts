@@ -60,3 +60,14 @@ export async function deleteExpense(id: string): Promise<ActionResult> {
   revalidatePath("/dashboard/expenses");
   return { success: true };
 }
+
+export async function deleteExpenses(ids: string[]): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+  if (ids.length === 0) return { success: true };
+
+  await prisma.expense.deleteMany({ where: { id: { in: ids } } });
+
+  revalidatePath("/dashboard/expenses");
+  return { success: true };
+}

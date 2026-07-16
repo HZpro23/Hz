@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -14,8 +14,20 @@ import {
   customerSchema,
   type CustomerInput,
 } from "@/features/customers/schema";
-import { createCustomer, updateCustomer } from "@/features/customers/actions";
+import {
+  createCustomer,
+  updateCustomer,
+  findSimilarCustomersAction,
+} from "@/features/customers/actions";
 import { ar } from "@/i18n/ar";
+
+type SimilarCustomer = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  score: number;
+};
 
 type CustomerRecord = {
   id: string;
@@ -29,9 +41,12 @@ type CustomerRecord = {
 export function CustomerFormSheet({
   open,
   customer,
+  onOpenChange,
 }: {
   open: boolean;
   customer?: CustomerRecord;
+  /** Overrides the default URL-param-driven close behavior (used on the customers list page). */
+  onOpenChange?: (open: boolean) => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -41,6 +56,7 @@ export function CustomerFormSheet({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<CustomerInput>({
     resolver: zodResolver(customerSchema),
@@ -53,7 +69,27 @@ export function CustomerFormSheet({
     },
   });
 
+  const nameValue = watch("name");
+  const [similarCustomers, setSimilarCustomers] = useState<SimilarCustomer[]>(
+    [],
+  );
+
+  useEffect(() => {
+    if (customer || !nameValue || nameValue.trim().length < 2) {
+      setSimilarCustomers([]);
+      return;
+    }
+    const timeout = setTimeout(() => {
+      findSimilarCustomersAction(nameValue).then(setSimilarCustomers);
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [nameValue, customer]);
+
   function close() {
+    if (onOpenChange) {
+      onOpenChange(false);
+      return;
+    }
     const params = new URLSearchParams(searchParams.toString());
     params.delete("new");
     params.delete("edit");
@@ -89,10 +125,41 @@ export function CustomerFormSheet({
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="customer-name">الاسم</Label>
-          <Input id="customer-name" {...register("name")} />
+          <Label htmlFor="customer-name">الاسم الكامل</Label>
+          <Input
+            id="customer-name"
+            placeholder="الاسم واللقب"
+            {...register("name")}
+          />
           {errors.name && (
             <p className="text-sm text-destructive">{errors.name.message}</p>
+          )}
+          {similarCustomers.length > 0 && (
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-2 text-sm">
+              <p className="mb-1 font-medium">
+                {ar.customers.similarCustomersHint}
+              </p>
+              <ul className="space-y-1">
+                {similarCustomers.map((match) => (
+                  <li key={match.id}>
+                    <button
+                      type="button"
+                      className="text-primary underline-offset-2 hover:underline"
+                      onClick={() => {
+                        const params = new URLSearchParams(
+                          searchParams.toString(),
+                        );
+                        params.delete("new");
+                        params.set("edit", match.id);
+                        router.push(`${pathname}?${params.toString()}`);
+                      }}
+                    >
+                      {match.name} — {match.phone}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
         <div className="space-y-2">

@@ -5,6 +5,8 @@ import { Eye } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
+import { deletePurchaseOrder } from "@/features/purchases/actions";
 import { PURCHASE_ORDER_STATUS_LABELS } from "@/features/purchases/schema";
 import { formatCurrency } from "@/lib/currency";
 
@@ -60,14 +62,20 @@ export const purchaseOrderColumns: ColumnDef<PurchaseOrderRow>[] = [
     id: "actions",
     header: "",
     cell: ({ row }) => (
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        nativeButton={false}
-        render={<Link href={`/dashboard/purchases/${row.original.id}`} />}
-      >
-        <Eye className="size-4" />
-      </Button>
+      <div className="flex justify-end gap-1">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          nativeButton={false}
+          render={<Link href={`/dashboard/purchases/${row.original.id}`} />}
+        >
+          <Eye className="size-4" />
+        </Button>
+        <ConfirmDeleteDialog
+          action={() => deletePurchaseOrder(row.original.id)}
+          description={`سيتم حذف أمر الشراء "${row.original.orderNumber}" نهائياً.`}
+        />
+      </div>
     ),
   },
 ];

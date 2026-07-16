@@ -35,6 +35,11 @@ import {
 } from "@/features/invoices/schema";
 import { createInvoice, updateInvoice } from "@/features/invoices/actions";
 import { formatCurrency } from "@/lib/currency";
+import {
+  CustomerPicker,
+  type CustomerOption,
+} from "@/features/customers/components/customer-picker";
+import { PaymentFieldsSection } from "@/features/invoices/components/payment-fields";
 
 type ProductOption = { id: string; name: string; sku: string };
 
@@ -88,11 +93,15 @@ function ProductPickerField({
 type InvoiceRecord = {
   id: string;
   language: string;
+  customerId: string | null;
   customerName: string;
   customerPhone: string;
   customerEmail: string | null;
   notes: string | null;
   orderId: string | null;
+  paymentMethod: string;
+  paymentStatus: string;
+  paidAmount: number;
   items: {
     productId: string | null;
     name: string;
@@ -104,10 +113,12 @@ type InvoiceRecord = {
 export function InvoiceForm({
   invoice,
   products,
+  customers,
   orderId,
 }: {
   invoice?: InvoiceRecord;
   products: ProductOption[];
+  customers: CustomerOption[];
   orderId?: string;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -123,11 +134,18 @@ export function InvoiceForm({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
       language: (invoice?.language as InvoiceOutput["language"]) ?? "AR",
+      customerId: invoice?.customerId ?? "",
       customerName: invoice?.customerName ?? "",
       customerPhone: invoice?.customerPhone ?? "",
       customerEmail: invoice?.customerEmail ?? "",
       notes: invoice?.notes ?? "",
       orderId: invoice?.orderId ?? orderId ?? "",
+      paymentMethod:
+        (invoice?.paymentMethod as InvoiceOutput["paymentMethod"]) ?? "CASH",
+      paymentStatus:
+        (invoice?.paymentStatus as InvoiceOutput["paymentStatus"]) ??
+        "UNPAID",
+      paidAmount: invoice?.paidAmount ?? 0,
       items: invoice?.items.length
         ? invoice.items.map((item) => ({
             productId: item.productId ?? "",
@@ -138,6 +156,8 @@ export function InvoiceForm({
         : [{ productId: "", name: "", quantity: 1, unitPrice: 0 }],
     },
   });
+
+  const paymentStatus = watch("paymentStatus");
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
   const items = watch("items");
@@ -165,40 +185,27 @@ export function InvoiceForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="invoice-customer-name">اسم العميل</Label>
-          <Input id="invoice-customer-name" {...register("customerName")} />
-          {errors.customerName && (
-            <p className="text-sm text-destructive">
-              {errors.customerName.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="invoice-customer-phone">رقم الهاتف</Label>
-          <Input
-            id="invoice-customer-phone"
-            dir="ltr"
-            {...register("customerPhone")}
+        <div className="space-y-2 sm:col-span-2">
+          <Label>العميل</Label>
+          <Controller
+            control={control}
+            name="customerId"
+            render={({ field }) => (
+              <CustomerPicker
+                customers={customers}
+                value={field.value}
+                onChange={(customer) => {
+                  field.onChange(customer?.id ?? "");
+                  setValue("customerName", customer?.name ?? "");
+                  setValue("customerPhone", customer?.phone ?? "");
+                  setValue("customerEmail", customer?.email ?? "");
+                }}
+              />
+            )}
           />
-          {errors.customerPhone && (
+          {errors.customerId && (
             <p className="text-sm text-destructive">
-              {errors.customerPhone.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="invoice-customer-email">
-            البريد الإلكتروني (اختياري)
-          </Label>
-          <Input
-            id="invoice-customer-email"
-            dir="ltr"
-            {...register("customerEmail")}
-          />
-          {errors.customerEmail && (
-            <p className="text-sm text-destructive">
-              {errors.customerEmail.message}
+              {errors.customerId.message}
             </p>
           )}
         </div>
@@ -208,7 +215,11 @@ export function InvoiceForm({
             control={control}
             name="language"
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select
+                items={INVOICE_LANGUAGE_LABELS}
+                value={field.value}
+                onValueChange={field.onChange}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -226,6 +237,12 @@ export function InvoiceForm({
           />
         </div>
       </div>
+
+      <PaymentFieldsSection
+        control={control}
+        paymentStatus={paymentStatus}
+        errors={errors}
+      />
 
       <div className="space-y-2">
         <Label htmlFor="invoice-notes">ملاحظات (اختياري)</Label>

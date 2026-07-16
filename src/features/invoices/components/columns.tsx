@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { deleteInvoice } from "@/features/invoices/actions";
 import { INVOICE_LANGUAGE_LABELS } from "@/features/invoices/schema";
+import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { formatCurrency } from "@/lib/currency";
+import type { PaymentStatus } from "@/generated/prisma/client";
 
 export type InvoiceRow = {
   id: string;
@@ -17,6 +19,7 @@ export type InvoiceRow = {
   customerName: string;
   customerPhone: string;
   total: number;
+  paymentStatus: PaymentStatus;
   createdAt: Date;
   _count: { items: number };
 };
@@ -47,6 +50,11 @@ export const invoiceColumns: ColumnDef<InvoiceRow>[] = [
     cell: ({ row }) => formatCurrency(row.original.total),
   },
   {
+    id: "paymentStatus",
+    header: "حالة الدفع",
+    cell: ({ row }) => <PaymentStatusBadge status={row.original.paymentStatus} />,
+  },
+  {
     id: "language",
     header: "اللغة",
     cell: ({ row }) => (
@@ -60,7 +68,7 @@ export const invoiceColumns: ColumnDef<InvoiceRow>[] = [
     id: "createdAt",
     header: "التاريخ",
     cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("ar-EG"),
+      new Date(row.original.createdAt).toLocaleDateString("fr-FR"),
   },
   {
     id: "actions",

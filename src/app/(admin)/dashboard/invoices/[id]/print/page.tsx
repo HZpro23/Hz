@@ -118,9 +118,10 @@ export default async function InvoicePrintPage({
 
         <div>
           <p className="text-sm font-medium text-muted-foreground">
-            {t.billTo}
+            {t.billTo}:
+            <span className="font-medium mx-1.5">{invoice.customerName}</span>
           </p>
-          <p className="font-medium">{invoice.customerName}</p>
+
           <p className="text-sm text-muted-foreground">
             {t.phone}: <span dir="ltr">{invoice.customerPhone}</span>
           </p>
@@ -169,7 +170,10 @@ export default async function InvoicePrintPage({
                 </td>
                 <td className="px-3 py-2 border border-gray-200">
                   <span className="block truncate max-w-[15ch]">
-                    {formatCurrency(Number(item.unitPrice) * item.quantity, lang)}
+                    {formatCurrency(
+                      Number(item.unitPrice) * item.quantity,
+                      lang,
+                    )}
                   </span>
                 </td>
               </tr>

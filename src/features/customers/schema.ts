@@ -1,7 +1,18 @@
 import { z } from "zod";
+import { ar, invertLabels } from "@/i18n/ar";
+import { isFullName } from "@/lib/arabic-name";
+
+export const DEBT_STATUS_LABELS: Record<string, string> =
+  ar.statusLabels.debtStatus;
+export const DEBT_STATUS_VALUE_BY_LABEL = invertLabels(DEBT_STATUS_LABELS);
 
 export const customerSchema = z.object({
-  name: z.string().min(2, { error: "الاسم يجب أن يتكون من حرفين على الأقل" }),
+  name: z
+    .string()
+    .min(2, { error: "الاسم يجب أن يتكون من حرفين على الأقل" })
+    .refine(isFullName, {
+      error: "الرجاء إدخال الاسم الكامل (الاسم واللقب)",
+    }),
   phone: z
     .string()
     .min(6, { error: "رقم الهاتف غير صحيح" }),

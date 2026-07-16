@@ -91,3 +91,27 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   revalidatePath("/dashboard/categories");
   return { success: true };
 }
+
+export async function deleteCategories(ids: string[]): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+  if (ids.length === 0) return { success: true };
+
+  let failedCount = 0;
+  for (const id of ids) {
+    try {
+      await prisma.category.delete({ where: { id } });
+    } catch {
+      failedCount++;
+    }
+  }
+
+  revalidatePath("/dashboard/categories");
+
+  if (failedCount > 0) {
+    return {
+      error: `تعذر حذف ${failedCount} من الأقسام لارتباطها بمنتجات أو أقسام فرعية`,
+    };
+  }
+  return { success: true };
+}

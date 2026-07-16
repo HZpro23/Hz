@@ -109,3 +109,41 @@ export async function cancelPurchaseOrder(id: string): Promise<ActionResult> {
   revalidatePath(`/dashboard/purchases/${id}`);
   return { success: true };
 }
+
+export async function deletePurchaseOrder(id: string): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+
+  try {
+    await prisma.purchaseOrder.delete({ where: { id } });
+  } catch {
+    return { error: "تعذر حذف أمر الشراء" };
+  }
+
+  revalidatePath("/dashboard/purchases");
+  return { success: true };
+}
+
+export async function deletePurchaseOrders(
+  ids: string[],
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+  if (ids.length === 0) return { success: true };
+
+  let failedCount = 0;
+  for (const id of ids) {
+    try {
+      await prisma.purchaseOrder.delete({ where: { id } });
+    } catch {
+      failedCount++;
+    }
+  }
+
+  revalidatePath("/dashboard/purchases");
+
+  if (failedCount > 0) {
+    return { error: `تعذر حذف ${failedCount} من أوامر الشراء` };
+  }
+  return { success: true };
+}

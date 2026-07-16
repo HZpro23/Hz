@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { ar } from "@/i18n/ar";
 
-export type AdminNavBadgeKey = "pendingOrders" | "lowStock";
+export type AdminNavBadgeKey = "pendingOrders" | "lowStock" | "unpaidInvoices";
 
 export type AdminNavItem = {
   href: string;
@@ -57,7 +57,12 @@ export const adminNavGroups: AdminNavGroup[] = [
         icon: ShoppingCart,
         badgeKey: "pendingOrders",
       },
-      { href: "/dashboard/invoices", label: "الفواتير", icon: FileText },
+      {
+        href: "/dashboard/invoices",
+        label: "الفواتير",
+        icon: FileText,
+        badgeKey: "unpaidInvoices",
+      },
     ],
   },
   {

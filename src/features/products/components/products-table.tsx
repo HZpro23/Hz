@@ -6,6 +6,7 @@ import {
   getProductColumns,
   type ProductRow,
 } from "@/features/products/components/columns";
+import { deleteProducts } from "@/features/products/actions";
 
 export function ProductsTable({ data }: { data: ProductRow[] }) {
   const pathname = usePathname();
@@ -18,5 +19,11 @@ export function ProductsTable({ data }: { data: ProductRow[] }) {
     return `${pathname}?${params.toString()}`;
   }
 
-  return <DataTable columns={getProductColumns(editHref)} data={data} />;
+  return (
+    <DataTable
+      columns={getProductColumns(editHref)}
+      data={data}
+      onDeleteSelected={deleteProducts}
+    />
+  );
 }

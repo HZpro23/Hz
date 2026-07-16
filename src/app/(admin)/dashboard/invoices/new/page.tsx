@@ -3,12 +3,16 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { getProductSelectOptions } from "@/features/products/queries";
+import { getCustomerOptions } from "@/features/customers/queries";
 import { InvoiceForm } from "@/features/invoices/components/invoice-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewInvoicePage() {
-  const products = await getProductSelectOptions();
+  const [products, customers] = await Promise.all([
+    getProductSelectOptions(),
+    getCustomerOptions(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -26,7 +30,7 @@ export default async function NewInvoicePage() {
         }
       />
       <div className="max-w-3xl">
-        <InvoiceForm products={products} />
+        <InvoiceForm products={products} customers={customers} />
       </div>
     </div>
   );

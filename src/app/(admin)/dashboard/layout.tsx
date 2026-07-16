@@ -25,6 +25,7 @@ export default async function DashboardLayout({
         adminName={session?.user?.name ?? ""}
         pendingOrders={stats.pendingOrders}
         lowStock={stats.lowStockCount}
+        unpaidInvoices={stats.unpaidInvoicesCount}
       />
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 print:hidden">

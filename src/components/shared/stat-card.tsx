@@ -7,11 +7,13 @@ export function StatCard({
   value,
   icon: Icon,
   variant = "default",
+  formatValue,
 }: {
   title: string;
   value: number;
   icon: LucideIcon;
   variant?: "default" | "warning";
+  formatValue?: (value: number) => string;
 }) {
   const isWarning = variant === "warning" && value > 0;
 
@@ -26,7 +28,7 @@ export function StatCard({
               isWarning && "text-destructive",
             )}
           >
-            {value.toLocaleString("ar")}
+            {formatValue ? formatValue(value) : value.toLocaleString("ar")}
           </p>
         </div>
         <div

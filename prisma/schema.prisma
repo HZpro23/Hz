@@ -86,15 +86,17 @@ model ProductImage {
 }
 
 model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String
-  email     String?
-  address   String?
-  notes     String?
-  orders    Order[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String    @id @default(cuid())
+  name           String
+  nameNormalized String
+  phone          String
+  email          String?
+  address        String?
+  notes          String?
+  orders         Order[]
+  invoices       Invoice[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 enum OrderStatus {
@@ -224,10 +226,25 @@ enum InvoiceLanguage {
   FR
 }
 
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CREDIT_CARD
+  OTHER
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+}
+
 model Invoice {
   id            String          @id @default(cuid())
   invoiceNumber String          @unique
   language      InvoiceLanguage @default(AR)
+  customerId    String?
+  customer      Customer?       @relation(fields: [customerId], references: [id])
   customerName  String
   customerPhone String
   customerEmail String?
@@ -236,8 +253,26 @@ model Invoice {
   order         Order?          @relation(fields: [orderId], references: [id])
   items         InvoiceItem[]
   total         Decimal         @default(0) @db.Decimal(10, 2)
+  paymentMethod PaymentMethod   @default(CASH)
+  paymentStatus PaymentStatus   @default(UNPAID)
+  paidAmount    Decimal         @default(0) @db.Decimal(10, 2)
+  payments      Payment[]
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+
+  @@index([customerId])
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  invoiceId String
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount    Decimal       @db.Decimal(10, 2)
+  method    PaymentMethod
+  note      String?
+  createdAt DateTime      @default(now())
+
+  @@index([invoiceId])
 }
 
 model InvoiceItem {

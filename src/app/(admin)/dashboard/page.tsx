@@ -1,8 +1,9 @@
-import { Package, Users, ShoppingCart, AlertTriangle } from "lucide-react";
+import { Package, Users, ShoppingCart, AlertTriangle, Wallet } from "lucide-react";
 import { StatCard } from "@/components/shared/stat-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { ar } from "@/i18n/ar";
 import { getDashboardStats } from "@/features/dashboard/queries";
+import { formatCurrency } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,13 @@ export default async function DashboardPage() {
           value={stats.lowStockCount}
           icon={AlertTriangle}
           variant="warning"
+        />
+        <StatCard
+          title={ar.dashboardCards.outstandingDebt}
+          value={stats.totalOutstandingDebt}
+          icon={Wallet}
+          variant="warning"
+          formatValue={(value) => formatCurrency(value)}
         />
       </div>
     </div>

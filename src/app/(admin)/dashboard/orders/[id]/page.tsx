@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { getOrderById } from "@/features/orders/queries";
+import { getCustomerOptions } from "@/features/customers/queries";
 import { OrderStatusSelect } from "@/features/orders/components/order-status-select";
 import { OrderItemsPriceForm } from "@/features/orders/components/order-items-price-form";
 import { GenerateInvoiceDialog } from "@/features/orders/components/generate-invoice-dialog";
+import { OrderCustomerCard } from "@/features/orders/components/order-customer-card";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +36,10 @@ export default async function OrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const order = await getOrderById(id);
+  const [order, customers] = await Promise.all([
+    getOrderById(id),
+    getCustomerOptions(),
+  ]);
   if (!order) notFound();
 
   const message = buildDefaultMessage(order);
@@ -98,7 +103,10 @@ export default async function OrderDetailPage({
                   عرض الفاتورة
                 </Button>
               ) : (
-                <GenerateInvoiceDialog orderId={order.id} />
+                <GenerateInvoiceDialog
+                  orderId={order.id}
+                  orderTotal={Number(order.total)}
+                />
               )}
               <Button
                 variant="outline"
@@ -123,39 +131,18 @@ export default async function OrderDetailPage({
         </div>
 
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>بيانات العميل</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <p>
-                <span className="text-muted-foreground">الاسم: </span>
-                {order.customerName}
-              </p>
-              <p>
-                <span className="text-muted-foreground">الهاتف: </span>
-                <span dir="ltr">{order.customerPhone}</span>
-              </p>
-              {order.customerEmail && (
-                <p>
-                  <span className="text-muted-foreground">
-                    البريد الإلكتروني:{" "}
-                  </span>
-                  <span dir="ltr">{order.customerEmail}</span>
-                </p>
-              )}
-              <p>
-                <span className="text-muted-foreground">تاريخ الطلب: </span>
-                {new Date(order.createdAt).toLocaleDateString("fr-FR")}
-              </p>
-              {order.notes && (
-                <p>
-                  <span className="text-muted-foreground">ملاحظات: </span>
-                  {order.notes}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <OrderCustomerCard
+            orderId={order.id}
+            customers={customers}
+            currentCustomer={order.customer}
+            snapshot={{
+              name: order.customerName,
+              phone: order.customerPhone,
+              email: order.customerEmail,
+            }}
+            createdAt={order.createdAt}
+            notes={order.notes}
+          />
 
           <Card>
             <CardHeader>

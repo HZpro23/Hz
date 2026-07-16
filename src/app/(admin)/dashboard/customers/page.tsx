@@ -10,8 +10,11 @@ import {
   getCustomerById,
 } from "@/features/customers/queries";
 import { CustomersTable } from "@/features/customers/components/customers-table";
+import { CustomersFilterBar } from "@/features/customers/components/customers-filter-bar";
 import { CustomerFormSheet } from "@/features/customers/components/customer-form-sheet";
+import { DEBT_STATUS_VALUE_BY_LABEL } from "@/features/customers/schema";
 import { ar } from "@/i18n/ar";
+import type { DebtFilter } from "@/features/customers/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -23,14 +26,19 @@ export default async function CustomersPage({
     q?: string;
     new?: string;
     edit?: string;
+    debtFilter?: string;
   }>;
 }) {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
   const query = params.q?.trim() || undefined;
+  const debtFilter = params.debtFilter
+    ? ((DEBT_STATUS_VALUE_BY_LABEL[params.debtFilter] ??
+        params.debtFilter) as DebtFilter)
+    : undefined;
 
   const [{ items, total, pageSize }, editingCustomer] = await Promise.all([
-    getCustomersPage({ query, page }),
+    getCustomersPage({ query, debtFilter, page }),
     params.edit ? getCustomerById(params.edit) : Promise.resolve(null),
   ]);
 
@@ -40,6 +48,7 @@ export default async function CustomersPage({
     const sp = new URLSearchParams();
     if (query) sp.set("q", query);
     if (page > 1) sp.set("page", String(page));
+    if (params.debtFilter) sp.set("debtFilter", params.debtFilter);
     for (const [key, value] of Object.entries(extra)) sp.set(key, value);
     return `/dashboard/customers?${sp.toString()}`;
   }
@@ -55,7 +64,10 @@ export default async function CustomersPage({
           </Button>
         }
       />
-      <DataTableSearch placeholder="ابحث بالاسم أو الهاتف أو البريد..." />
+      <div className="space-y-3">
+        <DataTableSearch placeholder="ابحث بالاسم أو الهاتف أو البريد..." />
+        <CustomersFilterBar />
+      </div>
       {items.length === 0 ? (
         <EmptyState
           icon={Users}
@@ -70,7 +82,7 @@ export default async function CustomersPage({
             pageSize={pageSize}
             total={total}
             basePath="/dashboard/customers"
-            searchParams={{ q: query }}
+            searchParams={{ q: query, debtFilter: params.debtFilter }}
           />
         </>
       )}
