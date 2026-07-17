@@ -20,7 +20,8 @@ export async function createBrand(input: unknown): Promise<ActionResult> {
       data: {
         name: parsed.data.name,
         slug: parsed.data.slug,
-        logoUrl: parsed.data.logoUrl || null,
+        logoUrl: parsed.data.logo?.secureUrl ?? null,
+        logoPublicId: parsed.data.logo?.publicId ?? null,
       },
     });
   } catch (error) {
@@ -50,7 +51,8 @@ export async function updateBrand(
       data: {
         name: parsed.data.name,
         slug: parsed.data.slug,
-        logoUrl: parsed.data.logoUrl || null,
+        logoUrl: parsed.data.logo?.secureUrl ?? null,
+        logoPublicId: parsed.data.logo?.publicId ?? null,
       },
     });
   } catch (error) {

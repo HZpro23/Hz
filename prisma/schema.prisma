@@ -31,13 +31,14 @@ model Category {
 }
 
 model Brand {
-  id        String    @id @default(cuid())
-  name      String
-  slug      String    @unique
-  logoUrl   String?
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  logoUrl       String?
+  logoPublicId  String?
+  products      Product[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 enum ProductStatus {

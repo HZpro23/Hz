@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+export const brandLogoSchema = z.object({
+  publicId: z.string(),
+  secureUrl: z.string(),
+});
+
 export const brandSchema = z.object({
   name: z.string().min(2, { error: "الاسم يجب أن يتكون من حرفين على الأقل" }),
   slug: z
@@ -8,7 +13,7 @@ export const brandSchema = z.object({
     .regex(/^[a-z0-9-]+$/, {
       error: "الرابط يجب أن يحتوي على أحرف إنجليزية صغيرة وأرقام وشرطات فقط",
     }),
-  logoUrl: z.string().optional(),
+  logo: brandLogoSchema.nullable().optional(),
 });
 
 export type BrandInput = z.infer<typeof brandSchema>;

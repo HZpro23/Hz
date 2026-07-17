@@ -2,13 +2,14 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { FormSheet } from "@/components/shared/form-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CloudinaryUploader } from "@/components/shared/cloudinary-uploader";
 import { brandSchema, type BrandInput } from "@/features/brands/schema";
 import { createBrand, updateBrand } from "@/features/brands/actions";
 import { ar } from "@/i18n/ar";
@@ -18,6 +19,7 @@ type BrandRecord = {
   name: string;
   slug: string;
   logoUrl: string | null;
+  logoPublicId: string | null;
 } | null;
 
 export function BrandFormSheet({
@@ -34,6 +36,7 @@ export function BrandFormSheet({
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<BrandInput>({
@@ -41,7 +44,10 @@ export function BrandFormSheet({
     defaultValues: {
       name: brand?.name ?? "",
       slug: brand?.slug ?? "",
-      logoUrl: brand?.logoUrl ?? "",
+      logo:
+        brand?.logoPublicId && brand?.logoUrl
+          ? { publicId: brand.logoPublicId, secureUrl: brand.logoUrl }
+          : null,
     },
   });
 
@@ -81,6 +87,20 @@ export function BrandFormSheet({
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
+          <Label>شعار العلامة التجارية (اختياري)</Label>
+          <Controller
+            control={control}
+            name="logo"
+            render={({ field }) => (
+              <CloudinaryUploader
+                value={field.value ? [field.value] : []}
+                onChange={(images) => field.onChange(images[0] ?? null)}
+                maxImages={1}
+              />
+            )}
+          />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="brand-name">الاسم</Label>
           <Input id="brand-name" {...register("name")} />
           {errors.name && (
@@ -93,10 +113,6 @@ export function BrandFormSheet({
           {errors.slug && (
             <p className="text-sm text-destructive">{errors.slug.message}</p>
           )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="brand-logo">رابط الشعار (اختياري)</Label>
-          <Input id="brand-logo" dir="ltr" {...register("logoUrl")} />
         </div>
         <Button
           type="submit"
