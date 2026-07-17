@@ -53,7 +53,7 @@ export function getCategoryColumns(
     },
     {
       id: "parent",
-      header: "القسم الأب",
+      header: "قسم الأب",
       cell: ({ row }) => row.original.parent?.name ?? "—",
     },
     {
@@ -69,7 +69,8 @@ export function getCategoryColumns(
           <Button
             variant="ghost"
             size="icon-sm"
-            nativeButton={false} render={<Link href={editHref(row.original.id)} />}
+            nativeButton={false}
+            render={<Link href={editHref(row.original.id)} />}
           >
             <Pencil className="size-4" />
           </Button>

@@ -135,7 +135,7 @@ export function CategoryFormSheet({
           )}
         </div>
         <div className="space-y-2">
-          <Label>القسم الأب (اختياري)</Label>
+          <Label>قسم الأب (اختياري)</Label>
           <Select
             value={parentId ?? "none"}
             onValueChange={(value) =>
