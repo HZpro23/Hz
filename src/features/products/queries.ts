@@ -150,15 +150,29 @@ export async function getProductPickerOptions() {
   });
 }
 
-export async function getLowStockProducts() {
-  return prisma.$queryRaw<
+export const LOW_STOCK_PAGE_SIZE = 10;
+
+export async function getLowStockProductsPage({ page }: { page: number }) {
+  const rows = await prisma.$queryRaw<
     {
       id: string;
       name: string;
       sku: string;
       quantity: number;
       minStockLevel: number;
+      totalCount: bigint;
     }[]
-  >`SELECT id, name, sku, quantity, "minStockLevel" FROM "Product"
-    WHERE quantity <= "minStockLevel" ORDER BY quantity ASC`;
+  >`SELECT id, name, sku, quantity, "minStockLevel", COUNT(*) OVER()::bigint AS "totalCount"
+    FROM "Product"
+    WHERE quantity <= "minStockLevel"
+    ORDER BY quantity ASC
+    LIMIT ${LOW_STOCK_PAGE_SIZE} OFFSET ${(page - 1) * LOW_STOCK_PAGE_SIZE}`;
+
+  const total = rows.length > 0 ? Number(rows[0].totalCount) : 0;
+
+  return {
+    items: rows.map(({ totalCount, ...row }) => row),
+    total,
+    pageSize: LOW_STOCK_PAGE_SIZE,
+  };
 }

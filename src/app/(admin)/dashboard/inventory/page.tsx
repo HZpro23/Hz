@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
 import { getInventoryMovementsPage } from "@/features/inventory/queries";
 import {
-  getLowStockProducts,
+  getLowStockProductsPage,
   getProductSelectOptions,
 } from "@/features/products/queries";
 import { RecordMovementDialog } from "@/features/inventory/components/record-movement-dialog";
@@ -26,17 +26,21 @@ export const dynamic = "force-dynamic";
 export default async function InventoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; lowStockPage?: string }>;
 }) {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
+  const lowStockPage = Math.max(1, Number(params.lowStockPage) || 1);
 
-  const [lowStockProducts, productOptions, { items, total, pageSize }] =
-    await Promise.all([
-      getLowStockProducts(),
-      getProductSelectOptions(),
-      getInventoryMovementsPage({ page }),
-    ]);
+  const [
+    { items: lowStockProducts, total: lowStockTotal, pageSize: lowStockPageSize },
+    productOptions,
+    { items, total, pageSize },
+  ] = await Promise.all([
+    getLowStockProductsPage({ page: lowStockPage }),
+    getProductSelectOptions(),
+    getInventoryMovementsPage({ page }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -58,34 +62,44 @@ export default async function InventoryPage({
               لا توجد منتجات منخفضة المخزون حالياً
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow dir="rtl">
-                  <TableHead>المنتج</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>الكمية الحالية</TableHead>
-                  <TableHead>الحد الأدنى</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lowStockProducts.map((product) => (
-                  <TableRow key={product.id} dir="rtl">
-                    <TableCell className="font-medium">
-                      {product.name}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      <span dir="rtl">{product.sku}</span>
-                    </TableCell>
-                    <TableCell className="font-medium text-destructive">
-                      {product.quantity.toLocaleString("ar")}
-                    </TableCell>
-                    <TableCell>
-                      {product.minStockLevel.toLocaleString("ar")}
-                    </TableCell>
+            <div className="space-y-4">
+              <Table>
+                <TableHeader>
+                  <TableRow dir="rtl">
+                    <TableHead>المنتج</TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>الكمية الحالية</TableHead>
+                    <TableHead>الحد الأدنى</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {lowStockProducts.map((product) => (
+                    <TableRow key={product.id} dir="rtl">
+                      <TableCell className="font-medium">
+                        {product.name}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <span dir="rtl">{product.sku}</span>
+                      </TableCell>
+                      <TableCell className="font-medium text-destructive">
+                        {product.quantity.toLocaleString("ar")}
+                      </TableCell>
+                      <TableCell>
+                        {product.minStockLevel.toLocaleString("ar")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <DataTablePagination
+                page={lowStockPage}
+                pageSize={lowStockPageSize}
+                total={lowStockTotal}
+                basePath="/dashboard/inventory"
+                pageParam="lowStockPage"
+                searchParams={{ page: params.page }}
+              />
+            </div>
           )}
         </CardContent>
       </Card>
@@ -152,7 +166,7 @@ export default async function InventoryPage({
                 pageSize={pageSize}
                 total={total}
                 basePath="/dashboard/inventory"
-                searchParams={{}}
+                searchParams={{ lowStockPage: params.lowStockPage }}
               />
             </>
           )}

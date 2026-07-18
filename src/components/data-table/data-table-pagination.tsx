@@ -8,12 +8,16 @@ export function DataTablePagination({
   total,
   basePath,
   searchParams,
+  pageParam = "page",
 }: {
   page: number;
   pageSize: number;
   total: number;
   basePath: string;
   searchParams: Record<string, string | undefined>;
+  /** Query key to write the page number under — override when a page hosts
+   * more than one independently-paginated table. */
+  pageParam?: string;
 }) {
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
@@ -22,7 +26,7 @@ export function DataTablePagination({
     for (const [key, value] of Object.entries(searchParams)) {
       if (value) params.set(key, value);
     }
-    params.set("page", String(targetPage));
+    params.set(pageParam, String(targetPage));
     return `${basePath}?${params.toString()}`;
   }
 

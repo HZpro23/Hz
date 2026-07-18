@@ -89,7 +89,18 @@ export default async function CustomersPage({
       <CustomerFormSheet
         key={editingCustomer?.id ?? (params.new ? "new" : "closed")}
         open={isSheetOpen}
-        customer={editingCustomer}
+        customer={
+          editingCustomer
+            ? {
+                id: editingCustomer.id,
+                name: editingCustomer.name,
+                phone: editingCustomer.phone,
+                email: editingCustomer.email,
+                address: editingCustomer.address,
+                notes: editingCustomer.notes,
+              }
+            : null
+        }
       />
     </div>
   );
