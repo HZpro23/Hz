@@ -10,6 +10,8 @@ import { getCustomerProfile } from "@/features/customers/queries";
 import { OrdersTable } from "@/features/orders/components/orders-table";
 import { InvoicesTable } from "@/features/invoices/components/invoices-table";
 import { PaymentHistory } from "@/features/invoices/components/payment-history";
+import { BalanceHistoryCard } from "@/features/customers/components/balance-history-card";
+import { AdjustBalanceDialog } from "@/features/customers/components/adjust-balance-dialog";
 import { formatCurrency } from "@/lib/currency";
 import { ar } from "@/i18n/ar";
 
@@ -24,7 +26,7 @@ export default async function CustomerProfilePage({
   const profile = await getCustomerProfile(id);
   if (!profile) notFound();
 
-  const { customer, orders, invoices, payments, totals } = profile;
+  const { customer, orders, invoices, payments, balanceHistory, totals } = profile;
 
   return (
     <div className="space-y-6">
@@ -56,13 +58,16 @@ export default async function CustomerProfilePage({
           icon={Wallet}
           formatValue={(value) => formatCurrency(value)}
         />
-        <StatCard
-          title={ar.customers.totalDebt}
-          value={totals.totalDebt}
-          icon={Receipt}
-          variant="warning"
-          formatValue={(value) => formatCurrency(value)}
-        />
+        <div className="space-y-2">
+          <StatCard
+            title={ar.customers.balance}
+            value={totals.balance}
+            icon={Receipt}
+            variant="balance"
+            formatValue={(value) => formatCurrency(value)}
+          />
+          <AdjustBalanceDialog customerId={customer.id} currentBalance={totals.balance} />
+        </div>
       </div>
 
       <Card>
@@ -160,6 +165,7 @@ export default async function CustomerProfilePage({
                 paymentStatus: invoice.paymentStatus,
                 createdAt: invoice.createdAt,
                 _count: { items: invoice.items.length },
+                balanceEffectApplied: Number(invoice.balanceEffectApplied),
               }))}
             />
           )}
@@ -170,6 +176,19 @@ export default async function CustomerProfilePage({
         payments={payments.map((payment) => ({
           ...payment,
           amount: Number(payment.amount),
+        }))}
+      />
+
+      <BalanceHistoryCard
+        entries={balanceHistory.map((entry) => ({
+          id: entry.id,
+          invoiceNumber: entry.invoiceNumber,
+          previousBalance: Number(entry.previousBalance),
+          change: Number(entry.change),
+          newBalance: Number(entry.newBalance),
+          reason: entry.reason,
+          note: entry.note,
+          createdAt: entry.createdAt,
         }))}
       />
     </div>

@@ -107,26 +107,50 @@ export async function updateOrderItems(
   });
   if (!order) return { error: "الطلب غير موجود" };
 
-  const dataById = new Map(
-    parsed.data.items.map((item) => [item.id, item]),
+  const existingIds = new Set(order.items.map((item) => item.id));
+  const updates = parsed.data.items.filter(
+    (item) => item.id && existingIds.has(item.id),
   );
-  const total = order.items.reduce((sum, item) => {
-    const edited = dataById.get(item.id);
-    const price = edited?.price ?? Number(item.price);
-    const quantity = edited?.quantity ?? item.quantity;
-    return sum + price * quantity;
-  }, 0);
+  const newItems = parsed.data.items.filter((item) => !item.id);
+
+  if (newItems.length > 0) {
+    const products = await prisma.product.findMany({
+      where: { id: { in: newItems.map((item) => item.productId) } },
+    });
+    if (products.length !== new Set(newItems.map((item) => item.productId)).size) {
+      return { error: "أحد المنتجات المضافة غير موجود" };
+    }
+  }
+
+  const updatesById = new Map(updates.map((item) => [item.id, item]));
+  const total =
+    order.items.reduce((sum, item) => {
+      const edited = updatesById.get(item.id);
+      const price = edited?.price ?? Number(item.price);
+      const quantity = edited?.quantity ?? item.quantity;
+      return sum + price * quantity;
+    }, 0) +
+    newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   await prisma.$transaction([
-    ...order.items
-      .filter((item) => dataById.has(item.id))
-      .map((item) => {
-        const edited = dataById.get(item.id)!;
-        return prisma.orderItem.update({
-          where: { id: item.id },
-          data: { price: edited.price, quantity: edited.quantity },
-        });
+    ...updates.map((item) =>
+      prisma.orderItem.update({
+        where: { id: item.id! },
+        data: { price: item.price, quantity: item.quantity },
       }),
+    ),
+    ...(newItems.length > 0
+      ? [
+          prisma.orderItem.createMany({
+            data: newItems.map((item) => ({
+              orderId,
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.price,
+            })),
+          }),
+        ]
+      : []),
     prisma.order.update({ where: { id: orderId }, data: { total } }),
   ]);
 

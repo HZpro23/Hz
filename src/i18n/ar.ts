@@ -44,7 +44,7 @@ export const ar = {
     totalCustomers: "إجمالي العملاء",
     orders: "الطلبات",
     lowStockProducts: "المنتجات منخفضة المخزون",
-    outstandingDebt: "إجمالي الديون المستحقة",
+    totalOwedByCustomers: "إجمالي المستحقات على العملاء",
   },
   statusLabels: {
     order: {
@@ -83,11 +83,21 @@ export const ar = {
       CASH: "نقداً",
       BANK_TRANSFER: "تحويل بنكي",
       CREDIT_CARD: "شيك",
+      BALANCE: "من الرصيد",
       OTHER: "أخرى",
     },
     debtStatus: {
       HAS_DEBT: "عليه دين",
       NO_DEBT: "لا يوجد دين",
+    },
+    balanceChangeReason: {
+      INVOICE_PAYMENT: "دفعة فاتورة",
+      BALANCE_USED: "استخدام الرصيد",
+      OVERPAYMENT_CREDIT: "دفع زائد",
+      INVOICE_EDIT: "تعديل فاتورة",
+      INVOICE_CANCELLATION: "إلغاء فاتورة",
+      BALANCE_RETURNED: "استرجاع رصيد بعد حذف فاتورة",
+      MANUAL_ADJUSTMENT: "تعديل يدوي من قِبل الإدارة",
     },
   },
   customers: {
@@ -95,7 +105,7 @@ export const ar = {
     personalInfo: "البيانات الشخصية",
     totalPurchased: "إجمالي المشتريات",
     totalPaid: "إجمالي المدفوعات",
-    totalDebt: "إجمالي الدين المستحق",
+    balance: "رصيد",
     ordersHistory: "الطلبات",
     invoicesHistory: "الفواتير",
     paymentsHistory: "سجل الدفعات",
@@ -110,6 +120,23 @@ export const ar = {
     changeCustomer: "تغيير العميل",
     editCustomerInfo: "تعديل بيانات العميل",
     viewProfile: "عرض الملف",
+    balanceHistory: "سجل تغييرات الرصيد",
+    noBalanceHistory: "لا توجد تغييرات على الرصيد بعد",
+    previousBalance: "الرصيد السابق",
+    newBalance: "الرصيد الجديد",
+    change: "التغيير",
+    reason: "السبب",
+    adjustBalance: "تعديل الرصيد",
+    adjustBalanceTitle: "تعديل رصيد العميل",
+    adjustBalanceDescription:
+      "استخدم هذا فقط لتصحيح رصيد العميل يدوياً. سيتم تسجيل هذا التعديل في سجل تغييرات الرصيد.",
+    increaseBalance: "زيادة الرصيد",
+    decreaseBalance: "خصم من الرصيد",
+    adjustmentAmount: "المبلغ",
+    adjustmentNote: "سبب التعديل (اختياري)",
+    currentBalance: "الرصيد الحالي",
+    balanceAfterAdjustment: "الرصيد بعد التعديل",
+    confirmAdjustment: "تأكيد التعديل",
   },
   invoices: {
     paymentMethod: "طريقة الدفع",
@@ -120,9 +147,42 @@ export const ar = {
     paymentNote: "ملاحظة",
     paymentDate: "تاريخ الدفعة",
     noPayments: "لم يتم تسجيل أي دفعات بعد",
-    overpaymentError: "المبلغ المدخل يتجاوز المبلغ المتبقي على الفاتورة",
     invalidAmount: "الرجاء إدخال مبلغ صحيح",
     outstandingInvoices: "الفواتير غير المسددة بالكامل",
+    payments: "الدفعات",
+    addPayment: "إضافة طريقة دفع",
+    availableBalance: "الرصيد المتاح",
+    noPaymentLines: "لم تتم إضافة أي دفعة، ستُنشأ الفاتورة كغير مدفوعة",
+    totalPaidLabel: "إجمالي المدفوع",
+    remainingAfterPayments: "المتبقي بعد الدفعات",
+    overpaidWillBecomeCredit: "الفائض سيُضاف كرصيد للعميل",
+    noCustomerForBalance: "الرجاء اختيار عميل لاستخدام الرصيد",
+    insufficientBalanceTitle: "الرصيد المتاح غير كافٍ",
+    insufficientBalanceUseAvailable: "استخدام الرصيد المتاح فقط",
+    insufficientBalanceUseAvailableHint:
+      "يبقى المبلغ المتبقي غير مدفوع، وتصبح الفاتورة مدفوعة جزئياً",
+    insufficientBalanceGoNegative: "السماح بأن يصبح الرصيد سالبًا وإكمال الدفع",
+    insufficientBalanceGoNegativeHint:
+      "يصبح رصيد العميل سالبًا، وتصبح الفاتورة مدفوعة بالكامل",
+    offerBalanceTitle: "استخدام رصيد العميل؟",
+    offerBalanceYes: "نعم، استخدم الرصيد",
+    offerBalanceNo: "لا، اترك المبلغ غير مدفوع",
+    deleteInvoiceNumber: "رقم الفاتورة",
+    deleteCustomerName: "العميل",
+    deleteInvoiceTotal: "إجمالي الفاتورة",
+    deleteBalanceIncreasePreview: "سيزيد رصيد العميل بمقدار",
+    deleteBalanceIncreaseReason:
+      "لأن هذا المبلغ كان قد دُفع سابقاً من رصيد العميل لهذه الفاتورة",
+    deleteBalanceIncreaseCheckboxLabel:
+      "أوافق على إعادة هذا المبلغ إلى رصيد العميل",
+    deleteBalanceDecreasePreview: "سينقص رصيد العميل بمقدار",
+    deleteBalanceDecreaseReason:
+      "لأن العميل دفع أكثر من قيمة هذه الفاتورة وحصل على الفرق كرصيد إضافي",
+    deleteBalanceDecreaseCheckboxLabel:
+      "أوافق على خصم هذا المبلغ من رصيد العميل",
+    deleteBalanceNoAutoChange:
+      "لن يتم تغيير رصيد العميل تلقائياً لن يُطبَّق هذا التغيير إلا إذا فعّلت المربع أدناه قبل الحذف",
+    deleteConfirmAndDelete: "تأكيد وحذف الفاتورة",
   },
 } as const;
 

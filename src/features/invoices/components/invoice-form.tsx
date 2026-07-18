@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -40,6 +40,12 @@ import {
   type CustomerOption,
 } from "@/features/customers/components/customer-picker";
 import { PaymentFieldsSection } from "@/features/invoices/components/payment-fields";
+import { BalanceConfirmDialog } from "@/features/invoices/components/balance-confirm-dialog";
+import {
+  checkBalanceConfirmation,
+  capBalanceLines,
+  type BalanceConfirmRequest,
+} from "@/features/invoices/balance-resolution";
 
 type ProductOption = {
   id: string;
@@ -161,9 +167,6 @@ type InvoiceRecord = {
   customerEmail: string | null;
   notes: string | null;
   orderId: string | null;
-  paymentMethod: string;
-  paymentStatus: string;
-  paidAmount: number;
   items: {
     productId: string | null;
     name: string;
@@ -202,11 +205,7 @@ export function InvoiceForm({
       customerEmail: invoice?.customerEmail ?? "",
       notes: invoice?.notes ?? "",
       orderId: invoice?.orderId ?? orderId ?? "",
-      paymentMethod:
-        (invoice?.paymentMethod as InvoiceOutput["paymentMethod"]) ?? "CASH",
-      paymentStatus:
-        (invoice?.paymentStatus as InvoiceOutput["paymentStatus"]) ?? "UNPAID",
-      paidAmount: invoice?.paidAmount ?? 0,
+      payments: [],
       items: invoice?.items.length
         ? invoice.items.map((item) => ({
             productId: item.productId ?? "",
@@ -218,7 +217,9 @@ export function InvoiceForm({
     },
   });
 
-  const paymentStatus = watch("paymentStatus");
+  const customerId = watch("customerId");
+  const selectedCustomer = customers.find((c) => c.id === customerId);
+  const customerBalance = selectedCustomer?.balance ?? 0;
   const productsById = new Map(
     products.map((product) => [product.id, product]),
   );
@@ -231,7 +232,12 @@ export function InvoiceForm({
     0,
   );
 
-  function onSubmit(values: InvoiceOutput) {
+  const [pendingValues, setPendingValues] = useState<InvoiceOutput | null>(null);
+  const [confirmRequest, setConfirmRequest] = useState<BalanceConfirmRequest | null>(
+    null,
+  );
+
+  function submitInvoice(values: InvoiceOutput) {
     startTransition(async () => {
       const result = invoice
         ? await updateInvoice(invoice.id, values)
@@ -244,6 +250,58 @@ export function InvoiceForm({
 
       if (invoice) toast.success("تم تحديث الفاتورة بنجاح");
     });
+  }
+
+  function onSubmit(values: InvoiceOutput) {
+    if (invoice) {
+      submitInvoice(values);
+      return;
+    }
+
+    const request = checkBalanceConfirmation({
+      total,
+      customerBalance,
+      hasCustomer: Boolean(values.customerId),
+      lines: values.payments,
+    });
+    if (request) {
+      setPendingValues(values);
+      setConfirmRequest(request);
+      return;
+    }
+    submitInvoice(values);
+  }
+
+  function cancelConfirm() {
+    setConfirmRequest(null);
+    setPendingValues(null);
+  }
+
+  function resolveUseAvailable() {
+    if (!pendingValues || confirmRequest?.kind !== "insufficient") return;
+    const payments = capBalanceLines(pendingValues.payments, confirmRequest.availableBalance);
+    setConfirmRequest(null);
+    submitInvoice({ ...pendingValues, payments });
+  }
+
+  function resolveGoNegative() {
+    if (!pendingValues) return;
+    setConfirmRequest(null);
+    submitInvoice(pendingValues);
+  }
+
+  function resolveUseBalance() {
+    if (!pendingValues || confirmRequest?.kind !== "offer-balance") return;
+    const amount = Math.min(confirmRequest.remaining, confirmRequest.availableBalance);
+    const payments = [...pendingValues.payments, { method: "BALANCE" as const, amount }];
+    setConfirmRequest(null);
+    submitInvoice({ ...pendingValues, payments });
+  }
+
+  function resolveDecline() {
+    if (!pendingValues) return;
+    setConfirmRequest(null);
+    submitInvoice(pendingValues);
   }
 
   return (
@@ -302,11 +360,15 @@ export function InvoiceForm({
         </div>
       </div>
 
-      <PaymentFieldsSection
-        control={control}
-        paymentStatus={paymentStatus}
-        errors={errors}
-      />
+      {!invoice && (
+        <PaymentFieldsSection
+          control={control}
+          errors={errors}
+          total={total}
+          customerBalance={customerBalance}
+          hasCustomer={Boolean(customerId)}
+        />
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="invoice-notes">ملاحظات (اختياري)</Label>
@@ -424,6 +486,15 @@ export function InvoiceForm({
               : "إنشاء الفاتورة"}
         </Button>
       </div>
+
+      <BalanceConfirmDialog
+        request={confirmRequest}
+        onCancel={cancelConfirm}
+        onUseAvailable={resolveUseAvailable}
+        onGoNegative={resolveGoNegative}
+        onUseBalance={resolveUseBalance}
+        onDecline={resolveDecline}
+      />
     </form>
   );
 }

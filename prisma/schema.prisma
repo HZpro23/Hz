@@ -31,14 +31,14 @@ model Category {
 }
 
 model Brand {
-  id            String    @id @default(cuid())
-  name          String
-  slug          String    @unique
-  logoUrl       String?
-  logoPublicId  String?
-  products      Product[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  name         String
+  slug         String    @unique
+  logoUrl      String?
+  logoPublicId String?
+  products     Product[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 enum ProductStatus {
@@ -87,17 +87,19 @@ model ProductImage {
 }
 
 model Customer {
-  id             String    @id @default(cuid())
+  id             String                   @id @default(cuid())
   name           String
   nameNormalized String
   phone          String
   email          String?
   address        String?
   notes          String?
+  balance        Decimal                  @default(0) @db.Decimal(10, 2)
   orders         Order[]
   invoices       Invoice[]
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  balanceHistory CustomerBalanceHistory[]
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
 }
 
 enum OrderStatus {
@@ -231,6 +233,7 @@ enum PaymentMethod {
   CASH
   BANK_TRANSFER
   CREDIT_CARD
+  BALANCE
   OTHER
 }
 
@@ -241,25 +244,32 @@ enum PaymentStatus {
 }
 
 model Invoice {
-  id            String          @id @default(cuid())
-  invoiceNumber String          @unique
-  language      InvoiceLanguage @default(AR)
-  customerId    String?
-  customer      Customer?       @relation(fields: [customerId], references: [id])
-  customerName  String
-  customerPhone String
-  customerEmail String?
-  notes         String?
-  orderId       String?         @unique
-  order         Order?          @relation(fields: [orderId], references: [id])
-  items         InvoiceItem[]
-  total         Decimal         @default(0) @db.Decimal(10, 2)
-  paymentMethod PaymentMethod   @default(CASH)
-  paymentStatus PaymentStatus   @default(UNPAID)
-  paidAmount    Decimal         @default(0) @db.Decimal(10, 2)
-  payments      Payment[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id                   String          @id @default(cuid())
+  invoiceNumber        String          @unique
+  language             InvoiceLanguage @default(AR)
+  customerId           String?
+  customer             Customer?       @relation(fields: [customerId], references: [id])
+  customerName         String
+  customerPhone        String
+  customerEmail        String?
+  notes                String?
+  orderId              String?         @unique
+  order                Order?          @relation(fields: [orderId], references: [id])
+  items                InvoiceItem[]
+  total                Decimal         @default(0) @db.Decimal(10, 2)
+  paymentMethod        PaymentMethod   @default(CASH)
+  paymentStatus        PaymentStatus   @default(UNPAID)
+  paidAmount           Decimal         @default(0) @db.Decimal(10, 2)
+  payments             Payment[]
+  /// Cumulative signed effect this invoice's payments have had on its
+  /// customer's رصيد so far (من الرصيد draws are negative, any excess paid
+  /// beyond the total is positive credit; real cash that just settles the
+  /// total contributes nothing). Recomputed and diffed against on every
+  /// payment/edit so deletes and edits can reverse exactly what was applied,
+  /// no matter how many separate payments were recorded over time.
+  balanceEffectApplied Decimal         @default(0) @db.Decimal(10, 2)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
   @@index([customerId])
 }
@@ -274,6 +284,32 @@ model Payment {
   createdAt DateTime      @default(now())
 
   @@index([invoiceId])
+}
+
+enum BalanceChangeReason {
+  INVOICE_PAYMENT
+  BALANCE_USED
+  OVERPAYMENT_CREDIT
+  INVOICE_EDIT
+  INVOICE_CANCELLATION
+  BALANCE_RETURNED
+  MANUAL_ADJUSTMENT
+}
+
+model CustomerBalanceHistory {
+  id              String              @id @default(cuid())
+  customerId      String
+  customer        Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  invoiceId       String?
+  invoiceNumber   String?
+  previousBalance Decimal             @db.Decimal(10, 2)
+  change          Decimal             @db.Decimal(10, 2)
+  newBalance      Decimal             @db.Decimal(10, 2)
+  reason          BalanceChangeReason
+  note            String?
+  createdAt       DateTime            @default(now())
+
+  @@index([customerId])
 }
 
 model InvoiceItem {

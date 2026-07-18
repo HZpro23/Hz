@@ -41,6 +41,9 @@ export default async function InvoiceEditPage({
   const total = Number(invoice.total);
   const paidAmount = Number(invoice.paidAmount);
   const remaining = Math.max(0, total - paidAmount);
+  const customerBalance =
+    customers.find((customer) => customer.id === invoice.customerId)?.balance ??
+    0;
 
   return (
     <div className="space-y-6">
@@ -81,7 +84,12 @@ export default async function InvoiceEditPage({
           <span className="font-medium">{formatCurrency(remaining)}</span>
         </p>
         {remaining > 0 && (
-          <RecordPaymentDialog invoiceId={invoice.id} remaining={remaining} />
+          <RecordPaymentDialog
+            invoiceId={invoice.id}
+            remaining={remaining}
+            customerBalance={customerBalance}
+            hasCustomer={Boolean(invoice.customerId)}
+          />
         )}
       </div>
 
@@ -97,9 +105,6 @@ export default async function InvoiceEditPage({
               customerEmail: invoice.customerEmail,
               notes: invoice.notes,
               orderId: invoice.orderId,
-              paymentMethod: invoice.paymentMethod,
-              paymentStatus: invoice.paymentStatus,
-              paidAmount,
               items: invoice.items.map((item) => ({
                 productId: item.productId,
                 name: item.name,

@@ -5,10 +5,16 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
 import { DataTableSearch } from "@/components/data-table/data-table-search";
-import { getOrdersPage } from "@/features/orders/queries";
+import {
+  getOrdersPage,
+  type OrderInvoiceFilter,
+} from "@/features/orders/queries";
 import { OrdersTable } from "@/features/orders/components/orders-table";
 import { OrdersFilterBar } from "@/features/orders/components/orders-filter-bar";
-import { ORDER_STATUS_VALUE_BY_LABEL } from "@/features/orders/schema";
+import {
+  ORDER_STATUS_VALUE_BY_LABEL,
+  ORDER_INVOICE_FILTER_VALUE_BY_LABEL,
+} from "@/features/orders/schema";
 import { ar } from "@/i18n/ar";
 import type { OrderStatus } from "@/generated/prisma/client";
 
@@ -23,6 +29,7 @@ export default async function OrdersPage({
     status?: string;
     from?: string;
     to?: string;
+    invoiceFilter?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -36,12 +43,17 @@ export default async function OrdersPage({
     : undefined;
   const from = params.from || undefined;
   const to = params.to || undefined;
+  const invoiceFilter = params.invoiceFilter
+    ? ((ORDER_INVOICE_FILTER_VALUE_BY_LABEL[params.invoiceFilter] ??
+        params.invoiceFilter) as OrderInvoiceFilter)
+    : undefined;
 
   const { items, total, pageSize } = await getOrdersPage({
     query,
     status,
     from,
     to,
+    invoiceFilter,
     page,
   });
 
@@ -76,7 +88,13 @@ export default async function OrdersPage({
             pageSize={pageSize}
             total={total}
             basePath="/dashboard/orders"
-            searchParams={{ q: query, status: params.status, from, to }}
+            searchParams={{
+              q: query,
+              status: params.status,
+              from,
+              to,
+              invoiceFilter: params.invoiceFilter,
+            }}
           />
         </>
       )}

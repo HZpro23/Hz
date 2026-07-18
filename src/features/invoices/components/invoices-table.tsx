@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AlertDialog, AlertDialogContent } from "@/components/ui/alert-dialog";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   invoiceColumns,
   type InvoiceRow,
 } from "@/features/invoices/components/columns";
+import { InvoiceBalanceDeleteContent } from "@/features/invoices/components/invoice-delete-dialog";
 import { PAYMENT_STATUS_LABELS } from "@/features/invoices/schema";
 import { deleteInvoices } from "@/features/invoices/actions";
 
@@ -65,6 +67,40 @@ export function InvoicesTable({
     setPage(1);
   }
 
+  // Bulk delete must ask about كل فاتورة تغيّر رصيد العميل on its own —
+  // never apply one answer to the whole selection. This queues the
+  // invoices that need a decision and resolves them one dialog at a time.
+  const [queueInvoice, setQueueInvoice] = useState<InvoiceRow | null>(null);
+  const resolverRef = useRef<((applyBalanceChange: boolean) => void) | null>(null);
+
+  function askApplyBalanceChange(invoice: InvoiceRow): Promise<boolean> {
+    return new Promise((resolve) => {
+      resolverRef.current = resolve;
+      setQueueInvoice(invoice);
+    });
+  }
+
+  function answerQueue(applyBalanceChange: boolean) {
+    const resolve = resolverRef.current;
+    resolverRef.current = null;
+    setQueueInvoice(null);
+    resolve?.(applyBalanceChange);
+  }
+
+  async function handleBulkDelete(ids: string[]) {
+    const decisions: { id: string; applyBalanceChange?: boolean }[] = [];
+    for (const id of ids) {
+      const invoice = data.find((row) => row.id === id);
+      if (invoice && Math.abs(invoice.balanceEffectApplied) > 0.005) {
+        const applyBalanceChange = await askApplyBalanceChange(invoice);
+        decisions.push({ id, applyBalanceChange });
+      } else {
+        decisions.push({ id });
+      }
+    }
+    return deleteInvoices(decisions);
+  }
+
   return (
     <div className="space-y-3">
       {searchable && (
@@ -96,8 +132,24 @@ export function InvoicesTable({
       <DataTable
         columns={invoiceColumns}
         data={paged}
-        onDeleteSelected={deleteInvoices}
+        onDeleteSelected={handleBulkDelete}
       />
+      <AlertDialog
+        open={Boolean(queueInvoice)}
+        onOpenChange={(open) => {
+          if (!open) answerQueue(false);
+        }}
+      >
+        <AlertDialogContent>
+          {queueInvoice && (
+            <InvoiceBalanceDeleteContent
+              invoice={queueInvoice}
+              onConfirm={(applyBalanceChange) => answerQueue(applyBalanceChange)}
+              onCancel={() => answerQueue(false)}
+            />
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
       {searchable && filtered.length > 0 && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>

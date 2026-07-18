@@ -67,6 +67,7 @@ export default async function InvoicesPage({
               paymentStatus: item.paymentStatus,
               createdAt: item.createdAt,
               _count: item._count,
+              balanceEffectApplied: Number(item.balanceEffectApplied),
             }))}
           />
           <DataTablePagination

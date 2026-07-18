@@ -33,6 +33,7 @@ export type CustomerOption = {
   email?: string | null;
   address?: string | null;
   notes?: string | null;
+  balance?: number;
 };
 
 const NONE_CUSTOMER: CustomerOption = { id: "", name: "اختر عميلاً...", phone: "" };

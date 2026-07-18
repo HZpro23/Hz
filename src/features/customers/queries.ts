@@ -22,9 +22,9 @@ export async function getCustomersPage({
 
   const debtClause =
     debtFilter === "HAS_DEBT"
-      ? Prisma.sql`AND COALESCE(inv.total_purchased, 0) - COALESCE(inv.total_paid, 0) > 0`
+      ? Prisma.sql`AND c.balance < 0`
       : debtFilter === "NO_DEBT"
-        ? Prisma.sql`AND COALESCE(inv.total_purchased, 0) - COALESCE(inv.total_paid, 0) <= 0`
+        ? Prisma.sql`AND c.balance >= 0`
         : Prisma.empty;
 
   const rows = await prisma.$queryRaw<
@@ -36,7 +36,7 @@ export async function getCustomersPage({
       ordersCount: bigint;
       totalPurchased: string;
       totalPaid: string;
-      totalDebt: string;
+      balance: string;
       totalCount: bigint;
     }[]
   >`
@@ -45,7 +45,7 @@ export async function getCustomersPage({
       COALESCE(ord.orders_count, 0)::bigint AS "ordersCount",
       COALESCE(inv.total_purchased, 0)::numeric AS "totalPurchased",
       COALESCE(inv.total_paid, 0)::numeric AS "totalPaid",
-      (COALESCE(inv.total_purchased, 0) - COALESCE(inv.total_paid, 0))::numeric AS "totalDebt",
+      c.balance::numeric AS "balance",
       COUNT(*) OVER()::bigint AS "totalCount"
     FROM "Customer" c
     LEFT JOIN (
@@ -76,15 +76,28 @@ export async function getCustomersPage({
       _count: { orders: Number(row.ordersCount) },
       totalPurchased: Number(row.totalPurchased),
       totalPaid: Number(row.totalPaid),
-      totalDebt: Number(row.totalDebt),
+      balance: Number(row.balance),
     })),
     total,
     pageSize: CUSTOMERS_PAGE_SIZE,
   };
 }
 
+export async function getCustomersOwingSummary() {
+  const rows = await prisma.$queryRaw<{ count: bigint; totalOwed: string }[]>`
+    SELECT COUNT(*)::bigint AS count, COALESCE(SUM(-balance), 0)::numeric AS "totalOwed"
+    FROM "Customer"
+    WHERE balance < 0
+  `;
+
+  return {
+    count: Number(rows[0]?.count ?? 0),
+    totalOwed: Number(rows[0]?.totalOwed ?? 0),
+  };
+}
+
 export async function getCustomerOptions() {
-  return prisma.customer.findMany({
+  const customers = await prisma.customer.findMany({
     orderBy: { name: "asc" },
     select: {
       id: true,
@@ -93,8 +106,14 @@ export async function getCustomerOptions() {
       email: true,
       address: true,
       notes: true,
+      balance: true,
     },
   });
+
+  return customers.map((customer) => ({
+    ...customer,
+    balance: Number(customer.balance),
+  }));
 }
 
 export async function getCustomerById(id: string) {
@@ -164,7 +183,7 @@ export async function getCustomerProfile(id: string) {
   const customer = await prisma.customer.findUnique({ where: { id } });
   if (!customer) return null;
 
-  const [orders, invoices] = await Promise.all([
+  const [orders, invoices, balanceHistory] = await Promise.all([
     prisma.order.findMany({
       where: { customerId: id },
       orderBy: { createdAt: "desc" },
@@ -178,6 +197,10 @@ export async function getCustomerProfile(id: string) {
         payments: { orderBy: { createdAt: "desc" } },
       },
     }),
+    prisma.customerBalanceHistory.findMany({
+      where: { customerId: id },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   const totalPurchased = invoices.reduce(
@@ -186,11 +209,6 @@ export async function getCustomerProfile(id: string) {
   );
   const totalPaid = invoices.reduce(
     (sum, invoice) => sum + Number(invoice.paidAmount),
-    0,
-  );
-  const totalDebt = invoices.reduce(
-    (sum, invoice) =>
-      sum + Math.max(0, Number(invoice.total) - Number(invoice.paidAmount)),
     0,
   );
 
@@ -209,6 +227,7 @@ export async function getCustomerProfile(id: string) {
     orders,
     invoices,
     payments,
-    totals: { totalPurchased, totalPaid, totalDebt },
+    balanceHistory,
+    totals: { totalPurchased, totalPaid, balance: Number(customer.balance) },
   };
 }

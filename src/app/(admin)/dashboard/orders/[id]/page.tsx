@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { getOrderById } from "@/features/orders/queries";
 import { getCustomerOptions } from "@/features/customers/queries";
+import { getProductPickerOptions } from "@/features/products/queries";
 import { OrderStatusSelect } from "@/features/orders/components/order-status-select";
 import { OrderItemsPriceForm } from "@/features/orders/components/order-items-price-form";
 import { GenerateInvoiceDialog } from "@/features/orders/components/generate-invoice-dialog";
 import { OrderCustomerCard } from "@/features/orders/components/order-customer-card";
+import { InvoiceLockedNotice } from "@/features/orders/components/invoice-locked-notice";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
@@ -36,14 +38,25 @@ export default async function OrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [order, customers] = await Promise.all([
+  const [order, customers, productRows] = await Promise.all([
     getOrderById(id),
     getCustomerOptions(),
+    getProductPickerOptions(),
   ]);
   if (!order) notFound();
 
+  const products = productRows.map((product) => ({
+    id: product.id,
+    name: product.name,
+    sku: product.sku,
+    price1: Number(product.price1),
+    price2: Number(product.price2),
+    price3: Number(product.price3),
+  }));
+
   const message = buildDefaultMessage(order);
   const whatsappUrl = buildWhatsAppUrl(order.customerPhone, message);
+  const locked = Boolean(order.invoice);
 
   return (
     <div className="space-y-6">
@@ -72,6 +85,7 @@ export default async function OrderDetailPage({
                 orderId={order.id}
                 items={order.items.map((item) => ({
                   id: item.id,
+                  productId: item.productId,
                   productName: item.product.name,
                   quantity: item.quantity,
                   price: Number(item.price),
@@ -82,6 +96,10 @@ export default async function OrderDetailPage({
                     price3: Number(item.product.price3),
                   },
                 }))}
+                products={products}
+                locked={locked}
+                invoiceId={order.invoice?.id}
+                invoiceNumber={order.invoice?.invoiceNumber}
               />
             </CardContent>
           </Card>
@@ -92,20 +110,19 @@ export default async function OrderDetailPage({
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               {order.invoice ? (
-                <Button
-                  variant="secondary"
-                  nativeButton={false}
-                  render={
-                    <Link href={`/dashboard/invoices/${order.invoice.id}`} />
-                  }
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  عرض الفاتورة
-                </Button>
+                <InvoiceLockedNotice
+                  invoiceId={order.invoice.id}
+                  invoiceNumber={order.invoice.invoiceNumber}
+                  message="تم إصدار فاتورة لهذا الطلب بالفعل. لتسجيل دفعات أو تعديل الفاتورة، يرجى الانتقال إلى صفحتها مباشرة."
+                />
               ) : (
                 <GenerateInvoiceDialog
                   orderId={order.id}
                   orderTotal={Number(order.total)}
+                  customerBalance={
+                    order.customer ? Number(order.customer.balance) : 0
+                  }
+                  hasCustomer={Boolean(order.customer)}
                 />
               )}
               <Button
@@ -134,7 +151,18 @@ export default async function OrderDetailPage({
           <OrderCustomerCard
             orderId={order.id}
             customers={customers}
-            currentCustomer={order.customer}
+            currentCustomer={
+              order.customer
+                ? {
+                    id: order.customer.id,
+                    name: order.customer.name,
+                    phone: order.customer.phone,
+                    email: order.customer.email,
+                    address: order.customer.address,
+                    notes: order.customer.notes,
+                  }
+                : null
+            }
             snapshot={{
               name: order.customerName,
               phone: order.customerPhone,
@@ -142,6 +170,9 @@ export default async function OrderDetailPage({
             }}
             createdAt={order.createdAt}
             notes={order.notes}
+            locked={locked}
+            invoiceId={order.invoice?.id}
+            invoiceNumber={order.invoice?.invoiceNumber}
           />
 
           <Card>

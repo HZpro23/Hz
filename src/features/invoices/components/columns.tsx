@@ -5,8 +5,7 @@ import { Eye } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
-import { deleteInvoice } from "@/features/invoices/actions";
+import { InvoiceDeleteDialog } from "@/features/invoices/components/invoice-delete-dialog";
 import { INVOICE_LANGUAGE_LABELS } from "@/features/invoices/schema";
 import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { formatCurrency } from "@/lib/currency";
@@ -22,6 +21,7 @@ export type InvoiceRow = {
   paymentStatus: PaymentStatus;
   createdAt: Date;
   _count: { items: number };
+  balanceEffectApplied: number;
 };
 
 export const invoiceColumns: ColumnDef<InvoiceRow>[] = [
@@ -83,9 +83,17 @@ export const invoiceColumns: ColumnDef<InvoiceRow>[] = [
         >
           <Eye className="size-4" />
         </Button>
-        <ConfirmDeleteDialog
-          action={() => deleteInvoice(row.original.id)}
-          description={`سيتم حذف الفاتورة "${row.original.invoiceNumber}" نهائياً.`}
+        <InvoiceDeleteDialog
+          invoice={{
+            id: row.original.id,
+            invoiceNumber: row.original.invoiceNumber,
+            customerName: row.original.customerName,
+            customerPhone: row.original.customerPhone,
+            total: row.original.total,
+            paymentStatus: row.original.paymentStatus,
+            createdAt: row.original.createdAt,
+            balanceEffectApplied: row.original.balanceEffectApplied,
+          }}
         />
       </div>
     ),

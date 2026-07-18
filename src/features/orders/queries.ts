@@ -4,17 +4,21 @@ import type { Prisma, OrderStatus } from "@/generated/prisma/client";
 
 export const ORDERS_PAGE_SIZE = 10;
 
+export type OrderInvoiceFilter = "NO_INVOICE" | "HAS_INVOICE";
+
 export async function getOrdersPage({
   query,
   status,
   from,
   to,
+  invoiceFilter,
   page,
 }: {
   query?: string;
   status?: OrderStatus;
   from?: string;
   to?: string;
+  invoiceFilter?: OrderInvoiceFilter;
   page: number;
 }) {
   const createdAtFilter: Prisma.DateTimeFilter = {};
@@ -33,6 +37,11 @@ export async function getOrdersPage({
       : {}),
     ...(status ? { status } : {}),
     ...(from || to ? { createdAt: createdAtFilter } : {}),
+    ...(invoiceFilter === "NO_INVOICE"
+      ? { invoice: null }
+      : invoiceFilter === "HAS_INVOICE"
+        ? { invoice: { isNot: null } }
+        : {}),
   };
 
   const [items, total] = await Promise.all([
@@ -71,7 +80,15 @@ export async function getOrderById(id: string) {
           },
         },
       },
-      invoice: { select: { id: true } },
+      invoice: {
+        select: {
+          id: true,
+          invoiceNumber: true,
+          total: true,
+          paidAmount: true,
+          paymentStatus: true,
+        },
+      },
       customer: true,
     },
   });

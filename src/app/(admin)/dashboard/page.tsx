@@ -39,8 +39,8 @@ export default async function DashboardPage() {
           variant="warning"
         />
         <StatCard
-          title={ar.dashboardCards.outstandingDebt}
-          value={stats.totalOutstandingDebt}
+          title={ar.dashboardCards.totalOwedByCustomers}
+          value={stats.totalOwedByCustomers}
           icon={Wallet}
           variant="warning"
           formatValue={(value) => formatCurrency(value)}

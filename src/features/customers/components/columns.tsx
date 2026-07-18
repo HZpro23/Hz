@@ -17,7 +17,7 @@ export type CustomerRow = {
   _count: { orders: number };
   totalPurchased: number;
   totalPaid: number;
-  totalDebt: number;
+  balance: number;
 };
 
 export function getCustomerColumns(
@@ -53,15 +53,24 @@ export function getCustomerColumns(
       cell: ({ row }) => formatCurrency(row.original.totalPaid),
     },
     {
-      id: "totalDebt",
-      header: ar.customers.totalDebt,
-      cell: ({ row }) => (
-        <span
-          className={row.original.totalDebt > 0 ? "text-destructive font-medium" : undefined}
-        >
-          {formatCurrency(row.original.totalDebt)}
-        </span>
-      ),
+      id: "balance",
+      header: ar.customers.balance,
+      cell: ({ row }) => {
+        const balance = row.original.balance;
+        return (
+          <span
+            className={
+              balance < 0
+                ? "text-destructive font-medium"
+                : balance > 0
+                  ? "text-emerald-600 font-medium dark:text-emerald-400"
+                  : undefined
+            }
+          >
+            {formatCurrency(balance)}
+          </span>
+        );
+      },
     },
     {
       id: "actions",

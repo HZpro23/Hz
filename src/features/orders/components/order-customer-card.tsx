@@ -10,6 +10,7 @@ import {
   type CustomerOption,
 } from "@/features/customers/components/customer-picker";
 import { CustomerFormSheet } from "@/features/customers/components/customer-form-sheet";
+import { InvoiceLockedNotice } from "@/features/orders/components/invoice-locked-notice";
 import { reassignOrderCustomer } from "@/features/orders/actions";
 import { ar } from "@/i18n/ar";
 
@@ -29,6 +30,9 @@ export function OrderCustomerCard({
   snapshot,
   createdAt,
   notes,
+  locked = false,
+  invoiceId,
+  invoiceNumber,
 }: {
   orderId: string;
   customers: CustomerOption[];
@@ -36,6 +40,9 @@ export function OrderCustomerCard({
   snapshot: { name: string; phone: string; email: string | null };
   createdAt: Date;
   notes: string | null;
+  locked?: boolean;
+  invoiceId?: string;
+  invoiceNumber?: string;
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -98,18 +105,28 @@ export function OrderCustomerCard({
           )}
 
           <div className="space-y-1.5 border-t pt-3">
-            <p className="text-xs text-muted-foreground">
-              {ar.customers.changeCustomer}
-            </p>
-            <CustomerPicker
-              customers={customers}
-              value={currentCustomer?.id ?? ""}
-              onChange={handleReassign}
-            />
-            {isPending && (
-              <p className="text-xs text-muted-foreground">
-                جاري التحديث...
-              </p>
+            {locked && invoiceId && invoiceNumber ? (
+              <InvoiceLockedNotice
+                invoiceId={invoiceId}
+                invoiceNumber={invoiceNumber}
+                message="تم إصدار فاتورة لهذا الطلب، لذلك لا يمكن تغيير العميل بعد الآن."
+              />
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  {ar.customers.changeCustomer}
+                </p>
+                <CustomerPicker
+                  customers={customers}
+                  value={currentCustomer?.id ?? ""}
+                  onChange={handleReassign}
+                />
+                {isPending && (
+                  <p className="text-xs text-muted-foreground">
+                    جاري التحديث...
+                  </p>
+                )}
+              </>
             )}
           </div>
         </CardContent>

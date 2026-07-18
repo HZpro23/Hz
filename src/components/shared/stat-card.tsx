@@ -12,10 +12,12 @@ export function StatCard({
   title: string;
   value: number;
   icon: LucideIcon;
-  variant?: "default" | "warning";
+  variant?: "default" | "warning" | "balance";
   formatValue?: (value: number) => string;
 }) {
   const isWarning = variant === "warning" && value > 0;
+  const isNegativeBalance = variant === "balance" && value < 0;
+  const isPositiveBalance = variant === "balance" && value > 0;
 
   return (
     <Card className="gap-3 transition-shadow hover:shadow-md">
@@ -25,7 +27,8 @@ export function StatCard({
           <p
             className={cn(
               "text-3xl font-bold tracking-tight",
-              isWarning && "text-destructive",
+              (isWarning || isNegativeBalance) && "text-destructive",
+              isPositiveBalance && "text-emerald-600 dark:text-emerald-400",
             )}
           >
             {formatValue ? formatValue(value) : value.toLocaleString("ar")}
@@ -34,9 +37,11 @@ export function StatCard({
         <div
           className={cn(
             "flex size-11 shrink-0 items-center justify-center rounded-xl",
-            isWarning
+            isWarning || isNegativeBalance
               ? "bg-destructive/10 text-destructive"
-              : "bg-primary/10 text-primary",
+              : isPositiveBalance
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                : "bg-primary/10 text-primary",
           )}
         >
           <Icon className="size-5" />

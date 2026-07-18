@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { customerSchema } from "@/features/customers/schema";
 import { normalizeArabicName } from "@/lib/arabic-name";
 import { findSimilarCustomers } from "@/features/customers/queries";
+import { adjustCustomerBalance } from "@/features/customers/balance";
 
 type ActionResult = { error?: string; success?: boolean };
 type CreateCustomerResult = ActionResult & { customerId?: string };
@@ -58,6 +59,32 @@ export async function updateCustomer(
 
   revalidatePath("/dashboard/customers");
   revalidatePath(`/dashboard/customers/${id}`);
+  return { success: true };
+}
+
+export async function adjustCustomerBalanceManual(
+  customerId: string,
+  input: { delta: number; note?: string },
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+
+  if (!Number.isFinite(input.delta) || Math.abs(input.delta) < 0.005) {
+    return { error: "الرجاء إدخال مبلغ صحيح" };
+  }
+
+  const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+  if (!customer) return { error: "العميل غير موجود" };
+
+  await prisma.$transaction(async (tx) => {
+    await adjustCustomerBalance(tx, customerId, input.delta, {
+      reason: "MANUAL_ADJUSTMENT",
+      note: input.note,
+    });
+  });
+
+  revalidatePath(`/dashboard/customers/${customerId}`);
+  revalidatePath("/dashboard/customers");
   return { success: true };
 }
 
