@@ -12,7 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/data-table/data-table";
-import { orderColumns, type OrderRow } from "@/features/orders/components/columns";
+import {
+  orderColumns,
+  type OrderRow,
+} from "@/features/orders/components/columns";
 import { ORDER_STATUS_LABELS } from "@/features/orders/schema";
 import { deleteOrders } from "@/features/orders/actions";
 
@@ -66,7 +69,7 @@ export function OrdersTable({
       {searchable && (
         <div className="flex flex-wrap items-end gap-3">
           <div className="relative max-w-sm flex-1">
-            <Search className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute inset-e-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(event) => handleQueryChange(event.target.value)}
