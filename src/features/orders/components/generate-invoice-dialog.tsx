@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { FileText, Plus, Trash2 } from "lucide-react";
+import { FileText, Plus, Trash2, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -177,6 +177,7 @@ export function GenerateInvoiceDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <fieldset disabled={isPending} className="contents">
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>لغة الفاتورة</Label>
@@ -324,9 +325,11 @@ export function GenerateInvoiceDialog({
             disabled={isPending}
             onClick={handleSubmit}
           >
+            {isPending && <Loader2 className="size-4 animate-spin" />}
             {isPending ? "جاري الإنشاء..." : "إنشاء الفاتورة"}
           </Button>
         </div>
+        </fieldset>
       </DialogContent>
     </Dialog>
 

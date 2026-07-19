@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -96,6 +96,7 @@ export function RecordMovementDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <fieldset disabled={isPending} className="contents">
           <div className="space-y-2">
             <Label>المنتج</Label>
             <Controller
@@ -186,8 +187,10 @@ export function RecordMovementDialog({
             className="w-full cursor-pointer"
             disabled={isPending}
           >
+            {isPending && <Loader2 className="size-4 animate-spin" />}
             {isPending ? "جاري الحفظ..." : "حفظ"}
           </Button>
+        </fieldset>
         </form>
       </DialogContent>
     </Dialog>

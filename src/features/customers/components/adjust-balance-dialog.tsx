@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Wallet, Plus, Minus } from "lucide-react";
+import { Wallet, Plus, Minus, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -83,6 +83,7 @@ export function AdjustBalanceDialog({
           <DialogDescription>{ar.customers.adjustBalanceDescription}</DialogDescription>
         </DialogHeader>
 
+        <fieldset disabled={isPending} className="contents">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2">
             <Button
@@ -167,9 +168,11 @@ export function AdjustBalanceDialog({
             disabled={isPending || !(amount > 0)}
             onClick={handleSubmit}
           >
+            {isPending && <Loader2 className="size-4 animate-spin" />}
             {isPending ? "جاري الحفظ..." : ar.customers.confirmAdjustment}
           </Button>
         </div>
+        </fieldset>
       </DialogContent>
     </Dialog>
   );

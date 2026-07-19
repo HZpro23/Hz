@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -205,6 +205,7 @@ export function OrderForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
+      <fieldset disabled={isPending} className="contents">
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card>
@@ -336,6 +337,7 @@ export function OrderForm({
                 disabled={isPending}
                 className="w-full cursor-pointer"
               >
+                {isPending && <Loader2 className="size-4 animate-spin" />}
                 {isPending ? "جاري الإنشاء..." : "إنشاء الطلب"}
               </Button>
             </CardContent>
@@ -426,6 +428,7 @@ export function OrderForm({
           </Card>
         </div>
       </div>
+      </fieldset>
 
       {selectedCustomer && (
         <CustomerFormSheet

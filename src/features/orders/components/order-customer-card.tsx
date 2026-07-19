@@ -116,11 +116,13 @@ export function OrderCustomerCard({
                 <p className="text-xs text-muted-foreground">
                   {ar.customers.changeCustomer}
                 </p>
-                <CustomerPicker
-                  customers={customers}
-                  value={currentCustomer?.id ?? ""}
-                  onChange={handleReassign}
-                />
+                <fieldset disabled={isPending} className="contents">
+                  <CustomerPicker
+                    customers={customers}
+                    value={currentCustomer?.id ?? ""}
+                    onChange={handleReassign}
+                  />
+                </fieldset>
                 {isPending && (
                   <p className="text-xs text-muted-foreground">
                     جاري التحديث...

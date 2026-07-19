@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { customerSchema } from "@/features/customers/schema";
 import { normalizeArabicName } from "@/lib/arabic-name";
-import { findSimilarCustomers } from "@/features/customers/queries";
+import { findCustomerByPhone } from "@/features/customers/queries";
 import { adjustCustomerBalance } from "@/features/customers/balance";
 
 type ActionResult = { error?: string; success?: boolean };
@@ -19,6 +19,14 @@ export async function createCustomer(
 
   const parsed = customerSchema.safeParse(input);
   if (!parsed.success) return { error: "الرجاء التحقق من البيانات المدخلة" };
+
+  const existing = await prisma.customer.findFirst({
+    where: { phone: parsed.data.phone },
+    select: { id: true },
+  });
+  if (existing) {
+    return { error: "يوجد عميل مسجل بنفس رقم الهاتف بالفعل" };
+  }
 
   const customer = await prisma.customer.create({
     data: {
@@ -44,6 +52,14 @@ export async function updateCustomer(
 
   const parsed = customerSchema.safeParse(input);
   if (!parsed.success) return { error: "الرجاء التحقق من البيانات المدخلة" };
+
+  const existing = await prisma.customer.findFirst({
+    where: { phone: parsed.data.phone, id: { not: id } },
+    select: { id: true },
+  });
+  if (existing) {
+    return { error: "يوجد عميل مسجل بنفس رقم الهاتف بالفعل" };
+  }
 
   await prisma.customer.update({
     where: { id },
@@ -88,14 +104,14 @@ export async function adjustCustomerBalanceManual(
   return { success: true };
 }
 
-export async function findSimilarCustomersAction(
-  name: string,
+export async function findCustomerByPhoneAction(
+  phone: string,
   excludeId?: string,
 ) {
   const session = await auth();
   if (!session?.user) return [];
-  if (name.trim().length < 2) return [];
-  return findSimilarCustomers(name, excludeId);
+  if (phone.trim().length < 6) return [];
+  return findCustomerByPhone(phone, excludeId);
 }
 
 export async function deleteCustomer(id: string): Promise<ActionResult> {

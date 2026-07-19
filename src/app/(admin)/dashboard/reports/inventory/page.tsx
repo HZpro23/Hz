@@ -11,13 +11,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/shared/page-header";
-import { getInventoryReportData } from "@/features/reports/queries";
+import { DataTablePagination } from "@/components/data-table/data-table-pagination";
+import { getInventoryReportPage } from "@/features/reports/queries";
 import { ReportExportButtons } from "@/features/reports/components/report-export-buttons";
 
 export const dynamic = "force-dynamic";
 
-export default async function InventoryReportPage() {
-  const products = await getInventoryReportData();
+export default async function InventoryReportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const params = await searchParams;
+  const page = Math.max(1, Number(params.page) || 1);
+  const {
+    items: products,
+    total,
+    pageSize,
+  } = await getInventoryReportPage({ page });
 
   return (
     <div className="space-y-6">
@@ -77,6 +88,15 @@ export default async function InventoryReportPage() {
           ))}
         </TableBody>
       </Table>
+      <div className="print:hidden">
+        <DataTablePagination
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          basePath="/dashboard/reports/inventory"
+          searchParams={{}}
+        />
+      </div>
     </div>
   );
 }

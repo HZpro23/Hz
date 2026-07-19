@@ -112,7 +112,7 @@ export const ar = {
     noOrders: "لا توجد طلبات لهذا العميل",
     noInvoices: "لا توجد فواتير لهذا العميل",
     noPayments: "لا توجد دفعات مسجلة",
-    similarCustomersHint: "عملاء بأسماء مشابهة",
+    matchingPhoneHint: "يوجد عميل مسجل بنفس رقم الهاتف",
     debtFilterLabel: "حالة الدين",
     debtFilterAll: "الكل",
     createNewCustomer: "إنشاء عميل جديد",

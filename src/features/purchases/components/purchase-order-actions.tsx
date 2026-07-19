@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { PackageCheck, XCircle } from "lucide-react";
+import { PackageCheck, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,11 +41,19 @@ export function PurchaseOrderActions({
   return (
     <div className="flex flex-col gap-2">
       <Button onClick={handleReceive} disabled={isPending}>
-        <PackageCheck className="size-4" />
+        {isPending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <PackageCheck className="size-4" />
+        )}
         استلام البضاعة
       </Button>
       <Button variant="outline" onClick={handleCancel} disabled={isPending}>
-        <XCircle className="size-4" />
+        {isPending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <XCircle className="size-4" />
+        )}
         إلغاء الأمر
       </Button>
     </div>

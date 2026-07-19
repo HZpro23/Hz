@@ -152,28 +152,26 @@ export async function searchCustomers(query: string, excludeId?: string) {
   `;
 }
 
-export async function findSimilarCustomers(name: string, excludeId?: string) {
-  const normalized = normalizeArabicName(name);
-  if (!normalized) return [];
+/**
+ * Duplicate-customer check used while adding/editing a customer: phone
+ * numbers are exact identifiers (unlike names, which vary in spelling), so
+ * this looks for an exact match rather than a fuzzy one.
+ */
+export async function findCustomerByPhone(phone: string, excludeId?: string) {
+  const trimmed = phone.trim();
+  if (trimmed.length < 6) return [];
 
   const excludeClause = excludeId
     ? Prisma.sql`AND id != ${excludeId}`
     : Prisma.empty;
 
   const rows = await prisma.$queryRaw<
-    {
-      id: string;
-      name: string;
-      phone: string;
-      email: string | null;
-      score: number;
-    }[]
+    { id: string; name: string; phone: string; email: string | null }[]
   >`
-    SELECT id, name, phone, email, similarity("nameNormalized", ${normalized}) AS score
+    SELECT id, name, phone, email
     FROM "Customer"
-    WHERE similarity("nameNormalized", ${normalized}) > 0.3
+    WHERE phone = ${trimmed}
       ${excludeClause}
-    ORDER BY score DESC
     LIMIT 5
   `;
   return rows;

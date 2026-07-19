@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -151,6 +151,7 @@ export function CartPageContent() {
                           size="sm"
                           variant="outline"
                           className="cursor-pointer"
+                          disabled={isSubmitting}
                           onClick={() =>
                             updateQuantity(item.productId, item.quantity - 1)
                           }
@@ -162,6 +163,7 @@ export function CartPageContent() {
                           size="sm"
                           variant="outline"
                           className="cursor-pointer"
+                          disabled={isSubmitting}
                           onClick={() =>
                             updateQuantity(item.productId, item.quantity + 1)
                           }
@@ -175,6 +177,7 @@ export function CartPageContent() {
                         size="sm"
                         variant="destructive"
                         className="cursor-pointer"
+                        disabled={isSubmitting}
                         onClick={() => removeItem(item.productId)}
                       >
                         حذف
@@ -198,6 +201,7 @@ export function CartPageContent() {
             <Button
               variant="outline"
               onClick={() => clearCart()}
+              disabled={isSubmitting}
               className="text-destructive hover:text-destructive cursor-pointer"
             >
               مسح السلة
@@ -218,6 +222,7 @@ export function CartPageContent() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <fieldset disabled={isSubmitting} className="contents">
               <div className="space-y-2">
                 <Label htmlFor="name">الاسم *</Label>
                 <Input
@@ -280,8 +285,10 @@ export function CartPageContent() {
                 className="w-full cursor-pointer"
                 disabled={isSubmitting}
               >
+                {isSubmitting && <Loader2 className="size-4 animate-spin" />}
                 {isSubmitting ? "جاري المعالجة..." : "طلب المنتجات"}
               </Button>
+              </fieldset>
             </form>
           </CardContent>
         </Card>

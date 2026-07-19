@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -140,7 +140,8 @@ export function InvoiceBalanceDeleteContent({
           {ar.common.cancel}
         </Button>
         <Button disabled={disabled} onClick={() => onConfirm(applyChange)}>
-          {ar.invoices.deleteConfirmAndDelete}
+          {disabled && <Loader2 className="size-4 animate-spin" />}
+          {disabled ? "جاري الحذف..." : ar.invoices.deleteConfirmAndDelete}
         </Button>
       </AlertDialogFooter>
     </>
@@ -217,7 +218,8 @@ export function InvoiceDeleteDialog({
             <AlertDialogFooter>
               <AlertDialogCancel>{ar.common.cancel}</AlertDialogCancel>
               <AlertDialogAction disabled={isPending} onClick={handleConfirm}>
-                {ar.common.delete}
+                {isPending && <Loader2 className="size-4 animate-spin" />}
+                {isPending ? "جاري الحذف..." : ar.common.delete}
               </AlertDialogAction>
             </AlertDialogFooter>
           </>

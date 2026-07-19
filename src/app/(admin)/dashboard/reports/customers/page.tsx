@@ -10,14 +10,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/shared/page-header";
-import { getCustomersReportData } from "@/features/reports/queries";
+import { DataTablePagination } from "@/components/data-table/data-table-pagination";
+import { getCustomersReportPage } from "@/features/reports/queries";
 import { ReportExportButtons } from "@/features/reports/components/report-export-buttons";
 import { formatCurrency } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
-export default async function CustomersReportPage() {
-  const customers = await getCustomersReportData();
+export default async function CustomersReportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const params = await searchParams;
+  const page = Math.max(1, Number(params.page) || 1);
+  const {
+    items: customers,
+    total,
+    pageSize,
+  } = await getCustomersReportPage({ page });
 
   return (
     <div className="space-y-6">
@@ -61,6 +72,15 @@ export default async function CustomersReportPage() {
           ))}
         </TableBody>
       </Table>
+      <div className="print:hidden">
+        <DataTablePagination
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          basePath="/dashboard/reports/customers"
+          searchParams={{}}
+        />
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { FormSheet } from "@/components/shared/form-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,16 +18,15 @@ import {
 import {
   createCustomer,
   updateCustomer,
-  findSimilarCustomersAction,
+  findCustomerByPhoneAction,
 } from "@/features/customers/actions";
 import { ar } from "@/i18n/ar";
 
-type SimilarCustomer = {
+type MatchingCustomer = {
   id: string;
   name: string;
   phone: string;
   email: string | null;
-  score: number;
 };
 
 type CustomerRecord = {
@@ -69,21 +69,21 @@ export function CustomerFormSheet({
     },
   });
 
-  const nameValue = watch("name");
-  const [similarCustomers, setSimilarCustomers] = useState<SimilarCustomer[]>(
+  const phoneValue = watch("phone");
+  const [matchingCustomers, setMatchingCustomers] = useState<MatchingCustomer[]>(
     [],
   );
 
   useEffect(() => {
-    if (customer || !nameValue || nameValue.trim().length < 2) {
-      setSimilarCustomers([]);
+    if (customer || !phoneValue || phoneValue.trim().length < 6) {
+      setMatchingCustomers([]);
       return;
     }
     const timeout = setTimeout(() => {
-      findSimilarCustomersAction(nameValue).then(setSimilarCustomers);
+      findCustomerByPhoneAction(phoneValue).then(setMatchingCustomers);
     }, 400);
     return () => clearTimeout(timeout);
-  }, [nameValue, customer]);
+  }, [phoneValue, customer]);
 
   function close() {
     if (onOpenChange) {
@@ -124,6 +124,7 @@ export function CustomerFormSheet({
       title={customer ? "تعديل بيانات العميل" : "إضافة عميل جديد"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <fieldset disabled={isPending} className="contents">
         <div className="space-y-2">
           <Label htmlFor="customer-name">الاسم الكامل</Label>
           <Input
@@ -134,13 +135,20 @@ export function CustomerFormSheet({
           {errors.name && (
             <p className="text-sm text-destructive">{errors.name.message}</p>
           )}
-          {similarCustomers.length > 0 && (
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="customer-phone">رقم الهاتف / واتساب</Label>
+          <Input id="customer-phone" dir="ltr" {...register("phone")} />
+          {errors.phone && (
+            <p className="text-sm text-destructive">{errors.phone.message}</p>
+          )}
+          {matchingCustomers.length > 0 && (
             <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-2 text-sm">
               <p className="mb-1 font-medium">
-                {ar.customers.similarCustomersHint}
+                {ar.customers.matchingPhoneHint}
               </p>
               <ul className="space-y-1">
-                {similarCustomers.map((match) => (
+                {matchingCustomers.map((match) => (
                   <li key={match.id}>
                     <button
                       type="button"
@@ -163,13 +171,6 @@ export function CustomerFormSheet({
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="customer-phone">رقم الهاتف / واتساب</Label>
-          <Input id="customer-phone" dir="ltr" {...register("phone")} />
-          {errors.phone && (
-            <p className="text-sm text-destructive">{errors.phone.message}</p>
-          )}
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="customer-email">البريد الإلكتروني (اختياري)</Label>
           <Input id="customer-email" dir="ltr" {...register("email")} />
           {errors.email && (
@@ -189,8 +190,10 @@ export function CustomerFormSheet({
           className="w-full cursor-pointer"
           disabled={isPending}
         >
+          {isPending && <Loader2 className="size-4 animate-spin" />}
           {isPending ? "جاري الحفظ..." : ar.common.save}
         </Button>
+      </fieldset>
       </form>
     </FormSheet>
   );

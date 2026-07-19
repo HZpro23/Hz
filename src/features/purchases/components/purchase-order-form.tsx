@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +68,7 @@ export function PurchaseOrderForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <fieldset disabled={isPending} className="contents">
       <div className="space-y-2">
         <Label>المورد</Label>
         <Controller
@@ -178,9 +179,11 @@ export function PurchaseOrderForm({
       <div className="flex items-center justify-between border-t pt-4">
         <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
         <Button type="submit" className="cursor-pointer" disabled={isPending}>
+          {isPending && <Loader2 className="size-4 animate-spin" />}
           {isPending ? "جاري الحفظ..." : "إنشاء أمر الشراء"}
         </Button>
       </div>
+      </fieldset>
     </form>
   );
 }

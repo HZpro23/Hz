@@ -79,14 +79,32 @@ export async function createOrderFromCart(
       };
     });
 
-    // Create or find customer — only reuse an existing customer when the
-    // (normalized) name is an exact match, to avoid creating duplicates.
+    // Create or find customer — phone number is the real identifier here
+    // (unlike names, which vary in spelling), so reuse an existing customer
+    // whenever this phone number is already on file instead of creating a
+    // duplicate record for the same person.
     const normalizedName = normalizeArabicName(validatedData.customerName);
     let customer = await prisma.customer.findFirst({
-      where: { nameNormalized: normalizedName },
+      where: { phone: validatedData.customerPhone },
     });
 
-    if (!customer) {
+    if (customer) {
+      const updates: { name?: string; nameNormalized?: string; email?: string } =
+        {};
+      if (customer.name !== validatedData.customerName) {
+        updates.name = validatedData.customerName;
+        updates.nameNormalized = normalizedName;
+      }
+      if (validatedData.customerEmail && customer.email !== validatedData.customerEmail) {
+        updates.email = validatedData.customerEmail;
+      }
+      if (Object.keys(updates).length > 0) {
+        customer = await prisma.customer.update({
+          where: { id: customer.id },
+          data: updates,
+        });
+      }
+    } else {
       customer = await prisma.customer.create({
         data: {
           name: validatedData.customerName,

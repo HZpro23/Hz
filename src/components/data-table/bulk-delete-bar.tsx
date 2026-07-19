@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -48,7 +48,12 @@ export function BulkDeleteBar({
         {count.toLocaleString("ar")} عنصر محدد
       </p>
       <div className="flex gap-2">
-        <Button variant="ghost" size="sm" onClick={onClearSelection}>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={isPending}
+          onClick={onClearSelection}
+        >
           إلغاء التحديد
         </Button>
         <AlertDialog open={open} onOpenChange={setOpen}>
@@ -71,7 +76,8 @@ export function BulkDeleteBar({
             <AlertDialogFooter>
               <AlertDialogCancel>{ar.common.cancel}</AlertDialogCancel>
               <AlertDialogAction disabled={isPending} onClick={handleConfirm}>
-                {ar.common.delete}
+                {isPending && <Loader2 className="size-4 animate-spin" />}
+                {isPending ? "جاري الحذف..." : ar.common.delete}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

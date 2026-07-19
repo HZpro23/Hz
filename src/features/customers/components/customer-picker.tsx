@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
 import {
   Combobox,
   ComboboxValue,
@@ -151,6 +151,7 @@ export function CustomerPicker({
             <DialogTitle>{ar.customers.createNewCustomer}</DialogTitle>
           </DialogHeader>
           <form action={handleCreate} className="space-y-4">
+            <fieldset disabled={isPending} className="contents">
             <div className="space-y-2">
               <Label htmlFor="picker-customer-name">الاسم الكامل</Label>
               <Input
@@ -180,8 +181,10 @@ export function CustomerPicker({
               className="w-full cursor-pointer"
               disabled={isPending}
             >
+              {isPending && <Loader2 className="size-4 animate-spin" />}
               {isPending ? "جاري الحفظ..." : ar.common.save}
             </Button>
+            </fieldset>
           </form>
         </DialogContent>
       </Dialog>

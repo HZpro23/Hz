@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { FormSheet } from "@/components/shared/form-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +87,7 @@ export function BrandFormSheet({
       title={brand ? "تعديل العلامة التجارية" : "إضافة علامة تجارية"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <fieldset disabled={isPending} className="contents">
         <div className="space-y-2">
           <Label>شعار العلامة التجارية (اختياري)</Label>
           <Controller
@@ -119,8 +121,10 @@ export function BrandFormSheet({
           className="w-full cursor-pointer"
           disabled={isPending}
         >
+          {isPending && <Loader2 className="size-4 animate-spin" />}
           {isPending ? "جاري الحفظ..." : ar.common.save}
         </Button>
+      </fieldset>
       </form>
     </FormSheet>
   );
