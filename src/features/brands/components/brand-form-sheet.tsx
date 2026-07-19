@@ -87,7 +87,7 @@ export function BrandFormSheet({
       title={brand ? "تعديل العلامة التجارية" : "إضافة علامة تجارية"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <fieldset disabled={isPending} className="contents">
+      <fieldset disabled={isPending} className="contents space-y-4">
         <div className="space-y-2">
           <Label>شعار العلامة التجارية (اختياري)</Label>
           <Controller

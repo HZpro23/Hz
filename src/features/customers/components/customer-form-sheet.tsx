@@ -124,7 +124,7 @@ export function CustomerFormSheet({
       title={customer ? "تعديل بيانات العميل" : "إضافة عميل جديد"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <fieldset disabled={isPending} className="contents">
+      <fieldset disabled={isPending} className="contents space-y-4">
         <div className="space-y-2">
           <Label htmlFor="customer-name">الاسم الكامل</Label>
           <Input

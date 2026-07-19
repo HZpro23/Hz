@@ -68,7 +68,7 @@ export function PurchaseOrderForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-    <fieldset disabled={isPending} className="contents">
+    <fieldset disabled={isPending} className="contents space-y-6">
       <div className="space-y-2">
         <Label>المورد</Label>
         <Controller

@@ -151,7 +151,7 @@ export function CustomerPicker({
             <DialogTitle>{ar.customers.createNewCustomer}</DialogTitle>
           </DialogHeader>
           <form action={handleCreate} className="space-y-4">
-            <fieldset disabled={isPending} className="contents">
+            <fieldset disabled={isPending} className="contents space-y-4">
             <div className="space-y-2">
               <Label htmlFor="picker-customer-name">الاسم الكامل</Label>
               <Input

@@ -222,7 +222,7 @@ export function CartPageContent() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <fieldset disabled={isSubmitting} className="contents">
+              <fieldset disabled={isSubmitting} className="contents space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">الاسم *</Label>
                 <Input

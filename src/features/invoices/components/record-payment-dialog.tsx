@@ -173,7 +173,7 @@ export function RecordPaymentDialog({
           <DialogTitle>{ar.invoices.recordPayment}</DialogTitle>
         </DialogHeader>
         <form action={handleSubmit} className="space-y-4">
-        <fieldset disabled={isPending} className="contents">
+        <fieldset disabled={isPending} className="contents space-y-4">
           <div className="space-y-2">
             <Label htmlFor="payment-amount">{ar.invoices.amountPaid}</Label>
             <Input

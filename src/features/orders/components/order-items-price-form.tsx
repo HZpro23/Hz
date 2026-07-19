@@ -272,7 +272,7 @@ export function OrderItemsPriceForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <fieldset disabled={isPending} className="contents">
+      <fieldset disabled={isPending} className="contents space-y-4">
       <Table>
         <TableHeader>
           <TableRow>

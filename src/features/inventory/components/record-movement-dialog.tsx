@@ -96,7 +96,7 @@ export function RecordMovementDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <fieldset disabled={isPending} className="contents">
+        <fieldset disabled={isPending} className="contents space-y-4">
           <div className="space-y-2">
             <Label>المنتج</Label>
             <Controller

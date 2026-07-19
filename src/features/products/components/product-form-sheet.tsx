@@ -127,7 +127,7 @@ export function ProductFormSheet({
       title={product ? "تعديل المنتج" : "إضافة منتج جديد"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <fieldset disabled={isPending} className="contents">
+      <fieldset disabled={isPending} className="contents space-y-4">
         <div className="space-y-2">
           <Label>صور المنتج</Label>
           <Controller

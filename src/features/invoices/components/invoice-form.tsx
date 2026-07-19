@@ -306,7 +306,7 @@ export function InvoiceForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <fieldset disabled={isPending} className="contents">
+      <fieldset disabled={isPending} className="contents space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
           <Label>العميل</Label>

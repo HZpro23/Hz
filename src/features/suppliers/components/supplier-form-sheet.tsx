@@ -86,7 +86,7 @@ export function SupplierFormSheet({
       title={supplier ? "تعديل بيانات المورد" : "إضافة مورد جديد"}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <fieldset disabled={isPending} className="contents">
+      <fieldset disabled={isPending} className="contents space-y-4">
         <div className="space-y-2">
           <Label htmlFor="supplier-name">الاسم</Label>
           <Input id="supplier-name" {...register("name")} />
