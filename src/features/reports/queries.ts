@@ -31,6 +31,34 @@ export async function getInventoryReportPage({ page }: { page: number }) {
   return { items, total, pageSize: REPORTS_PAGE_SIZE };
 }
 
+export async function getProductsReportData() {
+  return prisma.product.findMany({
+    include: {
+      category: { select: { name: true } },
+      brand: { select: { name: true } },
+      images: { orderBy: { position: "asc" }, select: { secureUrl: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getProductsReportPage({ page }: { page: number }) {
+  const [items, total] = await Promise.all([
+    prisma.product.findMany({
+      include: {
+        category: { select: { name: true } },
+        brand: { select: { name: true } },
+      },
+      orderBy: { name: "asc" },
+      skip: (page - 1) * REPORTS_PAGE_SIZE,
+      take: REPORTS_PAGE_SIZE,
+    }),
+    prisma.product.count(),
+  ]);
+
+  return { items, total, pageSize: REPORTS_PAGE_SIZE };
+}
+
 export async function getOrdersReportData() {
   return prisma.order.findMany({
     orderBy: { createdAt: "desc" },

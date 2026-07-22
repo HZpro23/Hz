@@ -1,9 +1,15 @@
 import Link from "next/link";
-import { Boxes, ShoppingCart, Users } from "lucide-react";
+import { Boxes, Package, ShoppingCart, Users } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { ar } from "@/i18n/ar";
 
 const REPORTS = [
+  {
+    href: "/dashboard/reports/products",
+    icon: Package,
+    title: "تقرير المنتجات",
+    description: "جميع المنتجات وأسعارها وأقسامها، قابل للتصدير وإعادة الاستيراد",
+  },
   {
     href: "/dashboard/reports/inventory",
     icon: Boxes,

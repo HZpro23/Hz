@@ -10,6 +10,7 @@ import { getCategoryOptions } from "@/features/categories/queries";
 import { getBrandOptions } from "@/features/brands/queries";
 import { ProductsTable } from "@/features/products/components/products-table";
 import { ProductFormSheet } from "@/features/products/components/product-form-sheet";
+import { ImportProductsDialog } from "@/features/products/components/import-products-dialog";
 import { ar } from "@/i18n/ar";
 
 export const dynamic = "force-dynamic";
@@ -55,10 +56,13 @@ export default async function ProductsPage({
       <PageHeader
         title={ar.admin.products}
         action={
-          <Button nativeButton={false} render={<Link href={buildHref({ new: "1" })} />}>
-            <Plus className="size-4" />
-            إضافة منتج
-          </Button>
+          <div className="flex gap-2">
+            <ImportProductsDialog />
+            <Button nativeButton={false} render={<Link href={buildHref({ new: "1" })} />}>
+              <Plus className="size-4" />
+              إضافة منتج
+            </Button>
+          </div>
         }
       />
       <DataTableSearch placeholder="ابحث بالاسم أو SKU أو الباركود..." />

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { buildCsv, buildXlsx } from "@/lib/report-export";
 import {
   getInventoryReportData,
+  getProductsReportData,
   getOrdersReportData,
   getCustomersReportData,
 } from "@/features/reports/queries";
@@ -31,6 +32,43 @@ const REPORT_BUILDERS: Record<string, () => Promise<ReportPayload>> = {
         product.quantity,
         product.minStockLevel,
         product.status === "ACTIVE" ? "نشط" : "غير نشط",
+      ]),
+    };
+  },
+  products: async () => {
+    const products = await getProductsReportData();
+    return {
+      headers: [
+        "اسم المنتج",
+        "SKU",
+        "الرابط",
+        "القسم",
+        "العلامة التجارية",
+        "الكمية",
+        "الحد الأدنى",
+        "السعر الأول",
+        "السعر الثاني",
+        "السعر الثالث",
+        "الباركود",
+        "الوصف",
+        "الحالة",
+        "الصور",
+      ],
+      rows: products.map((product) => [
+        product.name,
+        product.sku,
+        product.slug,
+        product.category.name,
+        product.brand?.name ?? "",
+        product.quantity,
+        product.minStockLevel,
+        Number(product.price1),
+        Number(product.price2),
+        Number(product.price3),
+        product.barcode ?? "",
+        product.description ?? "",
+        product.status === "ACTIVE" ? "نشط" : "غير نشط",
+        product.images.map((image) => image.secureUrl).join(", "),
       ]),
     };
   },

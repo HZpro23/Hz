@@ -54,6 +54,15 @@ export function getProductColumns(
       cell: ({ row }) => <p className="font-medium">{row.original.name}</p>,
     },
     {
+      accessorKey: "sku",
+      header: "SKU",
+      cell: ({ row }) => (
+        <span dir="ltr" className="text-muted-foreground">
+          {row.original.sku}
+        </span>
+      ),
+    },
+    {
       id: "category",
       header: "القسم",
       cell: ({ row }) => row.original.category.name,
