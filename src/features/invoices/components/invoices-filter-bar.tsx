@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
+import { Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -17,6 +19,7 @@ export function InvoicesFilterBar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -26,7 +29,9 @@ export function InvoicesFilterBar() {
       params.delete(key);
     }
     params.delete("page");
-    router.push(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
   }
 
   return (
@@ -35,6 +40,7 @@ export function InvoicesFilterBar() {
         <Label className="text-xs text-muted-foreground">حالة الدفع</Label>
         <Select
           value={searchParams.get("paymentStatus") ?? ALL_STATUSES}
+          disabled={isPending}
           onValueChange={(value) => {
             if (!value) return;
             updateParam("paymentStatus", value === ALL_STATUSES ? "" : value);
@@ -53,6 +59,9 @@ export function InvoicesFilterBar() {
           </SelectContent>
         </Select>
       </div>
+      {isPending && (
+        <Loader2 className="size-4 animate-spin self-center text-muted-foreground" />
+      )}
     </div>
   );
 }

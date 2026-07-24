@@ -6,6 +6,12 @@ export const DEBT_STATUS_LABELS: Record<string, string> =
   ar.statusLabels.debtStatus;
 export const DEBT_STATUS_VALUE_BY_LABEL = invertLabels(DEBT_STATUS_LABELS);
 
+export const CUSTOMER_SORT_LABELS: Record<string, string> =
+  ar.statusLabels.customerSort;
+export const CUSTOMER_SORT_VALUE_BY_LABEL = invertLabels(
+  CUSTOMER_SORT_LABELS,
+);
+
 export const customerSchema = z.object({
   name: z
     .string()

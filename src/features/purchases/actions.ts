@@ -31,6 +31,7 @@ export async function createPurchaseOrder(
     data: {
       orderNumber: generatePurchaseOrderNumber(),
       supplierId: parsed.data.supplierId,
+      language: parsed.data.language,
       total,
       items: {
         create: parsed.data.items.map((item) => ({

@@ -3,16 +3,24 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { getSupplierOptions } from "@/features/suppliers/queries";
-import { getProductSelectOptions } from "@/features/products/queries";
+import { getProductPickerOptions } from "@/features/products/queries";
 import { PurchaseOrderForm } from "@/features/purchases/components/purchase-order-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewPurchaseOrderPage() {
-  const [suppliers, products] = await Promise.all([
+  const [suppliers, productRows] = await Promise.all([
     getSupplierOptions(),
-    getProductSelectOptions(),
+    getProductPickerOptions(),
   ]);
+  const products = productRows.map((product) => ({
+    id: product.id,
+    name: product.name,
+    sku: product.sku,
+    price1: Number(product.price1),
+    price2: Number(product.price2),
+    price3: Number(product.price3),
+  }));
 
   return (
     <div className="space-y-6">

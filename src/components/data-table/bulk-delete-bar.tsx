@@ -32,13 +32,18 @@ export function BulkDeleteBar({
   const [isPending, startTransition] = useTransition();
 
   function handleConfirm() {
+    // Close this dialog before the async work starts (rather than after it
+    // succeeds): some selections trigger a second, separate confirmation
+    // dialog per invoice (رصيد effect) partway through, and leaving this
+    // modal open stacks two modals at once — the still-open one traps focus
+    // and blocks any interaction with the one underneath, so the operation
+    // looks stuck on "جاري الحذف..." forever.
+    setOpen(false);
     startTransition(async () => {
       const result = await onConfirm();
       if (result && "error" in result && result.error) {
         toast.error(result.error);
-        return;
       }
-      setOpen(false);
     });
   }
 

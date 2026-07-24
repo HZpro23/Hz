@@ -93,6 +93,7 @@ export default async function ProductsPage({
             price1: Number(editingProduct.price1),
             price2: Number(editingProduct.price2),
             price3: Number(editingProduct.price3),
+            purchasePrice: Number(editingProduct.purchasePrice),
           }
         }
         categoryOptions={categoryOptions}

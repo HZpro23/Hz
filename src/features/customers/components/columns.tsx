@@ -17,6 +17,7 @@ export type CustomerRow = {
   _count: { orders: number };
   totalPurchased: number;
   totalPaid: number;
+  outstanding: number;
   balance: number;
 };
 
@@ -51,6 +52,18 @@ export function getCustomerColumns(
       id: "totalPaid",
       header: ar.customers.totalPaid,
       cell: ({ row }) => formatCurrency(row.original.totalPaid),
+    },
+    {
+      id: "outstanding",
+      header: ar.customers.outstandingAmount,
+      cell: ({ row }) => {
+        const outstanding = row.original.outstanding;
+        return (
+          <span className={outstanding > 0 ? "font-medium text-amber-600 dark:text-amber-400" : undefined}>
+            {formatCurrency(outstanding)}
+          </span>
+        );
+      },
     },
     {
       id: "balance",

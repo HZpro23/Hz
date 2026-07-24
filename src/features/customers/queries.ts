@@ -7,13 +7,34 @@ export const CUSTOMERS_PAGE_SIZE = 10;
 
 export type DebtFilter = "HAS_DEBT" | "NO_DEBT";
 
+export type CustomerSort =
+  | "newest"
+  | "totalPurchased_desc"
+  | "totalPurchased_asc"
+  | "outstanding_desc"
+  | "outstanding_asc"
+  | "balance_desc"
+  | "balance_asc";
+
+const CUSTOMER_SORT_CLAUSES: Record<CustomerSort, Prisma.Sql> = {
+  newest: Prisma.sql`c."createdAt" DESC`,
+  totalPurchased_desc: Prisma.sql`COALESCE(inv.total_purchased, 0) DESC`,
+  totalPurchased_asc: Prisma.sql`COALESCE(inv.total_purchased, 0) ASC`,
+  outstanding_desc: Prisma.sql`COALESCE(inv.outstanding, 0) DESC`,
+  outstanding_asc: Prisma.sql`COALESCE(inv.outstanding, 0) ASC`,
+  balance_desc: Prisma.sql`c.balance DESC`,
+  balance_asc: Prisma.sql`c.balance ASC`,
+};
+
 export async function getCustomersPage({
   query,
   debtFilter,
+  sort,
   page,
 }: {
   query?: string;
   debtFilter?: DebtFilter;
+  sort?: CustomerSort;
   page: number;
 }) {
   const searchClause = query
@@ -27,6 +48,8 @@ export async function getCustomersPage({
         ? Prisma.sql`AND c.balance >= 0`
         : Prisma.empty;
 
+  const orderByClause = CUSTOMER_SORT_CLAUSES[sort ?? "newest"];
+
   const rows = await prisma.$queryRaw<
     {
       id: string;
@@ -36,6 +59,7 @@ export async function getCustomersPage({
       ordersCount: bigint;
       totalPurchased: string;
       totalPaid: string;
+      outstanding: string;
       balance: string;
       totalCount: bigint;
     }[]
@@ -45,11 +69,16 @@ export async function getCustomersPage({
       COALESCE(ord.orders_count, 0)::bigint AS "ordersCount",
       COALESCE(inv.total_purchased, 0)::numeric AS "totalPurchased",
       COALESCE(inv.total_paid, 0)::numeric AS "totalPaid",
+      COALESCE(inv.outstanding, 0)::numeric AS "outstanding",
       c.balance::numeric AS "balance",
       COUNT(*) OVER()::bigint AS "totalCount"
     FROM "Customer" c
     LEFT JOIN (
-      SELECT "customerId", SUM(total) AS total_purchased, SUM("paidAmount") AS total_paid
+      SELECT
+        "customerId",
+        SUM(total) AS total_purchased,
+        SUM("paidAmount") AS total_paid,
+        SUM(CASE WHEN "paymentStatus" IN ('UNPAID', 'PARTIALLY_PAID') THEN total - "paidAmount" ELSE 0 END) AS outstanding
       FROM "Invoice"
       WHERE "customerId" IS NOT NULL
       GROUP BY "customerId"
@@ -61,7 +90,7 @@ export async function getCustomersPage({
       GROUP BY "customerId"
     ) ord ON ord."customerId" = c.id
     WHERE 1=1 ${searchClause} ${debtClause}
-    ORDER BY c."createdAt" DESC
+    ORDER BY ${orderByClause}, c."createdAt" DESC
     LIMIT ${CUSTOMERS_PAGE_SIZE} OFFSET ${(page - 1) * CUSTOMERS_PAGE_SIZE}
   `;
 
@@ -76,6 +105,7 @@ export async function getCustomersPage({
       _count: { orders: Number(row.ordersCount) },
       totalPurchased: Number(row.totalPurchased),
       totalPaid: Number(row.totalPaid),
+      outstanding: Number(row.outstanding),
       balance: Number(row.balance),
     })),
     total,

@@ -62,6 +62,7 @@ model Product {
   price1        Decimal             @default(0) @db.Decimal(10, 2)
   price2        Decimal             @default(0) @db.Decimal(10, 2)
   price3        Decimal             @default(0) @db.Decimal(10, 2)
+  purchasePrice Decimal             @default(0) @db.Decimal(10, 2)
   status        ProductStatus       @default(ACTIVE)
   images        ProductImage[]
   orderItems    OrderItem[]
@@ -184,6 +185,7 @@ model PurchaseOrder {
   supplierId  String
   supplier    Supplier            @relation(fields: [supplierId], references: [id])
   status      PurchaseOrderStatus @default(PENDING)
+  language    InvoiceLanguage     @default(AR)
   items       PurchaseOrderItem[]
   total       Decimal             @db.Decimal(10, 2)
   receivedAt  DateTime?

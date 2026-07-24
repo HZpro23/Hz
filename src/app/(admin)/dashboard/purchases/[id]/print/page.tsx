@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getInvoiceById } from "@/features/invoices/queries";
+import { getPurchaseOrderById } from "@/features/purchases/queries";
 import { InvoicePrintButton } from "@/features/invoices/components/invoice-print-button";
 import { InvoicePdfButton } from "@/features/invoices/components/invoice-pdf-button";
 import { ar as arDict } from "@/i18n/ar";
@@ -13,53 +13,50 @@ const LABELS: Record<
   Lang,
   {
     title: string;
-    invoiceNumber: string;
+    orderNumber: string;
     date: string;
-    billTo: string;
+    supplier: string;
     phone: string;
     product: string;
     quantity: string;
-    unitPrice: string;
+    unitCost: string;
     lineTotal: string;
     total: string;
-    thankYou: string;
     print: string;
     openPdf: string;
   }
 > = {
   ar: {
-    title: "فاتورة",
-    invoiceNumber: "رقم الفاتورة",
+    title: "فاتورة شراء",
+    orderNumber: "رقم أمر الشراء",
     date: "التاريخ",
-    billTo: "فاتورة إلى",
+    supplier: "المورد",
     phone: "الهاتف",
     product: "المنتج",
     quantity: "الكمية",
-    unitPrice: "تكلفة الوحدة",
+    unitCost: "تكلفة الوحدة",
     lineTotal: "الإجمالي الفرعي",
     total: "الإجمالي الكلي",
-    thankYou: "شكراً لتعاملكم معنا",
     print: "طباعة / حفظ كـ PDF",
     openPdf: "فتح كملف PDF",
   },
   fr: {
-    title: "Facture",
-    invoiceNumber: "Numéro de facture",
+    title: "Facture d'achat",
+    orderNumber: "Numéro de commande",
     date: "Date",
-    billTo: "Facturé à",
+    supplier: "Fournisseur",
     phone: "Téléphone",
     product: "Produit",
     quantity: "Quantité",
-    unitPrice: "Prix unitaire",
+    unitCost: "Prix unitaire",
     lineTotal: "Sous-total",
     total: "Total",
-    thankYou: "Merci pour votre confiance",
     print: "Imprimer / Enregistrer en PDF",
     openPdf: "Ouvrir en PDF",
   },
 };
 
-export default async function InvoicePrintPage({
+export default async function PurchaseOrderPrintPage({
   params,
   searchParams,
 }: {
@@ -69,16 +66,16 @@ export default async function InvoicePrintPage({
   const { id } = await params;
   const { lang: langParam } = await searchParams;
 
-  const invoice = await getInvoiceById(id);
-  if (!invoice) notFound();
+  const order = await getPurchaseOrderById(id);
+  if (!order) notFound();
 
   const lang: Lang =
-    (langParam ?? invoice.language.toLowerCase()) === "fr" ? "fr" : "ar";
+    (langParam ?? order.language.toLowerCase()) === "fr" ? "fr" : "ar";
   const t = LABELS[lang];
   const dir = lang === "fr" ? "ltr" : "rtl";
 
-  const grandTotal = invoice.items.reduce(
-    (sum, item) => sum + Number(item.unitPrice) * item.quantity,
+  const grandTotal = order.items.reduce(
+    (sum, item) => sum + Number(item.unitCost) * item.quantity,
     0,
   );
 
@@ -89,15 +86,15 @@ export default async function InvoicePrintPage({
     >
       <div className="flex justify-end gap-2 print:hidden">
         <InvoicePdfButton
-          targetId="invoice-card"
-          fileName={`${invoice.invoiceNumber}.pdf`}
+          targetId="purchase-order-card"
+          fileName={`${order.orderNumber}.pdf`}
           label={t.openPdf}
         />
         <InvoicePrintButton label={t.print} />
       </div>
 
       <div
-        id="invoice-card"
+        id="purchase-order-card"
         className="space-y-8 rounded-xl border bg-card p-8 print:rounded-none print:border-none print:p-0"
       >
         <div className="flex items-start justify-between">
@@ -107,24 +104,24 @@ export default async function InvoicePrintPage({
           <div className="text-end">
             <h2 className="text-xl font-semibold">{t.title}</h2>
             <p className="text-sm text-muted-foreground">
-              {t.invoiceNumber}: <span dir="ltr">{invoice.invoiceNumber}</span>
+              {t.orderNumber}: <span dir="ltr">{order.orderNumber}</span>
             </p>
             <p className="text-sm text-muted-foreground">
-              {t.date}:{" "}
-              {new Date(invoice.createdAt).toLocaleDateString("fr-FR")}
+              {t.date}: {new Date(order.createdAt).toLocaleDateString("fr-FR")}
             </p>
           </div>
         </div>
 
         <div>
           <p className="text-sm font-medium text-muted-foreground">
-            {t.billTo}:
-            <span className="font-medium mx-1.5">{invoice.customerName}</span>
+            {t.supplier}:
+            <span className="font-medium mx-1.5">{order.supplier.name}</span>
           </p>
-
-          <p className="text-sm text-muted-foreground">
-            {t.phone}: <span dir="ltr">{invoice.customerPhone}</span>
-          </p>
+          {order.supplier.phone && (
+            <p className="text-sm text-muted-foreground">
+              {t.phone}: <span dir="ltr">{order.supplier.phone}</span>
+            </p>
+          )}
         </div>
 
         <table className="w-full border-collapse text-sm border border-gray-200">
@@ -140,7 +137,7 @@ export default async function InvoicePrintPage({
               </th>
               <th className="px-2 py-2 text-start font-medium border border-gray-200">
                 <span className="block truncate max-w-[15ch]">
-                  {t.unitPrice} {`(${CURRENCY_LABEL["fr"]})`}
+                  {t.unitCost} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
               </th>
               <th className="px-2 py-2 text-start font-medium border border-gray-200">
@@ -151,11 +148,11 @@ export default async function InvoicePrintPage({
             </tr>
           </thead>
           <tbody>
-            {invoice.items.map((item) => (
+            {order.items.map((item) => (
               <tr key={item.id} className="border-b">
                 <td className="px-3 py-2 border border-gray-200">
                   <span className="block truncate max-w-[18ch]">
-                    {item.name}
+                    {item.product.name}
                   </span>
                 </td>
                 <td className="px-3 py-2 border border-gray-200">
@@ -165,13 +162,13 @@ export default async function InvoicePrintPage({
                 </td>
                 <td className="px-3 py-2 border border-gray-200">
                   <span className="block truncate max-w-[15ch]">
-                    {formatCurrency(Number(item.unitPrice), lang, true)}
+                    {formatCurrency(Number(item.unitCost), lang, true)}
                   </span>
                 </td>
                 <td className="px-3 py-2 border border-gray-200">
                   <span className="block truncate max-w-[15ch]">
                     {formatCurrency(
-                      Number(item.unitPrice) * item.quantity,
+                      Number(item.unitCost) * item.quantity,
                       lang,
                       true,
                     )}
@@ -187,14 +184,6 @@ export default async function InvoicePrintPage({
             {t.total}: {formatCurrency(grandTotal, lang, false)}
           </p>
         </div>
-
-        {invoice.notes && (
-          <p className="text-sm text-muted-foreground">{invoice.notes}</p>
-        )}
-
-        <p className="text-center text-sm text-muted-foreground">
-          {t.thankYou}
-        </p>
       </div>
     </div>
   );

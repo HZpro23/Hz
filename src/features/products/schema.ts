@@ -42,6 +42,11 @@ export const productSchema = z.object({
   price3: z.coerce
     .number()
     .min(0, { error: "السعر يجب أن يكون رقماً موجباً" }),
+  purchasePrice: z.coerce
+    .number()
+    .min(0, { error: "السعر يجب أن يكون رقماً موجباً" })
+    .optional()
+    .default(0),
   status: z.enum(["ACTIVE", "INACTIVE"]),
   images: z.array(productImageSchema).default([]),
 });

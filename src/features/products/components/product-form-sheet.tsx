@@ -47,6 +47,7 @@ type ProductRecord = {
   price1: number;
   price2: number;
   price3: number;
+  purchasePrice: number;
   status: "ACTIVE" | "INACTIVE";
   images: UploadedImage[];
 } | null;
@@ -87,6 +88,7 @@ export function ProductFormSheet({
       price1: product?.price1 ?? 0,
       price2: product?.price2 ?? 0,
       price3: product?.price3 ?? 0,
+      purchasePrice: product?.purchasePrice ?? 0,
       status: product?.status ?? "ACTIVE",
       images: product?.images ?? [],
     },
@@ -266,6 +268,24 @@ export function ProductFormSheet({
               </p>
             )}
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="product-purchase-price">
+            سعر الشراء (التكلفة) (اختياري)
+          </Label>
+          <Input
+            id="product-purchase-price"
+            type="number"
+            min={0}
+            step="0.01"
+            {...register("purchasePrice")}
+          />
+          {errors.purchasePrice && (
+            <p className="text-sm text-destructive">
+              {errors.purchasePrice.message}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-3">

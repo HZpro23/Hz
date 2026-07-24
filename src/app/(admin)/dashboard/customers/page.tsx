@@ -12,9 +12,12 @@ import {
 import { CustomersTable } from "@/features/customers/components/customers-table";
 import { CustomersFilterBar } from "@/features/customers/components/customers-filter-bar";
 import { CustomerFormSheet } from "@/features/customers/components/customer-form-sheet";
-import { DEBT_STATUS_VALUE_BY_LABEL } from "@/features/customers/schema";
+import {
+  DEBT_STATUS_VALUE_BY_LABEL,
+  CUSTOMER_SORT_VALUE_BY_LABEL,
+} from "@/features/customers/schema";
 import { ar } from "@/i18n/ar";
-import type { DebtFilter } from "@/features/customers/queries";
+import type { DebtFilter, CustomerSort } from "@/features/customers/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +30,7 @@ export default async function CustomersPage({
     new?: string;
     edit?: string;
     debtFilter?: string;
+    sort?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -36,9 +40,13 @@ export default async function CustomersPage({
     ? ((DEBT_STATUS_VALUE_BY_LABEL[params.debtFilter] ??
         params.debtFilter) as DebtFilter)
     : undefined;
+  const sort = params.sort
+    ? ((CUSTOMER_SORT_VALUE_BY_LABEL[params.sort] ??
+        params.sort) as CustomerSort)
+    : undefined;
 
   const [{ items, total, pageSize }, editingCustomer] = await Promise.all([
-    getCustomersPage({ query, debtFilter, page }),
+    getCustomersPage({ query, debtFilter, sort, page }),
     params.edit ? getCustomerById(params.edit) : Promise.resolve(null),
   ]);
 
@@ -49,6 +57,7 @@ export default async function CustomersPage({
     if (query) sp.set("q", query);
     if (page > 1) sp.set("page", String(page));
     if (params.debtFilter) sp.set("debtFilter", params.debtFilter);
+    if (params.sort) sp.set("sort", params.sort);
     for (const [key, value] of Object.entries(extra)) sp.set(key, value);
     return `/dashboard/customers?${sp.toString()}`;
   }
@@ -82,7 +91,11 @@ export default async function CustomersPage({
             pageSize={pageSize}
             total={total}
             basePath="/dashboard/customers"
-            searchParams={{ q: query, debtFilter: params.debtFilter }}
+            searchParams={{
+              q: query,
+              debtFilter: params.debtFilter,
+              sort: params.sort,
+            }}
           />
         </>
       )}

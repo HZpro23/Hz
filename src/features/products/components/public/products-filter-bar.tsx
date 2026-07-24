@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -21,6 +21,12 @@ export function ProductsFilterBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get("q") ?? "");
+  const [isPending, startTransition] = useTransition();
+
+  const categoryLabels: Record<string, string> = {
+    all: "الكل",
+    ...Object.fromEntries(categories.map((c) => [c.slug, c.name])),
+  };
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -33,7 +39,9 @@ export function ProductsFilterBar({
         params.delete("q");
       }
       params.delete("page");
-      router.replace(`${pathname}?${params.toString()}`);
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`);
+      });
     }, 350);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -48,13 +56,19 @@ export function ProductsFilterBar({
       params.set("category", category);
     }
     params.delete("page");
-    router.push(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
   }
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <div className="relative flex-1">
-        <Search className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        {isPending ? (
+          <Loader2 className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+        ) : (
+          <Search className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        )}
         <Input
           value={value}
           onChange={(event) => setValue(event.target.value)}
@@ -63,14 +77,16 @@ export function ProductsFilterBar({
         />
       </div>
       <Select
+        items={categoryLabels}
         value={searchParams.get("category") ?? "all"}
+        disabled={isPending}
         onValueChange={handleCategoryChange}
       >
         <SelectTrigger className="w-full sm:w-56">
-          <SelectValue placeholder="جميع الأقسام" />
+          <SelectValue placeholder="الكل" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">جميع الأقسام</SelectItem>
+          <SelectItem value="all">الكل</SelectItem>
           {categories.map((category) => (
             <SelectItem key={category.slug} value={category.slug}>
               {category.name}

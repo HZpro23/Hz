@@ -14,6 +14,7 @@ export const purchaseOrderItemSchema = z.object({
 
 export const purchaseOrderSchema = z.object({
   supplierId: z.string().min(1, { error: "الرجاء اختيار المورد" }),
+  language: z.enum(["AR", "FR"]).default("AR"),
   items: z
     .array(purchaseOrderItemSchema)
     .min(1, { error: "أضف عنصراً واحداً على الأقل" }),

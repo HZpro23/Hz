@@ -73,6 +73,7 @@ export async function getProductById(id: string) {
       price1: true,
       price2: true,
       price3: true,
+      purchasePrice: true,
       status: true,
       images: { orderBy: { position: "asc" } },
     },

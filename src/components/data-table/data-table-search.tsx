@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ar } from "@/i18n/ar";
 
@@ -11,6 +11,7 @@ export function DataTableSearch({ placeholder }: { placeholder?: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get("q") ?? "");
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -24,7 +25,9 @@ export function DataTableSearch({ placeholder }: { placeholder?: string }) {
         params.delete("q");
       }
       params.delete("page");
-      router.replace(`${pathname}?${params.toString()}`);
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`);
+      });
     }, 350);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -32,7 +35,11 @@ export function DataTableSearch({ placeholder }: { placeholder?: string }) {
 
   return (
     <div className="relative w-full max-w-sm">
-      <Search className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      {isPending ? (
+        <Loader2 className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+      ) : (
+        <Search className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      )}
       <Input
         value={value}
         onChange={(event) => setValue(event.target.value)}

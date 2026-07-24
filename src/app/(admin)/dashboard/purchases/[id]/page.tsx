@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,14 +34,29 @@ export default async function PurchaseOrderDetailPage({
       <PageHeader
         title={`أمر الشراء ${order.orderNumber}`}
         action={
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/dashboard/purchases" />}
-          >
-            <ArrowRight className="size-4" />
-            رجوع
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link
+                  href={`/dashboard/purchases/${order.id}/print?lang=${order.language.toLowerCase()}`}
+                  target="_blank"
+                />
+              }
+            >
+              <Printer className="size-4" />
+              عرض / طباعة
+            </Button>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link href="/dashboard/purchases" />}
+            >
+              <ArrowRight className="size-4" />
+              رجوع
+            </Button>
+          </div>
         }
       />
 
