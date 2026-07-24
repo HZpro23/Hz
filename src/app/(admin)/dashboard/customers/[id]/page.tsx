@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Wallet, ShoppingCart, Receipt } from "lucide-react";
+import {
+  ArrowRight,
+  Wallet,
+  ShoppingCart,
+  Receipt,
+  CircleDollarSign,
+  FileClock,
+  FileX2,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
@@ -26,7 +34,26 @@ export default async function CustomerProfilePage({
   const profile = await getCustomerProfile(id);
   if (!profile) notFound();
 
-  const { customer, orders, invoices, payments, balanceHistory, totals } = profile;
+  const { customer, orders, invoices, payments, balanceHistory, totals } =
+    profile;
+
+  const partiallyPaidInvoices = invoices.filter(
+    (invoice) => invoice.paymentStatus === "PARTIALLY_PAID",
+  );
+  const unpaidInvoices = invoices.filter(
+    (invoice) => invoice.paymentStatus === "UNPAID",
+  );
+  const remainingOf = (invoice: (typeof invoices)[number]) =>
+    Number(invoice.total) - Number(invoice.paidAmount);
+  const partiallyPaidRemaining = partiallyPaidInvoices.reduce(
+    (sum, invoice) => sum + remainingOf(invoice),
+    0,
+  );
+  const unpaidRemaining = unpaidInvoices.reduce(
+    (sum, invoice) => sum + remainingOf(invoice),
+    0,
+  );
+  const totalOutstanding = partiallyPaidRemaining + unpaidRemaining;
 
   return (
     <div className="space-y-6">
@@ -66,9 +93,41 @@ export default async function CustomerProfilePage({
             variant="balance"
             formatValue={(value) => formatCurrency(value)}
           />
-          <AdjustBalanceDialog customerId={customer.id} currentBalance={totals.balance} />
+          <AdjustBalanceDialog
+            customerId={customer.id}
+            currentBalance={totals.balance}
+          />
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>الفواتير غير المسددة</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard
+              title="فواتير مدفوعة جزئياً"
+              value={partiallyPaidInvoices.length}
+              icon={FileClock}
+              variant="warning"
+            />
+            <StatCard
+              title="فواتير غير مدفوعة"
+              value={unpaidInvoices.length}
+              icon={FileX2}
+              variant="warning"
+            />
+            <StatCard
+              title="إجمالي المبلغ المتبقي"
+              value={totalOutstanding}
+              icon={CircleDollarSign}
+              variant="warning"
+              formatValue={(value) => formatCurrency(value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -109,9 +168,7 @@ export default async function CustomerProfilePage({
             variant="outline"
             size="sm"
             nativeButton={false}
-            render={
-              <Link href={`/dashboard/customers?edit=${customer.id}`} />
-            }
+            render={<Link href={`/dashboard/customers?edit=${customer.id}`} />}
           >
             {ar.customers.editCustomerInfo}
           </Button>
@@ -124,9 +181,7 @@ export default async function CustomerProfilePage({
         </CardHeader>
         <CardContent>
           {orders.length === 0 ? (
-            <EmptyState
-              icon={ShoppingCart}
-              title={ar.customers.noOrders}            />
+            <EmptyState icon={ShoppingCart} title={ar.customers.noOrders} />
           ) : (
             <OrdersTable
               searchable
@@ -149,9 +204,7 @@ export default async function CustomerProfilePage({
         </CardHeader>
         <CardContent>
           {invoices.length === 0 ? (
-            <EmptyState
-              icon={Receipt}
-              title={ar.customers.noInvoices}            />
+            <EmptyState icon={Receipt} title={ar.customers.noInvoices} />
           ) : (
             <InvoicesTable
               searchable

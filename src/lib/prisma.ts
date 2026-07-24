@@ -36,7 +36,19 @@ const pool =
 
 const adapter = globalForPrisma.adapter ?? new PrismaPg(pool);
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    adapter,
+    // Neon can suspend its compute after idling and take a few seconds to
+    // wake on the next query; the default 2s/5s transaction limits are too
+    // tight for that cold start and surface as P2028 "unable to start a
+    // transaction in the given time" on the first request after idle.
+    transactionOptions: {
+      maxWait: 15000,
+      timeout: 20000,
+    },
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.pool = pool;

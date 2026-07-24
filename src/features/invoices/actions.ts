@@ -236,10 +236,14 @@ export async function deleteInvoice(
   const existing = await prisma.invoice.findUnique({ where: { id } });
   if (!existing) return { error: "الفاتورة غير موجودة" };
 
-  await prisma.$transaction(async (tx) => {
-    await reverseInvoiceBalanceOnDelete(tx, existing, options?.applyBalanceChange);
-    await tx.invoice.delete({ where: { id } });
-  });
+  try {
+    await prisma.$transaction(async (tx) => {
+      await reverseInvoiceBalanceOnDelete(tx, existing, options?.applyBalanceChange);
+      await tx.invoice.delete({ where: { id } });
+    });
+  } catch {
+    return { error: "حدث خطأ أثناء حذف الفاتورة، الرجاء المحاولة مرة أخرى" };
+  }
 
   revalidatePath("/dashboard/invoices");
   if (existing.customerId) revalidatePath(`/dashboard/customers/${existing.customerId}`);
@@ -256,15 +260,19 @@ export async function deleteInvoices(
   const decisionById = new Map(decisions.map((d) => [d.id, d.applyBalanceChange]));
   const ids = decisions.map((d) => d.id);
 
-  await prisma.$transaction(async (tx) => {
-    const invoices = await tx.invoice.findMany({ where: { id: { in: ids } } });
+  try {
+    await prisma.$transaction(async (tx) => {
+      const invoices = await tx.invoice.findMany({ where: { id: { in: ids } } });
 
-    for (const invoice of invoices) {
-      await reverseInvoiceBalanceOnDelete(tx, invoice, decisionById.get(invoice.id));
-    }
+      for (const invoice of invoices) {
+        await reverseInvoiceBalanceOnDelete(tx, invoice, decisionById.get(invoice.id));
+      }
 
-    await tx.invoice.deleteMany({ where: { id: { in: ids } } });
-  });
+      await tx.invoice.deleteMany({ where: { id: { in: ids } } });
+    });
+  } catch {
+    return { error: "حدث خطأ أثناء حذف الفواتير المحددة، الرجاء المحاولة مرة أخرى" };
+  }
 
   revalidatePath("/dashboard/invoices");
   return { success: true };
