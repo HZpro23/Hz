@@ -71,6 +71,7 @@ export default async function PurchaseOrderDetailPage({
                 <TableHeader>
                   <TableRow>
                     <TableHead>المنتج</TableHead>
+                    <TableHead>SKU</TableHead>
                     <TableHead>الكمية</TableHead>
                     <TableHead>تكلفة الوحدة</TableHead>
                     <TableHead>الإجمالي</TableHead>
@@ -79,16 +80,11 @@ export default async function PurchaseOrderDetailPage({
                 <TableBody>
                   {order.items.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{item.product.name}</p>
-                          <p
-                            dir="ltr"
-                            className="text-xs text-muted-foreground"
-                          >
-                            {item.product.sku}
-                          </p>
-                        </div>
+                      <TableCell className="font-medium">
+                        {item.product.name}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <span dir="ltr">{item.product.sku}</span>
                       </TableCell>
                       <TableCell>
                         {item.quantity.toLocaleString("ar")}

@@ -6,8 +6,11 @@ import {
   getProductsReportData,
   getOrdersReportData,
   getCustomersReportData,
+  getPurchasesReportData,
+  getSuppliersReportData,
 } from "@/features/reports/queries";
 import { ORDER_STATUS_LABELS } from "@/features/orders/schema";
+import { PURCHASE_ORDER_STATUS_LABELS } from "@/features/purchases/schema";
 
 type ReportPayload = { headers: string[]; rows: (string | number)[][] };
 
@@ -109,6 +112,48 @@ const REPORT_BUILDERS: Record<string, () => Promise<ReportPayload>> = {
         customer.email ?? "",
         customer.ordersCount,
         customer.totalSpent,
+      ]),
+    };
+  },
+  purchases: async () => {
+    const purchases = await getPurchasesReportData();
+    return {
+      headers: [
+        "رقم أمر الشراء",
+        "المورد",
+        "الحالة",
+        "الإجمالي (درهم)",
+        "تاريخ الإنشاء",
+        "تاريخ الاستلام",
+      ],
+      rows: purchases.map((order) => [
+        order.orderNumber,
+        order.supplier.name,
+        PURCHASE_ORDER_STATUS_LABELS[order.status] ?? order.status,
+        Number(order.total),
+        order.createdAt.toISOString().slice(0, 10),
+        order.receivedAt ? order.receivedAt.toISOString().slice(0, 10) : "",
+      ]),
+    };
+  },
+  suppliers: async () => {
+    const suppliers = await getSuppliersReportData();
+    return {
+      headers: [
+        "الاسم",
+        "الهاتف",
+        "البريد الإلكتروني",
+        "العنوان",
+        "عدد أوامر الشراء",
+        "إجمالي المشتريات منه (درهم)",
+      ],
+      rows: suppliers.map((supplier) => [
+        supplier.name,
+        supplier.phone ?? "",
+        supplier.email ?? "",
+        supplier.address ?? "",
+        supplier.ordersCount,
+        supplier.totalPurchased,
       ]),
     };
   },

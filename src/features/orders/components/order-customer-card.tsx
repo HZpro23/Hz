@@ -9,7 +9,7 @@ import {
   CustomerPicker,
   type CustomerOption,
 } from "@/features/customers/components/customer-picker";
-import { CustomerFormSheet } from "@/features/customers/components/customer-form-sheet";
+import { OrderCustomerEditSheet } from "@/features/orders/components/order-customer-edit-sheet";
 import { InvoiceLockedNotice } from "@/features/orders/components/invoice-locked-notice";
 import { reassignOrderCustomer } from "@/features/orders/actions";
 import { ar } from "@/i18n/ar";
@@ -66,17 +66,15 @@ export function OrderCustomerCard({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>بيانات العميل</CardTitle>
-          {currentCustomer && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="cursor-pointer"
-              onClick={() => setEditOpen(true)}
-              title={ar.customers.editCustomerInfo}
-            >
-              <Pencil className="size-4" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="cursor-pointer"
+            onClick={() => setEditOpen(true)}
+            title={ar.customers.editCustomerInfo}
+          >
+            <Pencil className="size-4" />
+          </Button>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <p>
@@ -134,13 +132,13 @@ export function OrderCustomerCard({
         </CardContent>
       </Card>
 
-      {currentCustomer && (
-        <CustomerFormSheet
-          open={editOpen}
-          customer={currentCustomer}
-          onOpenChange={setEditOpen}
-        />
-      )}
+      <OrderCustomerEditSheet
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        orderId={orderId}
+        customer={currentCustomer}
+        snapshot={snapshot}
+      />
     </>
   );
 }

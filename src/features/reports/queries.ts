@@ -59,6 +59,76 @@ export async function getProductsReportPage({ page }: { page: number }) {
   return { items, total, pageSize: REPORTS_PAGE_SIZE };
 }
 
+export async function getPurchasesReportData() {
+  return prisma.purchaseOrder.findMany({
+    include: { supplier: { select: { name: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getPurchasesReportPage({ page }: { page: number }) {
+  const [items, total] = await Promise.all([
+    prisma.purchaseOrder.findMany({
+      include: { supplier: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * REPORTS_PAGE_SIZE,
+      take: REPORTS_PAGE_SIZE,
+    }),
+    prisma.purchaseOrder.count(),
+  ]);
+
+  return { items, total, pageSize: REPORTS_PAGE_SIZE };
+}
+
+export async function getSuppliersReportData() {
+  const suppliers = await prisma.supplier.findMany({
+    include: { purchaseOrders: { select: { total: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return suppliers.map(mapSupplierReportRow);
+}
+
+export async function getSuppliersReportPage({ page }: { page: number }) {
+  const [suppliers, total] = await Promise.all([
+    prisma.supplier.findMany({
+      include: { purchaseOrders: { select: { total: true } } },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * REPORTS_PAGE_SIZE,
+      take: REPORTS_PAGE_SIZE,
+    }),
+    prisma.supplier.count(),
+  ]);
+
+  return {
+    items: suppliers.map(mapSupplierReportRow),
+    total,
+    pageSize: REPORTS_PAGE_SIZE,
+  };
+}
+
+function mapSupplierReportRow(supplier: {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  purchaseOrders: { total: Prisma.Decimal | number }[];
+}) {
+  return {
+    id: supplier.id,
+    name: supplier.name,
+    phone: supplier.phone,
+    email: supplier.email,
+    address: supplier.address,
+    ordersCount: supplier.purchaseOrders.length,
+    totalPurchased: supplier.purchaseOrders.reduce(
+      (sum, order) => sum + Number(order.total),
+      0,
+    ),
+  };
+}
+
 export async function getOrdersReportData() {
   return prisma.order.findMany({
     orderBy: { createdAt: "desc" },

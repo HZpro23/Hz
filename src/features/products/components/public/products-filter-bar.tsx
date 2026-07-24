@@ -5,28 +5,37 @@ import { useEffect, useState, useTransition } from "react";
 import { Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Combobox,
+  useComboboxFilter,
+  ComboboxValue,
+  ComboboxTrigger,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxEmpty,
+  ComboboxList,
+  ComboboxItem,
+} from "@/components/ui/combobox";
+
+type CategoryOption = { slug: string; name: string };
+
+const ALL_CATEGORY: CategoryOption = { slug: "all", name: "الكل" };
 
 export function ProductsFilterBar({
   categories,
 }: {
-  categories: { slug: string; name: string }[];
+  categories: CategoryOption[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get("q") ?? "");
   const [isPending, startTransition] = useTransition();
+  const { contains } = useComboboxFilter();
 
-  const categoryLabels: Record<string, string> = {
-    all: "الكل",
-    ...Object.fromEntries(categories.map((c) => [c.slug, c.name])),
-  };
+  const categoryItems = [ALL_CATEGORY, ...categories];
+  const selectedCategory =
+    categoryItems.find((item) => item.slug === (searchParams.get("category") ?? "all")) ??
+    ALL_CATEGORY;
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -47,13 +56,13 @@ export function ProductsFilterBar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  function handleCategoryChange(category: string | null) {
+  function handleCategoryChange(category: CategoryOption | null) {
     if (!category) return;
     const params = new URLSearchParams(searchParams.toString());
-    if (category === "all") {
+    if (category.slug === "all") {
       params.delete("category");
     } else {
-      params.set("category", category);
+      params.set("category", category.slug);
     }
     params.delete("page");
     startTransition(() => {
@@ -76,24 +85,31 @@ export function ProductsFilterBar({
           className="pe-9"
         />
       </div>
-      <Select
-        items={categoryLabels}
-        value={searchParams.get("category") ?? "all"}
-        disabled={isPending}
+      <Combobox
+        items={categoryItems}
+        value={selectedCategory}
         onValueChange={handleCategoryChange}
+        isItemEqualToValue={(a: CategoryOption, b: CategoryOption) => a.slug === b.slug}
+        itemToStringValue={(item: CategoryOption) => item.slug}
+        itemToStringLabel={(item: CategoryOption) => item.name}
+        filter={contains}
+        disabled={isPending}
       >
-        <SelectTrigger className="w-full sm:w-56">
-          <SelectValue placeholder="الكل" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">الكل</SelectItem>
-          {categories.map((category) => (
-            <SelectItem key={category.slug} value={category.slug}>
-              {category.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <ComboboxTrigger className="w-full sm:w-56">
+          <ComboboxValue />
+        </ComboboxTrigger>
+        <ComboboxContent>
+          <ComboboxInput placeholder="ابحث عن قسم..." />
+          <ComboboxEmpty>لا توجد نتائج</ComboboxEmpty>
+          <ComboboxList>
+            {(item: CategoryOption) => (
+              <ComboboxItem key={item.slug} value={item}>
+                {item.name}
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
     </div>
   );
 }

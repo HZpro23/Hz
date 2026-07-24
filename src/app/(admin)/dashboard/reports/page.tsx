@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Boxes, Package, ShoppingCart, Users } from "lucide-react";
+import { Boxes, Package, ShoppingCart, Truck, Users, Warehouse } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { ar } from "@/i18n/ar";
 
@@ -27,6 +27,18 @@ const REPORTS = [
     icon: Users,
     title: "تقرير العملاء",
     description: "العملاء وعدد طلباتهم وإجمالي مشترياتهم",
+  },
+  {
+    href: "/dashboard/reports/purchases",
+    icon: Warehouse,
+    title: "تقرير المشتريات",
+    description: "جميع أوامر الشراء وحالتها وإجمالياتها",
+  },
+  {
+    href: "/dashboard/reports/suppliers",
+    icon: Truck,
+    title: "تقرير الموردون",
+    description: "الموردون وعدد أوامر الشراء وإجمالي المشتريات منهم",
   },
 ];
 
