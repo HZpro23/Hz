@@ -22,6 +22,8 @@ const LABELS: Record<
     unitPrice: string;
     lineTotal: string;
     total: string;
+    previousDebts: string;
+    grandTotal: string;
     thankYou: string;
     print: string;
     openPdf: string;
@@ -37,7 +39,9 @@ const LABELS: Record<
     quantity: "الكمية",
     unitPrice: "تكلفة الوحدة",
     lineTotal: "الإجمالي الفرعي",
-    total: "الإجمالي الكلي",
+    total: "إجمالي المنتجات",
+    previousDebts: "مجموع الديون السابقة",
+    grandTotal: "الإجمالي الكلي",
     thankYou: "شكراً لتعاملكم معنا",
     print: "طباعة / حفظ كـ PDF",
     openPdf: "فتح كملف PDF",
@@ -52,7 +56,9 @@ const LABELS: Record<
     quantity: "Quantité",
     unitPrice: "Prix unitaire",
     lineTotal: "Sous-total",
-    total: "Total",
+    total: "Total des produits",
+    previousDebts: "Total des dettes précédentes",
+    grandTotal: "Total général",
     thankYou: "Merci pour votre confiance",
     print: "Imprimer / Enregistrer en PDF",
     openPdf: "Ouvrir en PDF",
@@ -77,10 +83,12 @@ export default async function InvoicePrintPage({
   const t = LABELS[lang];
   const dir = lang === "fr" ? "ltr" : "rtl";
 
-  const grandTotal = invoice.items.reduce(
+  const itemsTotal = invoice.items.reduce(
     (sum, item) => sum + Number(item.unitPrice) * item.quantity,
     0,
   );
+  const previousDebtsTotal = Number(invoice.mergedDebtAmount);
+  const grandTotal = itemsTotal + previousDebtsTotal;
 
   return (
     <div
@@ -182,10 +190,24 @@ export default async function InvoicePrintPage({
           </tbody>
         </table>
 
-        <div className="flex justify-start border-t pt-4">
-          <p className="text-lg font-semibold">
-            {t.total}: {formatCurrency(grandTotal, lang, false)}
-          </p>
+        <div className="flex flex-col items-start gap-1 border-t pt-4">
+          {previousDebtsTotal > 0 ? (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {t.total}: {formatCurrency(itemsTotal, lang, false)}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {t.previousDebts}: {formatCurrency(previousDebtsTotal, lang, false)}
+              </p>
+              <p className="text-lg font-semibold">
+                {t.grandTotal}: {formatCurrency(grandTotal, lang, false)}
+              </p>
+            </>
+          ) : (
+            <p className="text-lg font-semibold">
+              {t.grandTotal}: {formatCurrency(grandTotal, lang, false)}
+            </p>
+          )}
         </div>
 
         {invoice.notes && (

@@ -3,13 +3,14 @@ import { notFound } from "next/navigation";
 import { ArrowRight, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
-import { getInvoiceById } from "@/features/invoices/queries";
+import { getInvoiceById, getOtherOutstandingInvoices } from "@/features/invoices/queries";
 import { getProductPickerOptions } from "@/features/products/queries";
 import { getCustomerOptions } from "@/features/customers/queries";
 import { InvoiceForm } from "@/features/invoices/components/invoice-form";
 import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { RecordPaymentDialog } from "@/features/invoices/components/record-payment-dialog";
 import { PaymentHistory } from "@/features/invoices/components/payment-history";
+import { MergeOldInvoicesDialog } from "@/features/invoices/components/merge-old-invoices-dialog";
 import { formatCurrency } from "@/lib/currency";
 import { ar } from "@/i18n/ar";
 
@@ -28,6 +29,10 @@ export default async function InvoiceEditPage({
   ]);
 
   if (!invoice) notFound();
+
+  const otherOutstandingInvoices = invoice.customerId
+    ? await getOtherOutstandingInvoices(invoice.customerId, invoice.id)
+    : [];
 
   const products = productRows.map((product) => ({
     id: product.id,
@@ -91,6 +96,18 @@ export default async function InvoiceEditPage({
             hasCustomer={Boolean(invoice.customerId)}
           />
         )}
+        {otherOutstandingInvoices.length > 0 && (
+          <MergeOldInvoicesDialog
+            invoiceId={invoice.id}
+            invoices={otherOutstandingInvoices.map((old) => ({
+              id: old.id,
+              invoiceNumber: old.invoiceNumber,
+              remaining: Math.max(0, Number(old.total) - Number(old.paidAmount)),
+              paymentStatus: old.paymentStatus,
+              createdAt: old.createdAt,
+            }))}
+          />
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -105,6 +122,7 @@ export default async function InvoiceEditPage({
               customerEmail: invoice.customerEmail,
               notes: invoice.notes,
               orderId: invoice.orderId,
+              mergedDebtAmount: Number(invoice.mergedDebtAmount),
               items: invoice.items.map((item) => ({
                 productId: item.productId,
                 name: item.name,

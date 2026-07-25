@@ -35,6 +35,7 @@ import {
 } from "@/features/invoices/schema";
 import { createInvoice, updateInvoice } from "@/features/invoices/actions";
 import { formatCurrency } from "@/lib/currency";
+import { ar } from "@/i18n/ar";
 import {
   CustomerPicker,
   type CustomerOption,
@@ -167,6 +168,10 @@ type InvoiceRecord = {
   customerEmail: string | null;
   notes: string | null;
   orderId: string | null;
+  /** Debt merged in from other invoices in "price only" mode — already
+   * included in the invoice's stored `total`, kept apart here purely so the
+   * displayed total can be broken down the same way the print view does. */
+  mergedDebtAmount?: number;
   items: {
     productId: string | null;
     name: string;
@@ -231,6 +236,8 @@ export function InvoiceForm({
       sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
     0,
   );
+  const mergedDebtAmount = invoice?.mergedDebtAmount ?? 0;
+  const grandTotal = total + mergedDebtAmount;
 
   const [pendingValues, setPendingValues] = useState<InvoiceOutput | null>(null);
   const [confirmRequest, setConfirmRequest] = useState<BalanceConfirmRequest | null>(
@@ -478,7 +485,18 @@ export function InvoiceForm({
       </div>
 
       <div className="flex items-center justify-between border-t pt-4">
-        <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
+        {mergedDebtAmount > 0 ? (
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {ar.invoices.previousDebtsTotal}: {formatCurrency(mergedDebtAmount)}
+            </p>
+            <p className="font-medium">
+              {ar.invoices.grandTotal}: {formatCurrency(grandTotal)}
+            </p>
+          </div>
+        ) : (
+          <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
+        )}
         <Button type="submit" disabled={isPending} className="cursor-pointer">
           {isPending && <Loader2 className="size-4 animate-spin" />}
           {isPending

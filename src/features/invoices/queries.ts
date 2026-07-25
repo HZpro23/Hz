@@ -53,6 +53,28 @@ export async function getInvoiceById(id: string) {
   });
 }
 
+export async function getOtherOutstandingInvoices(
+  customerId: string,
+  excludeInvoiceId: string,
+) {
+  return prisma.invoice.findMany({
+    where: {
+      customerId,
+      paymentStatus: { in: ["UNPAID", "PARTIALLY_PAID"] },
+      NOT: { id: excludeInvoiceId },
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      invoiceNumber: true,
+      total: true,
+      paidAmount: true,
+      paymentStatus: true,
+      createdAt: true,
+    },
+  });
+}
+
 export async function getOutstandingInvoicesSummary() {
   const rows = await prisma.invoice.findMany({
     where: { paymentStatus: { in: ["UNPAID", "PARTIALLY_PAID"] } },

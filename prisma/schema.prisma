@@ -270,6 +270,12 @@ model Invoice {
   /// payment/edit so deletes and edits can reverse exactly what was applied,
   /// no matter how many separate payments were recorded over time.
   balanceEffectApplied Decimal         @default(0) @db.Decimal(10, 2)
+  /// Cumulative remaining debt merged in from other outstanding invoices for
+  /// the same customer, when the admin chose to merge just the price rather
+  /// than the products (see mergeOldInvoicesIntoInvoice). Included in
+  /// `total` but kept separate so the print view can show it as its own
+  /// "previous debts" line instead of folding it into the items table.
+  mergedDebtAmount     Decimal         @default(0) @db.Decimal(10, 2)
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
 
