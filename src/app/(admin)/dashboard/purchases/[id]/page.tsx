@@ -34,19 +34,32 @@ export default async function PurchaseOrderDetailPage({
       <PageHeader
         title={`أمر الشراء ${order.orderNumber}`}
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               nativeButton={false}
               render={
                 <Link
-                  href={`/dashboard/purchases/${order.id}/print?lang=${order.language.toLowerCase()}`}
+                  href={`/dashboard/purchases/${order.id}/print?lang=ar`}
                   target="_blank"
                 />
               }
             >
               <Printer className="size-4" />
-              عرض / طباعة
+              فاتورة بالعربية
+            </Button>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link
+                  href={`/dashboard/purchases/${order.id}/print?lang=fr`}
+                  target="_blank"
+                />
+              }
+            >
+              <Printer className="size-4" />
+              Facture en Français
             </Button>
             <Button
               variant="outline"

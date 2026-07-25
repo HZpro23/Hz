@@ -117,7 +117,7 @@ export async function updateInvoice(
   });
   if (!existing) return { error: "الفاتورة غير موجودة" };
 
-  const total = computeTotal(parsed.data.items) + Number(existing.mergedDebtAmount);
+  const total = computeTotal(parsed.data.items);
   // Items/total edits never touch the payments already on file — رصيد only
   // ever moves because of من الرصيد or an over/under-paid total, both
   // captured by re-deriving the effect against the (unchanged) payments.

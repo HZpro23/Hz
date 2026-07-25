@@ -24,6 +24,7 @@ const LABELS: Record<
     total: string;
     print: string;
     openPdf: string;
+    supplierSignature: string;
   }
 > = {
   ar: {
@@ -39,6 +40,7 @@ const LABELS: Record<
     total: "الإجمالي الكلي",
     print: "طباعة / حفظ كـ PDF",
     openPdf: "فتح كملف PDF",
+    supplierSignature: "توقيع المورد",
   },
   fr: {
     title: "Facture d'achat",
@@ -53,6 +55,7 @@ const LABELS: Record<
     total: "Total",
     print: "Imprimer / Enregistrer en PDF",
     openPdf: "Ouvrir en PDF",
+    supplierSignature: "Signature du fournisseur",
   },
 };
 
@@ -183,6 +186,15 @@ export default async function PurchaseOrderPrintPage({
           <p className="text-lg font-semibold">
             {t.total}: {formatCurrency(grandTotal, lang, false)}
           </p>
+        </div>
+
+        <div className="flex justify-start pt-8 print:break-inside-avoid">
+          <div className="flex flex-col items-center gap-2">
+            <div className="size-32 rounded-md border border-gray-300" />
+            <p className="text-sm text-muted-foreground">
+              {t.supplierSignature}
+            </p>
+          </div>
         </div>
       </div>
     </div>

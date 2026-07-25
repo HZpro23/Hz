@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import { ArrowRight, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
-import { getInvoiceById, getOtherOutstandingInvoices } from "@/features/invoices/queries";
+import { getInvoiceById } from "@/features/invoices/queries";
 import { getProductPickerOptions } from "@/features/products/queries";
 import { getCustomerOptions } from "@/features/customers/queries";
+import { getCategoryOptions } from "@/features/categories/queries";
+import { getBrandOptions } from "@/features/brands/queries";
 import { InvoiceForm } from "@/features/invoices/components/invoice-form";
 import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { RecordPaymentDialog } from "@/features/invoices/components/record-payment-dialog";
-import { PaymentHistory } from "@/features/invoices/components/payment-history";
-import { MergeOldInvoicesDialog } from "@/features/invoices/components/merge-old-invoices-dialog";
 import { formatCurrency } from "@/lib/currency";
 import { ar } from "@/i18n/ar";
 
@@ -22,17 +22,15 @@ export default async function InvoiceEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [invoice, productRows, customers] = await Promise.all([
+  const [invoice, productRows, customers, categories, brands] = await Promise.all([
     getInvoiceById(id),
     getProductPickerOptions(),
     getCustomerOptions(),
+    getCategoryOptions(),
+    getBrandOptions(),
   ]);
 
   if (!invoice) notFound();
-
-  const otherOutstandingInvoices = invoice.customerId
-    ? await getOtherOutstandingInvoices(invoice.customerId, invoice.id)
-    : [];
 
   const products = productRows.map((product) => ({
     id: product.id,
@@ -41,6 +39,8 @@ export default async function InvoiceEditPage({
     price1: Number(product.price1),
     price2: Number(product.price2),
     price3: Number(product.price3),
+    categoryId: product.categoryId,
+    brandId: product.brandId,
   }));
 
   const total = Number(invoice.total);
@@ -96,52 +96,35 @@ export default async function InvoiceEditPage({
             hasCustomer={Boolean(invoice.customerId)}
           />
         )}
-        {otherOutstandingInvoices.length > 0 && (
-          <MergeOldInvoicesDialog
-            invoiceId={invoice.id}
-            invoices={otherOutstandingInvoices.map((old) => ({
-              id: old.id,
-              invoiceNumber: old.invoiceNumber,
-              remaining: Math.max(0, Number(old.total) - Number(old.paidAmount)),
-              paymentStatus: old.paymentStatus,
-              createdAt: old.createdAt,
-            }))}
-          />
-        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="max-w-3xl lg:col-span-2">
-          <InvoiceForm
-            invoice={{
-              id: invoice.id,
-              language: invoice.language,
-              customerId: invoice.customerId,
-              customerName: invoice.customerName,
-              customerPhone: invoice.customerPhone,
-              customerEmail: invoice.customerEmail,
-              notes: invoice.notes,
-              orderId: invoice.orderId,
-              mergedDebtAmount: Number(invoice.mergedDebtAmount),
-              items: invoice.items.map((item) => ({
-                productId: item.productId,
-                name: item.name,
-                quantity: item.quantity,
-                unitPrice: Number(item.unitPrice),
-              })),
-            }}
-            products={products}
-            customers={customers}
-          />
-        </div>
-        <div>
-          <PaymentHistory
-            payments={invoice.payments.map((payment) => ({
-              ...payment,
-              amount: Number(payment.amount),
-            }))}
-          />
-        </div>
+        <InvoiceForm
+          invoice={{
+            id: invoice.id,
+            language: invoice.language,
+            customerId: invoice.customerId,
+            customerName: invoice.customerName,
+            customerPhone: invoice.customerPhone,
+            customerEmail: invoice.customerEmail,
+            notes: invoice.notes,
+            orderId: invoice.orderId,
+            items: invoice.items.map((item) => ({
+              productId: item.productId,
+              name: item.name,
+              quantity: item.quantity,
+              unitPrice: Number(item.unitPrice),
+            })),
+          }}
+          products={products}
+          customers={customers}
+          categories={categories}
+          brands={brands}
+          payments={invoice.payments.map((payment) => ({
+            ...payment,
+            amount: Number(payment.amount),
+          }))}
+        />
       </div>
     </div>
   );

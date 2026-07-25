@@ -159,7 +159,6 @@ export const ar = {
     paymentDate: "تاريخ الدفعة",
     noPayments: "لم يتم تسجيل أي دفعات بعد",
     invalidAmount: "الرجاء إدخال مبلغ صحيح",
-    outstandingInvoices: "الفواتير غير المسددة بالكامل",
     payments: "الدفعات",
     addPayment: "إضافة طريقة دفع",
     availableBalance: "الرصيد المتاح",
@@ -194,27 +193,6 @@ export const ar = {
     deleteBalanceNoAutoChange:
       "لن يتم تغيير رصيد العميل تلقائياً لن يُطبَّق هذا التغيير إلا إذا فعّلت المربع أدناه قبل الحذف",
     deleteConfirmAndDelete: "تأكيد وحذف الفاتورة",
-    mergeOldInvoices: "دمج فواتير قديمة",
-    mergeOldInvoicesTitle: "دمج الفواتير القديمة غير المسددة",
-    mergeOldInvoicesDescription:
-      "لدى هذا العميل فواتير أخرى غير مسددة بالكامل. اختر الفواتير التي تريد دمج مبلغها المتبقي مع هذه الفاتورة.",
-    mergeOldInvoicesSelectAll: "تحديد الكل",
-    mergeOldInvoicesRemaining: "المتبقي",
-    mergeOldInvoicesMode: "طريقة الدمج",
-    mergeOldInvoicesModeProducts: "دمج منتجات الفواتير القديمة",
-    mergeOldInvoicesModeProductsHint:
-      "تُضاف منتجات الفواتير المحددة إلى قائمة منتجات هذه الفاتورة",
-    mergeOldInvoicesModePriceOnly: "إضافة السعر فقط كدين سابق",
-    mergeOldInvoicesModePriceOnlyHint:
-      "لا تُضاف منتجات، فقط المبلغ المتبقي يُضاف إلى إجمالي هذه الفاتورة",
-    mergeOldInvoicesCancelOld: "اعتبار الفواتير القديمة المدمجة مسددة",
-    mergeOldInvoicesCancelOldHint:
-      "سيتم تسوية الفواتير القديمة المحددة وتصبح مسددة بالكامل، لأن مبلغها انتقل إلى هذه الفاتورة",
-    mergeOldInvoicesSubmit: "دمج المحدد",
-    mergeOldInvoicesNoSelection: "الرجاء اختيار فاتورة واحدة على الأقل",
-    mergeOldInvoicesSuccess: "تم دمج الفواتير القديمة بنجاح",
-    previousDebtsTotal: "مجموع الديون السابقة",
-    grandTotal: "المجموع الكلي",
   },
 } as const;
 

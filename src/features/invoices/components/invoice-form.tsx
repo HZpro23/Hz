@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -41,6 +42,7 @@ import {
   type CustomerOption,
 } from "@/features/customers/components/customer-picker";
 import { PaymentFieldsSection } from "@/features/invoices/components/payment-fields";
+import { PaymentHistory } from "@/features/invoices/components/payment-history";
 import { BalanceConfirmDialog } from "@/features/invoices/components/balance-confirm-dialog";
 import {
   checkBalanceConfirmation,
@@ -55,6 +57,8 @@ type ProductOption = {
   price1: number;
   price2: number;
   price3: number;
+  categoryId: string;
+  brandId: string | null;
 };
 
 const NONE_PRODUCT: ProductOption = {
@@ -64,6 +68,8 @@ const NONE_PRODUCT: ProductOption = {
   price1: 0,
   price2: 0,
   price3: 0,
+  categoryId: "",
+  brandId: null,
 };
 
 const CUSTOM_PRICE = "سعر مخصص";
@@ -159,6 +165,185 @@ function ProductPickerField({
   );
 }
 
+type CategoryOption = { id: string; name: string };
+
+const NONE_CATEGORY: CategoryOption = { id: "", name: "اختر قسماً..." };
+const NONE_BRAND: CategoryOption = { id: "", name: "اختر علامة تجارية..." };
+
+/**
+ * Lets the admin pick a category and/or brand, see the matching products,
+ * check off one or more, and add all of them to the invoice's items at
+ * once — a faster path than adding rows one by one via the product search
+ * above.
+ */
+function CategoryQuickAddPanel({
+  categories,
+  brands,
+  products,
+  onAddProducts,
+}: {
+  categories: CategoryOption[];
+  brands: CategoryOption[];
+  products: ProductOption[];
+  onAddProducts: (products: ProductOption[]) => void;
+}) {
+  const { contains } = useComboboxFilter();
+  const [categoryId, setCategoryId] = useState("");
+  const [brandId, setBrandId] = useState("");
+  const [productQuery, setProductQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const categoryItems = [NONE_CATEGORY, ...categories];
+  const selectedCategory =
+    categoryItems.find((item) => item.id === categoryId) ?? NONE_CATEGORY;
+
+  const brandItems = [NONE_BRAND, ...brands];
+  const selectedBrand =
+    brandItems.find((item) => item.id === brandId) ?? NONE_BRAND;
+
+  const hasFilter = Boolean(categoryId) || Boolean(brandId);
+  const trimmedQuery = productQuery.trim().toLowerCase();
+  const filteredProducts = hasFilter
+    ? products
+        .filter((product) => !categoryId || product.categoryId === categoryId)
+        .filter((product) => !brandId || product.brandId === brandId)
+        .filter(
+          (product) =>
+            !trimmedQuery ||
+            product.name.toLowerCase().includes(trimmedQuery) ||
+            product.sku.toLowerCase().includes(trimmedQuery),
+        )
+    : [];
+
+  function toggle(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function handleAdd() {
+    const toAdd = filteredProducts.filter((product) => selectedIds.has(product.id));
+    if (toAdd.length === 0) return;
+    onAddProducts(toAdd);
+    setSelectedIds(new Set());
+  }
+
+  return (
+    <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+      <Label>إضافة سريعة حسب القسم أو العلامة التجارية</Label>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <Combobox
+          items={categoryItems}
+          value={selectedCategory}
+          onValueChange={(category: CategoryOption | null) => {
+            setCategoryId(category?.id ?? "");
+            setSelectedIds(new Set());
+          }}
+          isItemEqualToValue={(a: CategoryOption, b: CategoryOption) => a.id === b.id}
+          itemToStringValue={(item: CategoryOption) => item.id}
+          itemToStringLabel={(item: CategoryOption) => item.name}
+          filter={contains}
+        >
+          <ComboboxTrigger className="w-full">
+            <ComboboxValue />
+          </ComboboxTrigger>
+          <ComboboxContent>
+            <ComboboxInput placeholder="ابحث عن قسم..." />
+            <ComboboxEmpty>لا توجد نتائج</ComboboxEmpty>
+            <ComboboxList>
+              {(item: CategoryOption) => (
+                <ComboboxItem key={item.id} value={item}>
+                  {item.name}
+                </ComboboxItem>
+              )}
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
+
+        <Combobox
+          items={brandItems}
+          value={selectedBrand}
+          onValueChange={(brand: CategoryOption | null) => {
+            setBrandId(brand?.id ?? "");
+            setSelectedIds(new Set());
+          }}
+          isItemEqualToValue={(a: CategoryOption, b: CategoryOption) => a.id === b.id}
+          itemToStringValue={(item: CategoryOption) => item.id}
+          itemToStringLabel={(item: CategoryOption) => item.name}
+          filter={contains}
+        >
+          <ComboboxTrigger className="w-full">
+            <ComboboxValue />
+          </ComboboxTrigger>
+          <ComboboxContent>
+            <ComboboxInput placeholder="ابحث عن علامة تجارية..." />
+            <ComboboxEmpty>لا توجد نتائج</ComboboxEmpty>
+            <ComboboxList>
+              {(item: CategoryOption) => (
+                <ComboboxItem key={item.id} value={item}>
+                  {item.name}
+                </ComboboxItem>
+              )}
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
+      </div>
+
+      {hasFilter && (
+        <>
+          <Input
+            value={productQuery}
+            onChange={(event) => setProductQuery(event.target.value)}
+            placeholder="ابحث بالاسم أو SKU..."
+          />
+          {filteredProducts.length === 0 ? (
+            <p className="py-2 text-xs text-muted-foreground">
+              لا توجد منتجات مطابقة
+            </p>
+          ) : (
+            <>
+              <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border bg-background p-1.5">
+                {filteredProducts.map((product) => (
+                  <label
+                    key={product.id}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+                  >
+                    <Checkbox
+                      checked={selectedIds.has(product.id)}
+                      onCheckedChange={() => toggle(product.id)}
+                    />
+                    <span className="flex-1 truncate">{product.name}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {formatCurrency(product.price1)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                className="w-full cursor-pointer"
+                disabled={selectedIds.size === 0}
+                onClick={handleAdd}
+              >
+                <Plus className="size-4" />
+                إضافة{" "}
+                {selectedIds.size > 0
+                  ? selectedIds.size.toLocaleString("ar")
+                  : ""}{" "}
+                إلى الفاتورة
+              </Button>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 type InvoiceRecord = {
   id: string;
   language: string;
@@ -168,10 +353,6 @@ type InvoiceRecord = {
   customerEmail: string | null;
   notes: string | null;
   orderId: string | null;
-  /** Debt merged in from other invoices in "price only" mode — already
-   * included in the invoice's stored `total`, kept apart here purely so the
-   * displayed total can be broken down the same way the print view does. */
-  mergedDebtAmount?: number;
   items: {
     productId: string | null;
     name: string;
@@ -184,12 +365,27 @@ export function InvoiceForm({
   invoice,
   products,
   customers,
+  categories,
+  brands,
   orderId,
+  payments,
 }: {
   invoice?: InvoiceRecord;
   products: ProductOption[];
   customers: CustomerOption[];
+  categories: { id: string; name: string }[];
+  brands: { id: string; name: string }[];
   orderId?: string;
+  /** Only present when editing an existing invoice — renders the سجل
+   * الدفعات sidebar alongside the quick-add-by-category panel. */
+  payments?: {
+    id: string;
+    amount: number;
+    method: string;
+    note: string | null;
+    createdAt: Date;
+    invoiceNumber?: string;
+  }[];
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -236,8 +432,30 @@ export function InvoiceForm({
       sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
     0,
   );
-  const mergedDebtAmount = invoice?.mergedDebtAmount ?? 0;
-  const grandTotal = total + mergedDebtAmount;
+  function handleAddFromCategory(selected: ProductOption[]) {
+    const isOnlyEmptyRow =
+      fields.length === 1 && !items?.[0]?.productId && !items?.[0]?.name;
+
+    selected.forEach((product, index) => {
+      if (index === 0 && isOnlyEmptyRow) {
+        setValue("items.0.productId", product.id);
+        setValue("items.0.name", product.name);
+        setValue("items.0.quantity", 1);
+        setValue("items.0.unitPrice", product.price1);
+        return;
+      }
+      append({
+        productId: product.id,
+        name: product.name,
+        quantity: 1,
+        unitPrice: product.price1,
+      });
+    });
+
+    toast.success(
+      `تمت إضافة ${selected.length.toLocaleString("ar")} منتج إلى الفاتورة`,
+    );
+  }
 
   const [pendingValues, setPendingValues] = useState<InvoiceOutput | null>(null);
   const [confirmRequest, setConfirmRequest] = useState<BalanceConfirmRequest | null>(
@@ -312,6 +530,8 @@ export function InvoiceForm({
   }
 
   return (
+    <>
+    <div className="max-w-3xl space-y-6 lg:col-span-2">
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <fieldset disabled={isPending} className="contents space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -485,18 +705,7 @@ export function InvoiceForm({
       </div>
 
       <div className="flex items-center justify-between border-t pt-4">
-        {mergedDebtAmount > 0 ? (
-          <div>
-            <p className="text-sm text-muted-foreground">
-              {ar.invoices.previousDebtsTotal}: {formatCurrency(mergedDebtAmount)}
-            </p>
-            <p className="font-medium">
-              {ar.invoices.grandTotal}: {formatCurrency(grandTotal)}
-            </p>
-          </div>
-        ) : (
-          <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
-        )}
+        <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
         <Button type="submit" disabled={isPending} className="cursor-pointer">
           {isPending && <Loader2 className="size-4 animate-spin" />}
           {isPending
@@ -517,5 +726,28 @@ export function InvoiceForm({
         onDecline={resolveDecline}
       />
     </form>
+
+    {!invoice && (
+      <CategoryQuickAddPanel
+        categories={categories}
+        brands={brands}
+        products={products}
+        onAddProducts={handleAddFromCategory}
+      />
+    )}
+    </div>
+
+    {invoice && (
+      <div className="space-y-6">
+        <PaymentHistory payments={payments ?? []} />
+        <CategoryQuickAddPanel
+          categories={categories}
+          brands={brands}
+          products={products}
+          onAddProducts={handleAddFromCategory}
+        />
+      </div>
+    )}
+    </>
   );
 }

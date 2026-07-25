@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
-import { getInvoiceById } from "@/features/invoices/queries";
+import {
+  getInvoiceById,
+  getOtherOutstandingInvoices,
+} from "@/features/invoices/queries";
 import { InvoicePrintButton } from "@/features/invoices/components/invoice-print-button";
 import { InvoicePdfButton } from "@/features/invoices/components/invoice-pdf-button";
 import { ar as arDict } from "@/i18n/ar";
@@ -87,7 +90,14 @@ export default async function InvoicePrintPage({
     (sum, item) => sum + Number(item.unitPrice) * item.quantity,
     0,
   );
-  const previousDebtsTotal = Number(invoice.mergedDebtAmount);
+
+  const otherOutstandingInvoices = invoice.customerId
+    ? await getOtherOutstandingInvoices(invoice.customerId, invoice.id)
+    : [];
+  const previousDebtsTotal = otherOutstandingInvoices.reduce(
+    (sum, other) => sum + Math.max(0, Number(other.total) - Number(other.paidAmount)),
+    0,
+  );
   const grandTotal = itemsTotal + previousDebtsTotal;
 
   return (
