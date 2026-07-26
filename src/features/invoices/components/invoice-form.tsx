@@ -619,6 +619,15 @@ export function InvoiceForm({
               <Textarea id="invoice-notes" rows={2} {...register("notes")} />
             </div>
 
+            <div className="space-y-2 lg:hidden">
+              <CategoryQuickAddPanel
+                categories={categories}
+                brands={brands}
+                products={products}
+                onAddProducts={handleAddFromCategory}
+              />
+            </div>
+
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>المنتجات</Label>
@@ -641,13 +650,6 @@ export function InvoiceForm({
                   إضافة منتج
                 </Button>
               </div>
-
-              <CategoryQuickAddPanel
-                categories={categories}
-                brands={brands}
-                products={products}
-                onAddProducts={handleAddFromCategory}
-              />
 
               <div
                 className={
@@ -774,11 +776,22 @@ export function InvoiceForm({
         </form>
       </div>
 
-      {invoice && (
-        <div className="space-y-6">
-          <PaymentHistory payments={payments ?? []} />
+      <div className="space-y-6 lg:col-span-1">
+        {invoice && (
+          <div className="space-y-6">
+            <PaymentHistory payments={payments ?? []} />
+          </div>
+        )}
+
+        <div className="hidden space-y-6 lg:block">
+          <CategoryQuickAddPanel
+            categories={categories}
+            brands={brands}
+            products={products}
+            onAddProducts={handleAddFromCategory}
+          />
         </div>
-      )}
+      </div>
     </>
   );
 }

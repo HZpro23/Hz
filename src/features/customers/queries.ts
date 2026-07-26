@@ -113,11 +113,35 @@ export async function getCustomersPage({
   };
 }
 
+/**
+ * Total money owed to the store across all customers, combining two
+ * independent debt sources per customer: a negative رصيد (the account
+ * itself is overdrawn) and the remaining unpaid amount on their
+ * UNPAID/PARTIALLY_PAID invoices (goods invoiced but not yet paid off,
+ * regardless of رصيد). These never overlap — رصيد only moves via من الرصيد
+ * usage/overpayment/manual adjustments, never by an invoice simply being
+ * unpaid — so summing them per customer is a plain addition, not
+ * double-counting.
+ */
 export async function getCustomersOwingSummary() {
   const rows = await prisma.$queryRaw<{ count: bigint; totalOwed: string }[]>`
-    SELECT COUNT(*)::bigint AS count, COALESCE(SUM(-balance), 0)::numeric AS "totalOwed"
-    FROM "Customer"
-    WHERE balance < 0
+    WITH customer_debt AS (
+      SELECT
+        c.id,
+        GREATEST(0, -c.balance) AS balance_debt,
+        COALESCE(inv.outstanding, 0) AS invoice_debt
+      FROM "Customer" c
+      LEFT JOIN (
+        SELECT "customerId", SUM(total - "paidAmount") AS outstanding
+        FROM "Invoice"
+        WHERE "paymentStatus" IN ('UNPAID', 'PARTIALLY_PAID')
+        GROUP BY "customerId"
+      ) inv ON inv."customerId" = c.id
+    )
+    SELECT
+      COUNT(*) FILTER (WHERE balance_debt + invoice_debt > 0.005)::bigint AS count,
+      COALESCE(SUM(balance_debt + invoice_debt), 0)::numeric AS "totalOwed"
+    FROM customer_debt
   `;
 
   return {

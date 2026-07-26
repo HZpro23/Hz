@@ -17,7 +17,9 @@ export async function getDashboardStats() {
     prisma.product.count({ where: {} }),
     prisma.customer.count({ where: {} }),
     prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.order.count({ where: { status: { in: ["PENDING", "PROCESSING"] } } }),
+    prisma.order.count({
+      where: { status: { in: ["PENDING", "PROCESSING"] } },
+    }),
     prisma.$queryRaw<
       { count: bigint }[]
     >`SELECT COUNT(*)::bigint AS count FROM "Product" WHERE quantity <= "minStockLevel"`,
@@ -25,7 +27,7 @@ export async function getDashboardStats() {
     getCustomersOwingSummary(),
     prisma.$queryRaw<
       { total: string | null }[]
-    >`SELECT SUM("purchasePrice")::numeric AS total FROM "Product" WHERE quantity > 0`,
+    >`SELECT SUM(quantity * "purchasePrice")::numeric AS total FROM "Product"`,
   ]);
 
   return {
@@ -36,6 +38,8 @@ export async function getDashboardStats() {
     lowStockCount: Number(lowStockRows[0]?.count ?? 0),
     unpaidInvoicesCount: outstanding.count,
     totalOwedByCustomers: owingSummary.totalOwed,
-    totalInventoryPurchaseValue: Number(inventoryPurchaseValueRows[0]?.total ?? 0),
+    totalInventoryPurchaseValue: Number(
+      inventoryPurchaseValueRows[0]?.total ?? 0,
+    ),
   };
 }
