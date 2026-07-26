@@ -85,8 +85,9 @@ export default async function PurchaseOrderPrintPage({
   return (
     <div
       dir={dir}
-      className="mx-auto max-w-2xl space-y-6 p-6 print:max-w-none print:p-0 print:[page:a5-print]"
+      className="mx-auto max-w-2xl space-y-6 p-6 print:max-w-none print:p-0"
     >
+      <style>{"@page { size: A5; margin: 5mm; }"}</style>
       <div className="flex justify-end gap-2 print:hidden">
         <InvoicePdfButton
           targetId="purchase-order-card"
@@ -98,37 +99,48 @@ export default async function PurchaseOrderPrintPage({
 
       <div
         id="purchase-order-card"
-        className="space-y-8 rounded-xl border bg-card p-8 print:space-y-4 print:rounded-none print:border-none print:p-0"
+        className="rounded-xl border bg-card p-8 print:rounded-none print:border-none print:p-0"
       >
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{arDict.siteName}</h1>
-          </div>
-          <div className="text-end">
-            <h2 className="text-xl font-bold">{t.title}</h2>
-            <p className="text-sm font-semibold text-foreground">
-              {t.orderNumber}: <span dir="ltr">{order.orderNumber}</span>
-            </p>
-            <p className="text-sm font-semibold text-foreground">
-              {t.date}: {new Date(order.createdAt).toLocaleDateString("fr-FR")}
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold text-foreground">
-            {t.supplier}:
-            <span className="font-bold mx-1.5">{order.supplier.name}</span>
-          </p>
-          {order.supplier.phone && (
-            <p className="text-sm font-semibold text-foreground">
-              {t.phone}: <span dir="ltr">{order.supplier.phone}</span>
-            </p>
-          )}
-        </div>
-
-        <table className="w-full border-collapse text-sm border border-gray-200">
+        <table className="w-full border-collapse text-sm">
           <thead>
+            <tr>
+              <th colSpan={4} className="border-none p-0 pb-6 text-start font-normal print:pb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h1 className="text-2xl font-bold print:text-lg">
+                      {arDict.siteName}
+                    </h1>
+                  </div>
+                  <div className="text-end">
+                    <h2 className="text-xl font-bold print:text-base">
+                      {t.title}
+                    </h2>
+                    <p className="text-sm font-semibold text-foreground print:text-xs">
+                      {t.orderNumber}:{" "}
+                      <span dir="ltr">{order.orderNumber}</span>
+                    </p>
+                    <p className="text-sm font-semibold text-foreground print:text-xs">
+                      {t.date}:{" "}
+                      {new Date(order.createdAt).toLocaleDateString("fr-FR")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 print:mt-4">
+                  <p className="text-sm font-semibold text-foreground print:text-xs">
+                    {t.supplier}:
+                    <span className="font-bold mx-1.5">
+                      {order.supplier.name}
+                    </span>
+                  </p>
+                  {order.supplier.phone && (
+                    <p className="text-sm font-semibold text-foreground print:text-xs">
+                      {t.phone}: <span dir="ltr">{order.supplier.phone}</span>
+                    </p>
+                  )}
+                </div>
+              </th>
+            </tr>
             <tr className="border-b text-start">
               <th className="px-3 py-2 text-start font-bold border border-gray-200">
                 <span className="block truncate max-w-[10ch]">
@@ -179,23 +191,26 @@ export default async function PurchaseOrderPrintPage({
                 </td>
               </tr>
             ))}
+            <tr>
+              <td colSpan={4} className="border-none p-0 pt-4">
+                <div className="flex justify-start border-t pt-4">
+                  <p className="text-lg font-bold">
+                    {t.total}: {formatCurrency(grandTotal, lang, false)}
+                  </p>
+                </div>
+
+                <div className="flex justify-start pt-8 print:break-inside-avoid">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="size-32 rounded-md border border-gray-300" />
+                    <p className="text-sm font-semibold text-foreground">
+                      {t.supplierSignature}
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
-
-        <div className="flex justify-start border-t pt-4">
-          <p className="text-lg font-bold">
-            {t.total}: {formatCurrency(grandTotal, lang, false)}
-          </p>
-        </div>
-
-        <div className="flex justify-start pt-8 print:break-inside-avoid">
-          <div className="flex flex-col items-center gap-2">
-            <div className="size-32 rounded-md border border-gray-300" />
-            <p className="text-sm font-semibold text-foreground">
-              {t.supplierSignature}
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

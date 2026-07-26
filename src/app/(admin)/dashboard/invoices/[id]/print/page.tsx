@@ -104,8 +104,9 @@ export default async function InvoicePrintPage({
   return (
     <div
       dir={dir}
-      className="mx-auto max-w-2xl space-y-6 p-6 print:max-w-none print:p-0 print:[page:a5-print]"
+      className="mx-auto max-w-2xl space-y-6 p-6 print:max-w-none print:p-0"
     >
+      <style>{"@page { size: A5; margin: 5mm; }"}</style>
       <div className="flex justify-end gap-2 print:hidden">
         <InvoicePdfButton
           targetId="invoice-card"
@@ -117,38 +118,9 @@ export default async function InvoicePrintPage({
 
       <div
         id="invoice-card"
-        className="space-y-8 rounded-xl border bg-card p-8 print:space-y-4 print:rounded-none print:border-none print:p-0"
+        className="rounded-xl border bg-card p-8 print:rounded-none print:border-none print:p-0"
       >
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold print:text-lg">
-              {arDict.siteName}
-            </h1>
-          </div>
-          <div className="text-end">
-            <h2 className="text-xl font-bold print:text-base">{t.title}</h2>
-            <p className="text-sm font-semibold text-foreground print:text-xs">
-              {t.invoiceNumber}: <span dir="ltr">{invoice.invoiceNumber}</span>
-            </p>
-            <p className="text-sm font-semibold text-foreground print:text-xs">
-              {t.date}:{" "}
-              {new Date(invoice.createdAt).toLocaleDateString("fr-FR")}
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold text-foreground print:text-xs">
-            {t.billTo}:
-            <span className="font-bold mx-1.5">{invoice.customerName}</span>
-          </p>
-
-          <p className="text-sm font-semibold text-foreground print:text-xs">
-            {t.phone}: <span dir="ltr">{invoice.customerPhone}</span>
-          </p>
-        </div>
-
-        <table className="w-full table-fixed border-collapse text-sm border border-gray-200 print:text-xs">
+        <table className="w-full table-fixed border-collapse text-sm print:text-xs">
           <colgroup>
             <col className="w-[15%]" />
             <col className="w-[72%]" />
@@ -156,6 +128,46 @@ export default async function InvoicePrintPage({
             <col className="w-[25%]" />
           </colgroup>
           <thead>
+            <tr>
+              <th
+                colSpan={4}
+                className="border-none p-0 pb-6 text-start font-normal print:pb-4"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h1 className="text-2xl font-bold print:text-lg">
+                      {arDict.siteName}
+                    </h1>
+                  </div>
+                  <div className="text-end">
+                    <h2 className="text-xl font-bold print:text-base">
+                      {t.title}
+                    </h2>
+                    <p className="text-sm font-semibold text-foreground print:text-xs">
+                      {t.invoiceNumber}:{" "}
+                      <span dir="ltr">{invoice.invoiceNumber}</span>
+                    </p>
+                    <p className="text-sm font-semibold text-foreground print:text-xs">
+                      {t.date}:{" "}
+                      {new Date(invoice.createdAt).toLocaleDateString("fr-FR")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 print:mt-4">
+                  <p className="text-sm font-semibold text-foreground print:text-xs">
+                    {t.billTo}:
+                    <span className="font-bold mx-1.5">
+                      {invoice.customerName}
+                    </span>
+                  </p>
+
+                  <p className="text-sm font-semibold text-foreground print:text-xs">
+                    {t.phone}: <span dir="ltr">{invoice.customerPhone}</span>
+                  </p>
+                </div>
+              </th>
+            </tr>
             <tr className="border-b text-start">
               <th className="px-3 py-2 text-start font-bold border border-gray-200">
                 <span className="block truncate">{t.quantity}</span>
@@ -203,39 +215,43 @@ export default async function InvoicePrintPage({
                 </td>
               </tr>
             ))}
+            <tr>
+              <td colSpan={4} className="border-none p-0 pt-4">
+                <div className="flex flex-col items-start gap-1 border-t pt-4">
+                  {previousDebtsTotal > 0 ? (
+                    <>
+                      <p className="text-sm font-semibold text-foreground print:text-xs">
+                        {t.total}: {formatCurrency(itemsTotal, lang, false)}
+                      </p>
+                      <p className="text-sm font-semibold text-foreground print:text-xs">
+                        {t.previousDebts}:{" "}
+                        {formatCurrency(previousDebtsTotal, lang, false)}
+                      </p>
+                      <p className="text-lg font-bold print:text-sm">
+                        {t.grandTotal}:{" "}
+                        {formatCurrency(grandTotal, lang, false)}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-lg font-bold print:text-sm">
+                      {t.grandTotal}: {formatCurrency(grandTotal, lang, false)}
+                    </p>
+                  )}
+                </div>
+
+                {invoice.notes && (
+                  <p className="mt-4 text-sm font-semibold text-foreground print:text-xs">
+                    {invoice.notes}
+                  </p>
+                )}
+
+                <p className="mt-4 text-center text-sm font-semibold text-foreground print:text-xs">
+                  {t.thankYou}
+                </p>
+              </td>
+            </tr>
           </tbody>
         </table>
-
-        <div className="flex flex-col items-start gap-1 border-t pt-4">
-          {previousDebtsTotal > 0 ? (
-            <>
-              <p className="text-sm font-semibold text-foreground print:text-xs">
-                {t.total}: {formatCurrency(itemsTotal, lang, false)}
-              </p>
-              <p className="text-sm font-semibold text-foreground print:text-xs">
-                {t.previousDebts}:{" "}
-                {formatCurrency(previousDebtsTotal, lang, false)}
-              </p>
-              <p className="text-lg font-bold print:text-sm">
-                {t.grandTotal}: {formatCurrency(grandTotal, lang, false)}
-              </p>
-            </>
-          ) : (
-            <p className="text-lg font-bold print:text-sm">
-              {t.grandTotal}: {formatCurrency(grandTotal, lang, false)}
-            </p>
-          )}
-        </div>
-
-        {invoice.notes && (
-          <p className="text-sm font-semibold text-foreground print:text-xs">
-            {invoice.notes}
-          </p>
-        )}
-
-        <p className="text-center text-sm font-semibold text-foreground print:text-xs">
-          {t.thankYou}
-        </p>
       </div>
     </div>
   );
