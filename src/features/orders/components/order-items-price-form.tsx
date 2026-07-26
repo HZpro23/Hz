@@ -239,6 +239,7 @@ export function OrderItemsPriceForm({
             message="تم إصدار فاتورة لهذا الطلب، لذلك لا يمكن تعديل عناصره بعد الآن. لإجراء أي تعديل، يرجى التعامل مع الفاتورة مباشرة."
           />
         )}
+        <div className={items.length > 5 ? "max-h-120 overflow-y-auto" : undefined}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -263,6 +264,7 @@ export function OrderItemsPriceForm({
             ))}
           </TableBody>
         </Table>
+        </div>
         <div className="border-t pt-4">
           <p className="font-medium">الإجمالي الكلي: {formatCurrency(lockedTotal)}</p>
         </div>
@@ -273,6 +275,7 @@ export function OrderItemsPriceForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <fieldset disabled={isPending} className="contents space-y-4">
+      <div className={fields.length > 5 ? "max-h-120 overflow-y-auto" : undefined}>
       <Table>
         <TableHeader>
           <TableRow>
@@ -371,6 +374,7 @@ export function OrderItemsPriceForm({
           })}
         </TableBody>
       </Table>
+      </div>
 
       <Button
         type="button"

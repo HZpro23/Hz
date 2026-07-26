@@ -45,6 +45,7 @@ export const ar = {
     orders: "الطلبات",
     lowStockProducts: "المنتجات منخفضة المخزون",
     totalOwedByCustomers: "إجمالي المستحقات على العملاء",
+    totalInventoryPurchaseValue: "قيمة المخزون الحالي (سعر الشراء)",
   },
   statusLabels: {
     order: {

@@ -1,4 +1,4 @@
-import { Package, Users, ShoppingCart, AlertTriangle, Wallet } from "lucide-react";
+import { Package, Users, ShoppingCart, AlertTriangle, Wallet, Warehouse } from "lucide-react";
 import { StatCard } from "@/components/shared/stat-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { ar } from "@/i18n/ar";
@@ -43,6 +43,12 @@ export default async function DashboardPage() {
           value={stats.totalOwedByCustomers}
           icon={Wallet}
           variant="warning"
+          formatValue={(value) => formatCurrency(value)}
+        />
+        <StatCard
+          title={ar.dashboardCards.totalInventoryPurchaseValue}
+          value={stats.totalInventoryPurchaseValue}
+          icon={Warehouse}
           formatValue={(value) => formatCurrency(value)}
         />
       </div>

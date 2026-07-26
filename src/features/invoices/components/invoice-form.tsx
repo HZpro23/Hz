@@ -225,7 +225,9 @@ function CategoryQuickAddPanel({
   }
 
   function handleAdd() {
-    const toAdd = filteredProducts.filter((product) => selectedIds.has(product.id));
+    const toAdd = filteredProducts.filter((product) =>
+      selectedIds.has(product.id),
+    );
     if (toAdd.length === 0) return;
     onAddProducts(toAdd);
     setSelectedIds(new Set());
@@ -242,7 +244,9 @@ function CategoryQuickAddPanel({
             setCategoryId(category?.id ?? "");
             setSelectedIds(new Set());
           }}
-          isItemEqualToValue={(a: CategoryOption, b: CategoryOption) => a.id === b.id}
+          isItemEqualToValue={(a: CategoryOption, b: CategoryOption) =>
+            a.id === b.id
+          }
           itemToStringValue={(item: CategoryOption) => item.id}
           itemToStringLabel={(item: CategoryOption) => item.name}
           filter={contains}
@@ -270,7 +274,9 @@ function CategoryQuickAddPanel({
             setBrandId(brand?.id ?? "");
             setSelectedIds(new Set());
           }}
-          isItemEqualToValue={(a: CategoryOption, b: CategoryOption) => a.id === b.id}
+          isItemEqualToValue={(a: CategoryOption, b: CategoryOption) =>
+            a.id === b.id
+          }
           itemToStringValue={(item: CategoryOption) => item.id}
           itemToStringLabel={(item: CategoryOption) => item.name}
           filter={contains}
@@ -457,10 +463,11 @@ export function InvoiceForm({
     );
   }
 
-  const [pendingValues, setPendingValues] = useState<InvoiceOutput | null>(null);
-  const [confirmRequest, setConfirmRequest] = useState<BalanceConfirmRequest | null>(
+  const [pendingValues, setPendingValues] = useState<InvoiceOutput | null>(
     null,
   );
+  const [confirmRequest, setConfirmRequest] =
+    useState<BalanceConfirmRequest | null>(null);
 
   function submitInvoice(values: InvoiceOutput) {
     startTransition(async () => {
@@ -504,7 +511,10 @@ export function InvoiceForm({
 
   function resolveUseAvailable() {
     if (!pendingValues || confirmRequest?.kind !== "insufficient") return;
-    const payments = capBalanceLines(pendingValues.payments, confirmRequest.availableBalance);
+    const payments = capBalanceLines(
+      pendingValues.payments,
+      confirmRequest.availableBalance,
+    );
     setConfirmRequest(null);
     submitInvoice({ ...pendingValues, payments });
   }
@@ -517,8 +527,14 @@ export function InvoiceForm({
 
   function resolveUseBalance() {
     if (!pendingValues || confirmRequest?.kind !== "offer-balance") return;
-    const amount = Math.min(confirmRequest.remaining, confirmRequest.availableBalance);
-    const payments = [...pendingValues.payments, { method: "BALANCE" as const, amount }];
+    const amount = Math.min(
+      confirmRequest.remaining,
+      confirmRequest.availableBalance,
+    );
+    const payments = [
+      ...pendingValues.payments,
+      { method: "BALANCE" as const, amount },
+    ];
     setConfirmRequest(null);
     submitInvoice({ ...pendingValues, payments });
   }
@@ -531,223 +547,238 @@ export function InvoiceForm({
 
   return (
     <>
-    <div className="max-w-3xl space-y-6 lg:col-span-2">
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <fieldset disabled={isPending} className="contents space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2">
-          <Label>العميل</Label>
-          <Controller
-            control={control}
-            name="customerId"
-            render={({ field }) => (
-              <CustomerPicker
-                customers={customers}
-                value={field.value}
-                onChange={(customer) => {
-                  field.onChange(customer?.id ?? "");
-                  setValue("customerName", customer?.name ?? "");
-                  setValue("customerPhone", customer?.phone ?? "");
-                  setValue("customerEmail", customer?.email ?? "");
-                }}
-              />
-            )}
-          />
-          {errors.customerId && (
-            <p className="text-sm text-destructive">
-              {errors.customerId.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label>لغة الفاتورة</Label>
-          <Controller
-            control={control}
-            name="language"
-            render={({ field }) => (
-              <Select
-                items={INVOICE_LANGUAGE_LABELS}
-                value={field.value}
-                onValueChange={field.onChange}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(INVOICE_LANGUAGE_LABELS).map(
-                    ([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ),
-                  )}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
-      </div>
-
-      {!invoice && (
-        <PaymentFieldsSection
-          control={control}
-          errors={errors}
-          total={total}
-          customerBalance={customerBalance}
-          hasCustomer={Boolean(customerId)}
-        />
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="invoice-notes">ملاحظات (اختياري)</Label>
-        <Textarea id="invoice-notes" rows={2} {...register("notes")} />
-      </div>
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label>المنتجات</Label>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="cursor-pointer"
-            onClick={() =>
-              append({ productId: "", name: "", quantity: 1, unitPrice: 0 })
-            }
-          >
-            <Plus className="size-4" />
-            إضافة منتج
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {fields.map((field, index) => (
-            <div
-              key={field.id}
-              className="grid grid-cols-1 items-start gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto_auto_auto]"
-            >
-              <div className="space-y-1">
-                <Label className="text-xs">اختر من المنتجات</Label>
+      <div className="max-w-3xl space-y-6 lg:col-span-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <fieldset disabled={isPending} className="contents space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
+                <Label>العميل</Label>
                 <Controller
                   control={control}
-                  name={`items.${index}.productId`}
-                  render={({ field: productField }) => (
-                    <ProductPickerField
-                      value={productField.value ?? ""}
-                      products={products}
-                      onChange={(product) => {
-                        productField.onChange(product?.id ?? "");
-                        if (product?.id) {
-                          setValue(`items.${index}.name`, product.name);
-                          setValue(`items.${index}.unitPrice`, product.price1);
-                        }
+                  name="customerId"
+                  render={({ field }) => (
+                    <CustomerPicker
+                      customers={customers}
+                      value={field.value}
+                      onChange={(customer) => {
+                        field.onChange(customer?.id ?? "");
+                        setValue("customerName", customer?.name ?? "");
+                        setValue("customerPhone", customer?.phone ?? "");
+                        setValue("customerEmail", customer?.email ?? "");
                       }}
                     />
                   )}
                 />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">اسم المنتج في الفاتورة</Label>
-                <Input {...register(`items.${index}.name`)} />
-                {errors.items?.[index]?.name && (
+                {errors.customerId && (
                   <p className="text-sm text-destructive">
-                    {errors.items[index]?.name?.message}
+                    {errors.customerId.message}
                   </p>
                 )}
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">الكمية</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  className="w-20"
-                  {...register(`items.${index}.quantity`)}
+              <div className="space-y-2">
+                <Label>لغة الفاتورة</Label>
+                <Controller
+                  control={control}
+                  name="language"
+                  render={({ field }) => (
+                    <Select
+                      items={INVOICE_LANGUAGE_LABELS}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(INVOICE_LANGUAGE_LABELS).map(
+                          ([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">السعر</Label>
-                <div className="flex flex-col gap-1.5">
-                  <PriceTierField
-                    price={Number(items?.[index]?.unitPrice) || 0}
-                    product={productsById.get(items?.[index]?.productId ?? "")}
-                    onChange={(price) =>
-                      setValue(`items.${index}.unitPrice`, price)
-                    }
-                  />
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    className="w-24"
-                    {...register(`items.${index}.unitPrice`)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <Label className="hidden text-xs sm:block">&nbsp;</Label>
+            </div>
+
+            {!invoice && (
+              <PaymentFieldsSection
+                control={control}
+                errors={errors}
+                total={total}
+                customerBalance={customerBalance}
+                hasCustomer={Boolean(customerId)}
+              />
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="invoice-notes">ملاحظات (اختياري)</Label>
+              <Textarea id="invoice-notes" rows={2} {...register("notes")} />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>المنتجات</Label>
+
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="icon-sm"
+                  variant="outline"
+                  size="sm"
                   className="cursor-pointer"
-                  disabled={fields.length === 1}
-                  onClick={() => remove(index)}
+                  onClick={() =>
+                    append({
+                      productId: "",
+                      name: "",
+                      quantity: 1,
+                      unitPrice: 0,
+                    })
+                  }
                 >
-                  <Trash2 className="size-4" />
+                  <Plus className="size-4" />
+                  إضافة منتج
                 </Button>
               </div>
+
+              <CategoryQuickAddPanel
+                categories={categories}
+                brands={brands}
+                products={products}
+                onAddProducts={handleAddFromCategory}
+              />
+
+              <div
+                className={
+                  fields.length > 5
+                    ? "max-h-120 space-y-3 overflow-y-auto pe-1"
+                    : "space-y-3"
+                }
+              >
+                {fields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="grid grid-cols-1 items-start gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto_auto_auto]"
+                  >
+                    <div className="space-y-1">
+                      <Label className="text-xs">اختر من المنتجات</Label>
+                      <Controller
+                        control={control}
+                        name={`items.${index}.productId`}
+                        render={({ field: productField }) => (
+                          <ProductPickerField
+                            value={productField.value ?? ""}
+                            products={products}
+                            onChange={(product) => {
+                              productField.onChange(product?.id ?? "");
+                              if (product?.id) {
+                                setValue(`items.${index}.name`, product.name);
+                                setValue(
+                                  `items.${index}.unitPrice`,
+                                  product.price1,
+                                );
+                              }
+                            }}
+                          />
+                        )}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">اسم المنتج في الفاتورة</Label>
+                      <Input {...register(`items.${index}.name`)} />
+                      {errors.items?.[index]?.name && (
+                        <p className="text-sm text-destructive">
+                          {errors.items[index]?.name?.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">الكمية</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        className="w-20"
+                        {...register(`items.${index}.quantity`)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">السعر</Label>
+                      <div className="flex flex-col gap-1.5">
+                        <PriceTierField
+                          price={Number(items?.[index]?.unitPrice) || 0}
+                          product={productsById.get(
+                            items?.[index]?.productId ?? "",
+                          )}
+                          onChange={(price) =>
+                            setValue(`items.${index}.unitPrice`, price)
+                          }
+                        />
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          className="w-24"
+                          {...register(`items.${index}.unitPrice`)}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="hidden text-xs sm:block">&nbsp;</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="cursor-pointer"
+                        disabled={fields.length === 1}
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {errors.items?.message && (
+                <p className="text-sm text-destructive">
+                  {errors.items.message}
+                </p>
+              )}
             </div>
-          ))}
+
+            <div className="flex items-center justify-between border-t pt-4">
+              <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="cursor-pointer"
+              >
+                {isPending && <Loader2 className="size-4 animate-spin" />}
+                {isPending
+                  ? "جاري الحفظ..."
+                  : invoice
+                    ? "حفظ التعديلات"
+                    : "إنشاء الفاتورة"}
+              </Button>
+            </div>
+          </fieldset>
+
+          <BalanceConfirmDialog
+            request={confirmRequest}
+            onCancel={cancelConfirm}
+            onUseAvailable={resolveUseAvailable}
+            onGoNegative={resolveGoNegative}
+            onUseBalance={resolveUseBalance}
+            onDecline={resolveDecline}
+          />
+        </form>
+      </div>
+
+      {invoice && (
+        <div className="space-y-6">
+          <PaymentHistory payments={payments ?? []} />
         </div>
-        {errors.items?.message && (
-          <p className="text-sm text-destructive">{errors.items.message}</p>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between border-t pt-4">
-        <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
-        <Button type="submit" disabled={isPending} className="cursor-pointer">
-          {isPending && <Loader2 className="size-4 animate-spin" />}
-          {isPending
-            ? "جاري الحفظ..."
-            : invoice
-              ? "حفظ التعديلات"
-              : "إنشاء الفاتورة"}
-        </Button>
-      </div>
-      </fieldset>
-
-      <BalanceConfirmDialog
-        request={confirmRequest}
-        onCancel={cancelConfirm}
-        onUseAvailable={resolveUseAvailable}
-        onGoNegative={resolveGoNegative}
-        onUseBalance={resolveUseBalance}
-        onDecline={resolveDecline}
-      />
-    </form>
-
-    {!invoice && (
-      <CategoryQuickAddPanel
-        categories={categories}
-        brands={brands}
-        products={products}
-        onAddProducts={handleAddFromCategory}
-      />
-    )}
-    </div>
-
-    {invoice && (
-      <div className="space-y-6">
-        <PaymentHistory payments={payments ?? []} />
-        <CategoryQuickAddPanel
-          categories={categories}
-          brands={brands}
-          products={products}
-          onAddProducts={handleAddFromCategory}
-        />
-      </div>
-    )}
+      )}
     </>
   );
 }

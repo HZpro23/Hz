@@ -80,6 +80,11 @@ export default async function PurchaseOrderDetailPage({
               <CardTitle>العناصر</CardTitle>
             </CardHeader>
             <CardContent>
+              <div
+                className={
+                  order.items.length > 5 ? "max-h-120 overflow-y-auto" : undefined
+                }
+              >
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -110,6 +115,7 @@ export default async function PurchaseOrderDetailPage({
                   ))}
                 </TableBody>
               </Table>
+              </div>
               <div className="mt-4 flex justify-end text-sm font-medium">
                 الإجمالي الكلي: {formatCurrency(Number(order.total))}
               </div>

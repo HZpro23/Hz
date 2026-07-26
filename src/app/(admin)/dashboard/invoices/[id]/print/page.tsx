@@ -38,10 +38,10 @@ const LABELS: Record<
     date: "التاريخ",
     billTo: "فاتورة إلى",
     phone: "الهاتف",
-    product: "المنتج",
-    quantity: "الكمية",
-    unitPrice: "تكلفة الوحدة",
-    lineTotal: "الإجمالي الفرعي",
+    product: "نوع البضاعة",
+    quantity: "العدد",
+    unitPrice: "التمن",
+    lineTotal: "الإجمالي",
     total: "إجمالي المنتجات",
     previousDebts: "مجموع الديون السابقة",
     grandTotal: "الإجمالي الكلي",
@@ -149,12 +149,12 @@ export default async function InvoicePrintPage({
           <thead>
             <tr className="border-b text-start">
               <th className="px-3 py-2 text-start font-medium border border-gray-200">
-                <span className="block truncate max-w-[10ch]">{t.product}</span>
-              </th>
-              <th className="px-3 py-2 text-start font-medium border border-gray-200">
                 <span className="block truncate max-w-[10ch]">
                   {t.quantity}
                 </span>
+              </th>
+              <th className="px-3 py-2 text-start font-medium border border-gray-200">
+                <span className="block truncate max-w-[10ch]">{t.product}</span>
               </th>
               <th className="px-2 py-2 text-start font-medium border border-gray-200">
                 <span className="block truncate max-w-[15ch]">
@@ -172,13 +172,13 @@ export default async function InvoicePrintPage({
             {invoice.items.map((item) => (
               <tr key={item.id} className="border-b">
                 <td className="px-3 py-2 border border-gray-200">
-                  <span className="block truncate max-w-[18ch]">
-                    {item.name}
+                  <span className="block truncate max-w-[15ch]">
+                    {item.quantity}
                   </span>
                 </td>
                 <td className="px-3 py-2 border border-gray-200">
-                  <span className="block truncate max-w-[15ch]">
-                    {item.quantity}
+                  <span className="block truncate max-w-[18ch]">
+                    {item.name}
                   </span>
                 </td>
                 <td className="px-3 py-2 border border-gray-200">

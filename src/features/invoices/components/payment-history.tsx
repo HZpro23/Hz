@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/currency";
 import { PAYMENT_METHOD_LABELS } from "@/features/invoices/schema";
+import { EditPaymentDialog } from "@/features/invoices/components/edit-payment-dialog";
 import { ar } from "@/i18n/ar";
 
 type PaymentRow = {
@@ -42,9 +43,17 @@ export function PaymentHistory({ payments }: { payments: PaymentRow[] }) {
                     </p>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(payment.createdAt).toLocaleDateString("fr-FR")}
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(payment.createdAt).toLocaleDateString("fr-FR")}
+                  </p>
+                  <EditPaymentDialog
+                    paymentId={payment.id}
+                    initialAmount={payment.amount}
+                    initialMethod={payment.method}
+                    initialNote={payment.note}
+                  />
+                </div>
               </li>
             ))}
           </ul>

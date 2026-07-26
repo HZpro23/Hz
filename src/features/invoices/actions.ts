@@ -442,3 +442,92 @@ export async function recordPayment(
   }
   return { success: true };
 }
+
+/**
+ * Corrects an already-recorded payment's amount/method/note. Recomputes the
+ * invoice's paidAmount, paymentStatus, and balanceEffectApplied from scratch
+ * against the *other* payments plus this edited one (same derivation
+ * recordPayment uses), then applies only the difference from what رصيد
+ * previously reflected — exactly the delta-based approach updateInvoice and
+ * deleteInvoice already use, so edits/deletes elsewhere keep working off an
+ * accurate balanceEffectApplied no matter how many times a payment here is
+ * corrected.
+ */
+export async function updatePayment(
+  paymentId: string,
+  input: { amount: number; method: PaymentMethod; note?: string },
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+
+  if (!(input.amount > 0)) {
+    return { error: "الرجاء إدخال مبلغ صحيح" };
+  }
+
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    include: { invoice: { include: { payments: true } } },
+  });
+  if (!payment) return { error: "الدفعة غير موجودة" };
+
+  const invoice = payment.invoice;
+
+  if (input.method === "BALANCE" && !invoice.customerId) {
+    return { error: ar.invoices.noCustomerForBalance };
+  }
+
+  const total = Number(invoice.total);
+  const otherPayments = invoice.payments.filter((p) => p.id !== paymentId);
+  const otherPaidAmount = otherPayments.reduce(
+    (sum, p) => sum + Number(p.amount),
+    0,
+  );
+  const newPaidAmount = otherPaidAmount + input.amount;
+  const paymentStatus = computePaymentStatus(total, newPaidAmount);
+
+  const allPayments = [
+    ...otherPayments.map((p) => ({ amount: Number(p.amount), method: p.method as string })),
+    { amount: input.amount, method: input.method as string },
+  ];
+  const newBalanceEffect = computeBalanceEffect(total, allPayments);
+  const previousBalanceEffect = Number(invoice.balanceEffectApplied);
+  const delta = newBalanceEffect - previousBalanceEffect;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { id: paymentId },
+        data: {
+          amount: input.amount,
+          method: input.method,
+          note: input.note || null,
+        },
+      });
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          paidAmount: newPaidAmount,
+          paymentStatus,
+          balanceEffectApplied: newBalanceEffect,
+        },
+      });
+
+      if (invoice.customerId) {
+        await adjustCustomerBalance(tx, invoice.customerId, delta, {
+          reason: "INVOICE_EDIT",
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+        });
+      }
+    });
+  } catch {
+    return { error: "حدث خطأ أثناء تعديل الدفعة" };
+  }
+
+  revalidatePath(`/dashboard/invoices/${invoice.id}`);
+  revalidatePath("/dashboard/invoices");
+  if (invoice.customerId) {
+    revalidatePath(`/dashboard/customers/${invoice.customerId}`);
+  }
+  return { success: true };
+}

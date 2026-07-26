@@ -33,10 +33,10 @@ const LABELS: Record<
     date: "التاريخ",
     supplier: "المورد",
     phone: "الهاتف",
-    product: "المنتج",
-    quantity: "الكمية",
-    unitCost: "تكلفة الوحدة",
-    lineTotal: "الإجمالي الفرعي",
+    product: "نوع البضاعة",
+    quantity: "العدد",
+    unitCost: "التمن",
+    lineTotal: "الإجمالي",
     total: "الإجمالي الكلي",
     print: "طباعة / حفظ كـ PDF",
     openPdf: "فتح كملف PDF",
@@ -131,12 +131,12 @@ export default async function PurchaseOrderPrintPage({
           <thead>
             <tr className="border-b text-start">
               <th className="px-3 py-2 text-start font-medium border border-gray-200">
-                <span className="block truncate max-w-[10ch]">{t.product}</span>
-              </th>
-              <th className="px-3 py-2 text-start font-medium border border-gray-200">
                 <span className="block truncate max-w-[10ch]">
                   {t.quantity}
                 </span>
+              </th>
+              <th className="px-3 py-2 text-start font-medium border border-gray-200">
+                <span className="block truncate max-w-[10ch]">{t.product}</span>
               </th>
               <th className="px-2 py-2 text-start font-medium border border-gray-200">
                 <span className="block truncate max-w-[15ch]">
@@ -154,13 +154,13 @@ export default async function PurchaseOrderPrintPage({
             {order.items.map((item) => (
               <tr key={item.id} className="border-b">
                 <td className="px-3 py-2 border border-gray-200">
-                  <span className="block truncate max-w-[18ch]">
-                    {item.product.name}
+                  <span className="block truncate max-w-[15ch]">
+                    {item.quantity}
                   </span>
                 </td>
                 <td className="px-3 py-2 border border-gray-200">
-                  <span className="block truncate max-w-[15ch]">
-                    {item.quantity}
+                  <span className="block truncate max-w-[18ch]">
+                    {item.product.name}
                   </span>
                 </td>
                 <td className="px-3 py-2 border border-gray-200">

@@ -303,7 +303,13 @@ export function PurchaseOrderForm({
           </Button>
         </div>
 
-        <div className="space-y-3">
+        <div
+          className={
+            fields.length > 5
+              ? "max-h-120 space-y-3 overflow-y-auto pe-1"
+              : "space-y-3"
+          }
+        >
           {fields.map((field, index) => (
             <div
               key={field.id}
