@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { purchaseOrderSchema } from "@/features/purchases/schema";
+import {
+  purchaseOrderSchema,
+  purchaseOrderItemsSchema,
+} from "@/features/purchases/schema";
 
 type ActionResult = { error?: string; success?: boolean };
 
@@ -45,6 +48,54 @@ export async function createPurchaseOrder(
 
   revalidatePath("/dashboard/purchases");
   redirect(`/dashboard/purchases/${order.id}`);
+}
+
+/**
+ * Replaces a purchase order's items and recomputes its total. Allowed at
+ * any status, including after receipt — but deliberately does NOT touch
+ * product quantities or inventory movements, since those were already
+ * recorded against whatever items existed at receive time. Editing items
+ * afterward is purely a correction to the order's own record; if the stock
+ * itself needs adjusting too, that's a separate manual inventory action.
+ */
+export async function updatePurchaseOrderItems(
+  id: string,
+  input: unknown,
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+
+  const parsed = purchaseOrderItemsSchema.safeParse(input);
+  if (!parsed.success) return { error: "الرجاء التحقق من البيانات المدخلة" };
+
+  const order = await prisma.purchaseOrder.findUnique({ where: { id } });
+  if (!order) return { error: "أمر الشراء غير موجود" };
+
+  const total = parsed.data.items.reduce(
+    (sum, item) => sum + item.quantity * item.unitCost,
+    0,
+  );
+
+  try {
+    await prisma.$transaction([
+      prisma.purchaseOrderItem.deleteMany({ where: { purchaseOrderId: id } }),
+      prisma.purchaseOrderItem.createMany({
+        data: parsed.data.items.map((item) => ({
+          purchaseOrderId: id,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitCost: item.unitCost,
+        })),
+      }),
+      prisma.purchaseOrder.update({ where: { id }, data: { total } }),
+    ]);
+  } catch {
+    return { error: "حدث خطأ أثناء تحديث عناصر أمر الشراء" };
+  }
+
+  revalidatePath("/dashboard/purchases");
+  revalidatePath(`/dashboard/purchases/${id}`);
+  return { success: true };
 }
 
 export async function receivePurchaseOrder(id: string): Promise<ActionResult> {

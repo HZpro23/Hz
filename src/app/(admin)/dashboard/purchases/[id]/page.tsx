@@ -4,19 +4,12 @@ import { ArrowRight, Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { PageHeader } from "@/components/shared/page-header";
 import { getPurchaseOrderById } from "@/features/purchases/queries";
+import { getProductPickerOptions } from "@/features/products/queries";
 import { PurchaseOrderActions } from "@/features/purchases/components/purchase-order-actions";
+import { PurchaseOrderItemsForm } from "@/features/purchases/components/purchase-order-items-form";
 import { PURCHASE_ORDER_STATUS_LABELS } from "@/features/purchases/schema";
-import { formatCurrency } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +19,20 @@ export default async function PurchaseOrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const order = await getPurchaseOrderById(id);
+  const [order, productRows] = await Promise.all([
+    getPurchaseOrderById(id),
+    getProductPickerOptions(),
+  ]);
   if (!order) notFound();
+
+  const products = productRows.map((product) => ({
+    id: product.id,
+    name: product.name,
+    sku: product.sku,
+    price1: Number(product.price1),
+    price2: Number(product.price2),
+    price3: Number(product.price3),
+  }));
 
   return (
     <div className="space-y-6">
@@ -79,46 +84,23 @@ export default async function PurchaseOrderDetailPage({
             <CardHeader>
               <CardTitle>العناصر</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div
-                className={
-                  order.items.length > 5 ? "max-h-120 overflow-y-auto" : undefined
-                }
-              >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>المنتج</TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>الكمية</TableHead>
-                    <TableHead>تكلفة الوحدة</TableHead>
-                    <TableHead>الإجمالي</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {order.items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">
-                        {item.product.name}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        <span dir="ltr">{item.product.sku}</span>
-                      </TableCell>
-                      <TableCell>
-                        {item.quantity.toLocaleString("ar")}
-                      </TableCell>
-                      <TableCell>{formatCurrency(Number(item.unitCost))}</TableCell>
-                      <TableCell>
-                        {formatCurrency(Number(item.unitCost) * item.quantity)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              </div>
-              <div className="mt-4 flex justify-end text-sm font-medium">
-                الإجمالي الكلي: {formatCurrency(Number(order.total))}
-              </div>
+            <CardContent className="space-y-4">
+              {order.status === "RECEIVED" && (
+                <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-800 dark:text-amber-400">
+                  تم استلام هذا الأمر بالفعل وأُضيفت كمياته إلى المخزون. تعديل
+                  العناصر هنا يُحدّث سجل أمر الشراء فقط، ولا يُعدّل كميات
+                  المخزون التي أُضيفت مسبقاً.
+                </p>
+              )}
+              <PurchaseOrderItemsForm
+                purchaseOrderId={order.id}
+                items={order.items.map((item) => ({
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  unitCost: Number(item.unitCost),
+                }))}
+                products={products}
+              />
             </CardContent>
           </Card>
         </div>
