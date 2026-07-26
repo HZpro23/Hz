@@ -5,6 +5,21 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Plus, Trash2, Loader2 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { SortableItem } from "@/components/shared/sortable-item";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +51,6 @@ import {
 } from "@/features/invoices/schema";
 import { createInvoice, updateInvoice } from "@/features/invoices/actions";
 import { formatCurrency } from "@/lib/currency";
-import { ar } from "@/i18n/ar";
 import {
   CustomerPicker,
   type CustomerOption,
@@ -431,7 +445,21 @@ export function InvoiceForm({
     products.map((product) => [product.id, product]),
   );
 
-  const { fields, append, remove } = useFieldArray({ control, name: "items" });
+  const { fields, append, remove, move } = useFieldArray({
+    control,
+    name: "items",
+  });
+  const dragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = fields.findIndex((field) => field.id === active.id);
+    const newIndex = fields.findIndex((field) => field.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) move(oldIndex, newIndex);
+  }
   const items = watch("items");
   const total = items.reduce(
     (sum, item) =>
@@ -651,96 +679,123 @@ export function InvoiceForm({
                 </Button>
               </div>
 
-              <div
-                className={
-                  fields.length > 5
-                    ? "max-h-120 space-y-3 overflow-y-auto pe-1"
-                    : "space-y-3"
-                }
+              <DndContext
+                id="invoice-items-dnd"
+                sensors={dragSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
               >
-                {fields.map((field, index) => (
+                <SortableContext
+                  items={fields.map((field) => field.id)}
+                  strategy={verticalListSortingStrategy}
+                >
                   <div
-                    key={field.id}
-                    className="grid grid-cols-1 items-start gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto_auto_auto]"
+                    className={
+                      fields.length > 5
+                        ? "max-h-120 space-y-3 overflow-y-auto pe-1"
+                        : "space-y-3"
+                    }
                   >
-                    <div className="space-y-1">
-                      <Label className="text-xs">اختر من المنتجات</Label>
-                      <Controller
-                        control={control}
-                        name={`items.${index}.productId`}
-                        render={({ field: productField }) => (
-                          <ProductPickerField
-                            value={productField.value ?? ""}
-                            products={products}
-                            onChange={(product) => {
-                              productField.onChange(product?.id ?? "");
-                              if (product?.id) {
-                                setValue(`items.${index}.name`, product.name);
-                                setValue(
-                                  `items.${index}.unitPrice`,
-                                  product.price1,
-                                );
-                              }
-                            }}
-                          />
-                        )}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">اسم المنتج في الفاتورة</Label>
-                      <Input {...register(`items.${index}.name`)} />
-                      {errors.items?.[index]?.name && (
-                        <p className="text-sm text-destructive">
-                          {errors.items[index]?.name?.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">الكمية</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        className="w-20"
-                        {...register(`items.${index}.quantity`)}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">السعر</Label>
-                      <div className="flex flex-col gap-1.5">
-                        <PriceTierField
-                          price={Number(items?.[index]?.unitPrice) || 0}
-                          product={productsById.get(
-                            items?.[index]?.productId ?? "",
-                          )}
-                          onChange={(price) =>
-                            setValue(`items.${index}.unitPrice`, price)
-                          }
-                        />
-                        <Input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          className="w-24"
-                          {...register(`items.${index}.unitPrice`)}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="hidden text-xs sm:block">&nbsp;</Label>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="cursor-pointer"
-                        disabled={fields.length === 1}
-                        onClick={() => remove(index)}
+                    {fields.map((field, index) => (
+                      <SortableItem
+                        key={field.id}
+                        id={field.id}
+                        className="grid grid-cols-1 items-start gap-2 rounded-lg border p-3 sm:grid-cols-[auto_1fr_1fr_auto_auto_auto]"
                       >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
+                        {(dragHandle) => (
+                          <>
+                            <div className="flex items-center justify-center pt-1 sm:pt-6">
+                              {dragHandle}
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">اختر من المنتجات</Label>
+                              <Controller
+                                control={control}
+                                name={`items.${index}.productId`}
+                                render={({ field: productField }) => (
+                                  <ProductPickerField
+                                    value={productField.value ?? ""}
+                                    products={products}
+                                    onChange={(product) => {
+                                      productField.onChange(product?.id ?? "");
+                                      if (product?.id) {
+                                        setValue(
+                                          `items.${index}.name`,
+                                          product.name,
+                                        );
+                                        setValue(
+                                          `items.${index}.unitPrice`,
+                                          product.price1,
+                                        );
+                                      }
+                                    }}
+                                  />
+                                )}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">
+                                اسم المنتج في الفاتورة
+                              </Label>
+                              <Input {...register(`items.${index}.name`)} />
+                              {errors.items?.[index]?.name && (
+                                <p className="text-sm text-destructive">
+                                  {errors.items[index]?.name?.message}
+                                </p>
+                              )}
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">الكمية</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                className="w-20"
+                                {...register(`items.${index}.quantity`)}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">السعر</Label>
+                              <div className="flex flex-col gap-1.5">
+                                <PriceTierField
+                                  price={Number(items?.[index]?.unitPrice) || 0}
+                                  product={productsById.get(
+                                    items?.[index]?.productId ?? "",
+                                  )}
+                                  onChange={(price) =>
+                                    setValue(`items.${index}.unitPrice`, price)
+                                  }
+                                />
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  step="0.01"
+                                  className="w-24"
+                                  {...register(`items.${index}.unitPrice`)}
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="hidden text-xs sm:block">
+                                &nbsp;
+                              </Label>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="cursor-pointer"
+                                disabled={fields.length === 1}
+                                onClick={() => remove(index)}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </SortableItem>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
               {errors.items?.message && (
                 <p className="text-sm text-destructive">
                   {errors.items.message}

@@ -41,11 +41,15 @@ export async function getCustomersPage({
     ? Prisma.sql`AND (c.name ILIKE ${"%" + query + "%"} OR c.phone ILIKE ${"%" + query + "%"} OR c.email ILIKE ${"%" + query + "%"})`
     : Prisma.empty;
 
+  // "عليه دين" combines both debt sources: a negative رصيد, or a remaining
+  // unpaid amount on UNPAID/PARTIALLY_PAID invoices (المبلغ المتبقي) — same
+  // combined definition used for "إجمالي المستحقات على العملاء" on the
+  // dashboard. "لا يوجد دين" requires being clear on both.
   const debtClause =
     debtFilter === "HAS_DEBT"
-      ? Prisma.sql`AND c.balance < 0`
+      ? Prisma.sql`AND (c.balance < 0 OR COALESCE(inv.outstanding, 0) > 0.005)`
       : debtFilter === "NO_DEBT"
-        ? Prisma.sql`AND c.balance >= 0`
+        ? Prisma.sql`AND c.balance >= 0 AND COALESCE(inv.outstanding, 0) <= 0.005`
         : Prisma.empty;
 
   const orderByClause = CUSTOMER_SORT_CLAUSES[sort ?? "newest"];

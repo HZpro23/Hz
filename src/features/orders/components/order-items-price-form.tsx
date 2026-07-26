@@ -1,10 +1,26 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, type ReactNode } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,6 +82,43 @@ const NONE_PRODUCT: ProductOption = {
 };
 
 const CUSTOM_PRICE = "سعر مخصص";
+
+function SortableTableRow({
+  id,
+  children,
+}: {
+  id: string;
+  children: (dragHandle: ReactNode) => ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const dragHandle = (
+    <button
+      type="button"
+      className="cursor-grab touch-none text-muted-foreground outline-none hover:text-foreground active:cursor-grabbing"
+      {...attributes}
+      {...listeners}
+    >
+      <GripVertical className="size-4" />
+    </button>
+  );
+
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={isDragging ? "relative z-10 opacity-50" : undefined}
+    >
+      {children(dragHandle)}
+    </TableRow>
+  );
+}
 
 function productLabel(product: ProductOption) {
   return product.id ? `${product.name} (${product.sku})` : product.name;
@@ -204,7 +257,28 @@ export function OrderItemsPriceForm({
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: "items" });
+  const { fields, append, remove, move } = useFieldArray({
+    control,
+    name: "items",
+  });
+
+  const dragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = fields.findIndex((field) => field.id === active.id);
+    const newIndex = fields.findIndex((field) => field.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      move(oldIndex, newIndex);
+    }
+  }
+
   const watchedItems = watch("items");
   const productsById = new Map(products.map((product) => [product.id, product]));
 
@@ -276,9 +350,16 @@ export function OrderItemsPriceForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <fieldset disabled={isPending} className="contents space-y-4">
       <div className={fields.length > 5 ? "max-h-120 overflow-y-auto" : undefined}>
+      <DndContext
+        id="order-items-price-dnd"
+        sensors={dragSensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead></TableHead>
             <TableHead>المنتج</TableHead>
             <TableHead>الكمية</TableHead>
             <TableHead>السعر</TableHead>
@@ -287,6 +368,10 @@ export function OrderItemsPriceForm({
           </TableRow>
         </TableHeader>
         <TableBody>
+          <SortableContext
+            items={fields.map((field) => field.id)}
+            strategy={verticalListSortingStrategy}
+          >
           {fields.map((field, index) => {
             const existingItem = items[index];
             const isExisting = Boolean(existingItem);
@@ -297,7 +382,14 @@ export function OrderItemsPriceForm({
               : productsById.get(watchedItems?.[index]?.productId ?? "");
 
             return (
-              <TableRow key={field.id}>
+              <SortableTableRow key={field.id} id={field.id}>
+                {(dragHandle) => (
+                  <>
+                <TableCell>
+                  <div className="flex items-center justify-center">
+                    {dragHandle}
+                  </div>
+                </TableCell>
                 <TableCell className="font-medium">
                   {isExisting ? (
                     existingItem.productName
@@ -369,11 +461,15 @@ export function OrderItemsPriceForm({
                     </Button>
                   )}
                 </TableCell>
-              </TableRow>
+                  </>
+                )}
+              </SortableTableRow>
             );
           })}
+          </SortableContext>
         </TableBody>
       </Table>
+      </DndContext>
       </div>
 
       <Button

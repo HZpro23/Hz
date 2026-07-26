@@ -123,11 +123,11 @@ export default async function InvoicePrintPage({
             <h1 className="text-2xl font-bold">{arDict.siteName}</h1>
           </div>
           <div className="text-end">
-            <h2 className="text-xl font-semibold">{t.title}</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-xl font-bold">{t.title}</h2>
+            <p className="text-sm font-semibold text-foreground">
               {t.invoiceNumber}: <span dir="ltr">{invoice.invoiceNumber}</span>
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-semibold text-foreground">
               {t.date}:{" "}
               {new Date(invoice.createdAt).toLocaleDateString("fr-FR")}
             </p>
@@ -135,12 +135,12 @@ export default async function InvoicePrintPage({
         </div>
 
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
+          <p className="text-sm font-semibold text-foreground">
             {t.billTo}:
-            <span className="font-medium mx-1.5">{invoice.customerName}</span>
+            <span className="font-bold mx-1.5">{invoice.customerName}</span>
           </p>
 
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm font-semibold text-foreground">
             {t.phone}: <span dir="ltr">{invoice.customerPhone}</span>
           </p>
         </div>
@@ -148,20 +148,20 @@ export default async function InvoicePrintPage({
         <table className="w-full border-collapse text-sm border border-gray-200">
           <thead>
             <tr className="border-b text-start">
-              <th className="px-3 py-2 text-start font-medium border border-gray-200">
+              <th className="px-3 py-2 text-start font-bold border border-gray-200">
                 <span className="block truncate max-w-[10ch]">
                   {t.quantity}
                 </span>
               </th>
-              <th className="px-3 py-2 text-start font-medium border border-gray-200">
+              <th className="px-3 py-2 text-start font-bold border border-gray-200">
                 <span className="block truncate max-w-[10ch]">{t.product}</span>
               </th>
-              <th className="px-2 py-2 text-start font-medium border border-gray-200">
+              <th className="px-2 py-2 text-start font-bold border border-gray-200">
                 <span className="block truncate max-w-[15ch]">
                   {t.unitPrice} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
               </th>
-              <th className="px-2 py-2 text-start font-medium border border-gray-200">
+              <th className="px-2 py-2 text-start font-bold border border-gray-200">
                 <span className="block truncate max-w-[18ch]">
                   {t.lineTotal} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
@@ -170,7 +170,7 @@ export default async function InvoicePrintPage({
           </thead>
           <tbody>
             {invoice.items.map((item) => (
-              <tr key={item.id} className="border-b">
+              <tr key={item.id} className="border-b font-semibold text-foreground">
                 <td className="px-3 py-2 border border-gray-200">
                   <span className="block truncate max-w-[15ch]">
                     {item.quantity}
@@ -203,28 +203,28 @@ export default async function InvoicePrintPage({
         <div className="flex flex-col items-start gap-1 border-t pt-4">
           {previousDebtsTotal > 0 ? (
             <>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm font-semibold text-foreground">
                 {t.total}: {formatCurrency(itemsTotal, lang, false)}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm font-semibold text-foreground">
                 {t.previousDebts}: {formatCurrency(previousDebtsTotal, lang, false)}
               </p>
-              <p className="text-lg font-semibold">
+              <p className="text-lg font-bold">
                 {t.grandTotal}: {formatCurrency(grandTotal, lang, false)}
               </p>
             </>
           ) : (
-            <p className="text-lg font-semibold">
+            <p className="text-lg font-bold">
               {t.grandTotal}: {formatCurrency(grandTotal, lang, false)}
             </p>
           )}
         </div>
 
         {invoice.notes && (
-          <p className="text-sm text-muted-foreground">{invoice.notes}</p>
+          <p className="text-sm font-semibold text-foreground">{invoice.notes}</p>
         )}
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-sm font-semibold text-foreground">
           {t.thankYou}
         </p>
       </div>
