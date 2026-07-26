@@ -104,7 +104,7 @@ export default async function InvoicePrintPage({
   return (
     <div
       dir={dir}
-      className="mx-auto max-w-2xl space-y-6 p-6 print:max-w-none print:p-0"
+      className="mx-auto max-w-2xl space-y-6 p-6 print:max-w-none print:p-0 print:[page:a5-print]"
     >
       <div className="flex justify-end gap-2 print:hidden">
         <InvoicePdfButton
@@ -117,18 +117,20 @@ export default async function InvoicePrintPage({
 
       <div
         id="invoice-card"
-        className="space-y-8 rounded-xl border bg-card p-8 print:rounded-none print:border-none print:p-0"
+        className="space-y-8 rounded-xl border bg-card p-8 print:space-y-4 print:rounded-none print:border-none print:p-0"
       >
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{arDict.siteName}</h1>
+            <h1 className="text-2xl font-bold print:text-lg">
+              {arDict.siteName}
+            </h1>
           </div>
           <div className="text-end">
-            <h2 className="text-xl font-bold">{t.title}</h2>
-            <p className="text-sm font-semibold text-foreground">
+            <h2 className="text-xl font-bold print:text-base">{t.title}</h2>
+            <p className="text-sm font-semibold text-foreground print:text-xs">
               {t.invoiceNumber}: <span dir="ltr">{invoice.invoiceNumber}</span>
             </p>
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-foreground print:text-xs">
               {t.date}:{" "}
               {new Date(invoice.createdAt).toLocaleDateString("fr-FR")}
             </p>
@@ -136,22 +138,22 @@ export default async function InvoicePrintPage({
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-foreground">
+          <p className="text-sm font-semibold text-foreground print:text-xs">
             {t.billTo}:
             <span className="font-bold mx-1.5">{invoice.customerName}</span>
           </p>
 
-          <p className="text-sm font-semibold text-foreground">
+          <p className="text-sm font-semibold text-foreground print:text-xs">
             {t.phone}: <span dir="ltr">{invoice.customerPhone}</span>
           </p>
         </div>
 
-        <table className="w-full table-fixed border-collapse text-sm border border-gray-200">
+        <table className="w-full table-fixed border-collapse text-sm border border-gray-200 print:text-xs">
           <colgroup>
-            <col className="w-[12%]" />
-            <col className="w-[60%]" />
-            <col className="w-[16%]" />
-            <col className="w-[19%]" />
+            <col className="w-[15%]" />
+            <col className="w-[72%]" />
+            <col className="w-[20%]" />
+            <col className="w-[25%]" />
           </colgroup>
           <thead>
             <tr className="border-b text-start">
@@ -162,12 +164,12 @@ export default async function InvoicePrintPage({
                 <span className="block truncate">{t.product}</span>
               </th>
               <th className="px-2 py-2 text-start font-bold border border-gray-200">
-                <span className="block truncate">
+                <span className="block leading-tight whitespace-normal break-words">
                   {t.unitPrice} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
               </th>
               <th className="px-2 py-2 text-start font-bold border border-gray-200">
-                <span className="block truncate">
+                <span className="block leading-tight whitespace-normal break-words">
                   {t.lineTotal} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
               </th>
@@ -207,31 +209,31 @@ export default async function InvoicePrintPage({
         <div className="flex flex-col items-start gap-1 border-t pt-4">
           {previousDebtsTotal > 0 ? (
             <>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground print:text-xs">
                 {t.total}: {formatCurrency(itemsTotal, lang, false)}
               </p>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground print:text-xs">
                 {t.previousDebts}:{" "}
                 {formatCurrency(previousDebtsTotal, lang, false)}
               </p>
-              <p className="text-lg font-bold">
+              <p className="text-lg font-bold print:text-sm">
                 {t.grandTotal}: {formatCurrency(grandTotal, lang, false)}
               </p>
             </>
           ) : (
-            <p className="text-lg font-bold">
+            <p className="text-lg font-bold print:text-sm">
               {t.grandTotal}: {formatCurrency(grandTotal, lang, false)}
             </p>
           )}
         </div>
 
         {invoice.notes && (
-          <p className="text-sm font-semibold text-foreground">
+          <p className="text-sm font-semibold text-foreground print:text-xs">
             {invoice.notes}
           </p>
         )}
 
-        <p className="text-center text-sm font-semibold text-foreground">
+        <p className="text-center text-sm font-semibold text-foreground print:text-xs">
           {t.thankYou}
         </p>
       </div>

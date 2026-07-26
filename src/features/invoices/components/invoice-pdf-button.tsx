@@ -35,11 +35,28 @@ export function InvoicePdfButton({
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? "landscape" : "portrait",
-        unit: "px",
-        format: [canvas.width, canvas.height],
+        orientation: "portrait",
+        unit: "mm",
+        format: "a5",
       });
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 6;
+      const maxWidth = pageWidth - margin * 2;
+      const maxHeight = pageHeight - margin * 2;
+
+      const canvasRatio = canvas.width / canvas.height;
+      let imgWidth = maxWidth;
+      let imgHeight = imgWidth / canvasRatio;
+      if (imgHeight > maxHeight) {
+        imgHeight = maxHeight;
+        imgWidth = imgHeight * canvasRatio;
+      }
+
+      const x = (pageWidth - imgWidth) / 2;
+      const y = margin;
+      pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
       pdf.setProperties({ title: fileName });
 
       const blobUrl = pdf.output("bloburl");

@@ -85,7 +85,7 @@ export default async function PurchaseOrderPrintPage({
   return (
     <div
       dir={dir}
-      className="mx-auto max-w-2xl space-y-6 p-6 print:max-w-none print:p-0"
+      className="mx-auto max-w-2xl space-y-6 p-6 print:max-w-none print:p-0 print:[page:a5-print]"
     >
       <div className="flex justify-end gap-2 print:hidden">
         <InvoicePdfButton
@@ -98,7 +98,7 @@ export default async function PurchaseOrderPrintPage({
 
       <div
         id="purchase-order-card"
-        className="space-y-8 rounded-xl border bg-card p-8 print:rounded-none print:border-none print:p-0"
+        className="space-y-8 rounded-xl border bg-card p-8 print:space-y-4 print:rounded-none print:border-none print:p-0"
       >
         <div className="flex items-start justify-between">
           <div>

@@ -133,6 +133,11 @@
   margin: 12mm;
 }
 
+@page a5-print {
+  size: A5;
+  margin: 5mm;
+}
+
 @media print {
   html {
     font-family: Tahoma, Arial, sans-serif;
