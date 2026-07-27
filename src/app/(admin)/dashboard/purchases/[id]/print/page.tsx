@@ -22,6 +22,8 @@ const LABELS: Record<
     unitCost: string;
     lineTotal: string;
     total: string;
+    itemsCount: string;
+    totalWeight: string;
     print: string;
     openPdf: string;
     supplierSignature: string;
@@ -38,6 +40,8 @@ const LABELS: Record<
     unitCost: "التمن",
     lineTotal: "الإجمالي",
     total: "الإجمالي الكلي",
+    itemsCount: "عدد المنتجات",
+    totalWeight: "الوزن الإجمالي (kg)",
     print: "طباعة / حفظ كـ PDF",
     openPdf: "فتح كملف PDF",
     supplierSignature: "توقيع المورد",
@@ -53,6 +57,8 @@ const LABELS: Record<
     unitCost: "Prix unitaire",
     lineTotal: "Sous-total",
     total: "Total",
+    itemsCount: "Nombre de produits",
+    totalWeight: "Poids total (kg)",
     print: "Imprimer / Enregistrer en PDF",
     openPdf: "Ouvrir en PDF",
     supplierSignature: "Signature du fournisseur",
@@ -79,6 +85,11 @@ export default async function PurchaseOrderPrintPage({
 
   const grandTotal = order.items.reduce(
     (sum, item) => sum + Number(item.unitCost) * item.quantity,
+    0,
+  );
+  const itemsCount = order.items.length;
+  const totalWeight = order.items.reduce(
+    (sum, item) => sum + Number(item.product.weight ?? 0) * item.quantity,
     0,
   );
 
@@ -142,20 +153,20 @@ export default async function PurchaseOrderPrintPage({
               </th>
             </tr>
             <tr className="border-b text-start">
-              <th className="px-3 py-2 text-start font-bold border border-gray-200">
+              <th className="px-3 py-2 text-start font-bold border-2 border-gray-400">
                 <span className="block truncate max-w-[10ch]">
                   {t.quantity}
                 </span>
               </th>
-              <th className="px-3 py-2 text-start font-bold border border-gray-200">
+              <th className="px-3 py-2 text-start font-bold border-2 border-gray-400">
                 <span className="block truncate max-w-[10ch]">{t.product}</span>
               </th>
-              <th className="px-2 py-2 text-start font-bold border border-gray-200">
+              <th className="px-2 py-2 text-start font-bold border-2 border-gray-400">
                 <span className="block truncate max-w-[15ch]">
                   {t.unitCost} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
               </th>
-              <th className="px-2 py-2 text-start font-bold border border-gray-200">
+              <th className="px-2 py-2 text-start font-bold border-2 border-gray-400">
                 <span className="block truncate max-w-[18ch]">
                   {t.lineTotal} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
@@ -165,22 +176,22 @@ export default async function PurchaseOrderPrintPage({
           <tbody>
             {order.items.map((item) => (
               <tr key={item.id} className="border-b font-semibold text-foreground">
-                <td className="px-3 py-2 border border-gray-200">
+                <td className="px-3 py-2 border-2 border-gray-400">
                   <span className="block truncate max-w-[15ch]">
                     {item.quantity}
                   </span>
                 </td>
-                <td className="px-3 py-2 border border-gray-200">
+                <td className="px-3 py-2 border-2 border-gray-400">
                   <span className="block truncate max-w-[18ch]">
                     {item.product.name}
                   </span>
                 </td>
-                <td className="px-3 py-2 border border-gray-200">
+                <td className="px-3 py-2 border-2 border-gray-400">
                   <span className="block truncate max-w-[15ch]">
                     {formatCurrency(Number(item.unitCost), lang, true)}
                   </span>
                 </td>
-                <td className="px-3 py-2 border border-gray-200">
+                <td className="px-3 py-2 border-2 border-gray-400">
                   <span className="block truncate max-w-[15ch]">
                     {formatCurrency(
                       Number(item.unitCost) * item.quantity,
@@ -192,10 +203,25 @@ export default async function PurchaseOrderPrintPage({
               </tr>
             ))}
             <tr>
-              <td colSpan={4} className="border-none p-0 pt-4">
-                <div className="flex justify-start border-t pt-4">
-                  <p className="text-lg font-bold">
-                    {t.total}: {formatCurrency(grandTotal, lang, false)}
+              <td colSpan={4} className="border-none p-0 pt-5 print:pt-3">
+                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t-2 border-gray-400 pt-3 text-sm font-semibold text-foreground print:pt-2 print:text-xs">
+                  <p>
+                    {t.itemsCount}: <span className="font-bold">{itemsCount}</span>
+                  </p>
+                  <p>
+                    {t.totalWeight}:{" "}
+                    <span className="font-bold" dir="ltr">
+                      {totalWeight.toFixed(2)} kg
+                    </span>
+                  </p>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between rounded-md border-2 border-gray-400 bg-gray-100 px-4 py-2 print:mt-2 print:py-1.5 print:[print-color-adjust:exact] print:[-webkit-print-color-adjust:exact]">
+                  <p className="text-base font-bold print:text-sm">
+                    {t.total}
+                  </p>
+                  <p className="text-lg font-bold print:text-base">
+                    {formatCurrency(grandTotal, lang, false)}
                   </p>
                 </div>
 

@@ -96,10 +96,7 @@ export default async function InvoicePrintPage({
     (sum, item) => sum + Number(item.unitPrice) * item.quantity,
     0,
   );
-  const itemsCount = invoice.items.reduce(
-    (sum, item) => sum + item.quantity,
-    0,
-  );
+  const itemsCount = invoice.items.length;
   const totalWeight = invoice.items.reduce(
     (sum, item) => sum + Number(item.product?.weight ?? 0) * item.quantity,
     0,

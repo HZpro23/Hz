@@ -22,7 +22,11 @@ export async function getPurchaseOrderById(id: string) {
     where: { id },
     include: {
       supplier: true,
-      items: { include: { product: { select: { name: true, sku: true } } } },
+      items: {
+        include: {
+          product: { select: { name: true, sku: true, weight: true } },
+        },
+      },
     },
   });
 }
