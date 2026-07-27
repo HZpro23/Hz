@@ -193,19 +193,7 @@ export function PurchaseOrderItemsForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <fieldset disabled={isPending} className="contents space-y-4">
-        <div className="flex items-center justify-between">
-          <Label>العناصر</Label>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="cursor-pointer"
-            onClick={() => append({ productId: "", quantity: 1, unitCost: 0 })}
-          >
-            <Plus className="size-4" />
-            إضافة عنصر
-          </Button>
-        </div>
+        <Label>العناصر</Label>
 
         <div
           className={
@@ -283,6 +271,17 @@ export function PurchaseOrderItemsForm({
         {errors.items?.message && (
           <p className="text-sm text-destructive">{errors.items.message}</p>
         )}
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="cursor-pointer"
+          onClick={() => append({ productId: "", quantity: 1, unitCost: 0 })}
+        >
+          <Plus className="size-4" />
+          إضافة عنصر
+        </Button>
 
         <div className="flex items-center justify-between border-t pt-4">
           <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>

@@ -657,27 +657,7 @@ export function InvoiceForm({
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>المنتجات ({fields.length})</Label>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="cursor-pointer"
-                  onClick={() =>
-                    append({
-                      productId: "",
-                      name: "",
-                      quantity: 1,
-                      unitPrice: 0,
-                    })
-                  }
-                >
-                  <Plus className="size-4" />
-                  إضافة منتج
-                </Button>
-              </div>
+              <Label>المنتجات ({fields.length})</Label>
 
               <DndContext
                 id="invoice-items-dnd"
@@ -801,6 +781,24 @@ export function InvoiceForm({
                   {errors.items.message}
                 </p>
               )}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() =>
+                  append({
+                    productId: "",
+                    name: "",
+                    quantity: 1,
+                    unitPrice: 0,
+                  })
+                }
+              >
+                <Plus className="size-4" />
+                إضافة منتج
+              </Button>
             </div>
 
             <div className="flex items-center justify-between border-t pt-4">

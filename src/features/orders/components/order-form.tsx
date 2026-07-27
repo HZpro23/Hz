@@ -247,21 +247,7 @@ export function OrderForm({
                 <Textarea id="order-notes" rows={2} {...register("notes")} />
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label>المنتجات</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="cursor-pointer"
-                  onClick={() =>
-                    append({ productId: "", quantity: 1, price: 0 })
-                  }
-                >
-                  <Plus className="size-4" />
-                  إضافة منتج
-                </Button>
-              </div>
+              <Label>المنتجات</Label>
 
               <DndContext
                 id="order-items-dnd"
@@ -375,6 +361,19 @@ export function OrderForm({
                   {errors.items.message}
                 </p>
               )}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() =>
+                  append({ productId: "", quantity: 1, price: 0 })
+                }
+              >
+                <Plus className="size-4" />
+                إضافة منتج
+              </Button>
 
               <div className="flex items-center justify-between border-t pt-4">
                 <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>

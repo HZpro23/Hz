@@ -290,18 +290,7 @@ export function PurchaseOrderForm({
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label>العناصر</Label>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => append({ productId: "", quantity: 1, unitCost: 0 })}
-          >
-            <Plus className="size-4" />
-            إضافة عنصر
-          </Button>
-        </div>
+        <Label>العناصر</Label>
 
         <div
           className={
@@ -378,6 +367,16 @@ export function PurchaseOrderForm({
         {errors.items?.message && (
           <p className="text-sm text-destructive">{errors.items.message}</p>
         )}
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => append({ productId: "", quantity: 1, unitCost: 0 })}
+        >
+          <Plus className="size-4" />
+          إضافة عنصر
+        </Button>
       </div>
 
       <div className="flex items-center justify-between border-t pt-4">
