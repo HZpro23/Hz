@@ -47,6 +47,11 @@ export const productSchema = z.object({
     .min(0, { error: "السعر يجب أن يكون رقماً موجباً" })
     .optional()
     .default(0),
+  weight: z.coerce
+    .number()
+    .min(0, { error: "الوزن يجب أن يكون رقماً موجباً" })
+    .optional()
+    .default(0),
   status: z.enum(["ACTIVE", "INACTIVE"]),
   images: z.array(productImageSchema).default([]),
 });

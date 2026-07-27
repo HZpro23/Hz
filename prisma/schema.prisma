@@ -63,6 +63,7 @@ model Product {
   price2        Decimal             @default(0) @db.Decimal(10, 2)
   price3        Decimal             @default(0) @db.Decimal(10, 2)
   purchasePrice Decimal             @default(0) @db.Decimal(10, 2)
+  weight        Decimal?             @default(0) @db.Decimal(10, 3)
   status        ProductStatus       @default(ACTIVE)
   images        ProductImage[]
   orderItems    OrderItem[]

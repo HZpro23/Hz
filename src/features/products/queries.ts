@@ -74,6 +74,7 @@ export async function getProductById(id: string) {
       price2: true,
       price3: true,
       purchasePrice: true,
+      weight: true,
       status: true,
       images: { orderBy: { position: "asc" } },
     },

@@ -27,6 +27,8 @@ const LABELS: Record<
     total: string;
     previousDebts: string;
     grandTotal: string;
+    itemsCount: string;
+    totalWeight: string;
     thankYou: string;
     print: string;
     openPdf: string;
@@ -43,8 +45,10 @@ const LABELS: Record<
     unitPrice: "التمن",
     lineTotal: "الإجمالي",
     total: "إجمالي المنتجات",
-    previousDebts: "مجموع الديون السابقة",
+    previousDebts: "الحساب القديم",
     grandTotal: "الإجمالي الكلي",
+    itemsCount: "عدد المنتجات",
+    totalWeight: "الوزن الإجمالي (kg)",
     thankYou: "شكراً لتعاملكم معنا",
     print: "طباعة / حفظ كـ PDF",
     openPdf: "فتح كملف PDF",
@@ -60,8 +64,10 @@ const LABELS: Record<
     unitPrice: "Prix unitaire",
     lineTotal: "Sous-total",
     total: "Total des produits",
-    previousDebts: "Total des dettes précédentes",
+    previousDebts: "Ancien compte",
     grandTotal: "Total général",
+    itemsCount: "Nombre de produits",
+    totalWeight: "Poids total (kg)",
     thankYou: "Merci pour votre confiance",
     print: "Imprimer / Enregistrer en PDF",
     openPdf: "Ouvrir en PDF",
@@ -88,6 +94,14 @@ export default async function InvoicePrintPage({
 
   const itemsTotal = invoice.items.reduce(
     (sum, item) => sum + Number(item.unitPrice) * item.quantity,
+    0,
+  );
+  const itemsCount = invoice.items.reduce(
+    (sum, item) => sum + item.quantity,
+    0,
+  );
+  const totalWeight = invoice.items.reduce(
+    (sum, item) => sum + Number(item.product?.weight ?? 0) * item.quantity,
     0,
   );
 
@@ -169,18 +183,18 @@ export default async function InvoicePrintPage({
               </th>
             </tr>
             <tr className="border-b text-start">
-              <th className="px-3 py-2 text-start font-bold border border-gray-200">
+              <th className="px-3 py-2 text-start font-bold border-2 border-gray-400">
                 <span className="block truncate">{t.quantity}</span>
               </th>
-              <th className="px-3 py-2 text-start font-bold border border-gray-200">
+              <th className="px-3 py-2 text-start font-bold border-2 border-gray-400">
                 <span className="block truncate">{t.product}</span>
               </th>
-              <th className="px-2 py-2 text-start font-bold border border-gray-200">
+              <th className="px-2 py-2 text-start font-bold border-2 border-gray-400">
                 <span className="block leading-tight whitespace-normal break-words">
                   {t.unitPrice} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
               </th>
-              <th className="px-2 py-2 text-start font-bold border border-gray-200">
+              <th className="px-2 py-2 text-start font-bold border-2 border-gray-400">
                 <span className="block leading-tight whitespace-normal break-words">
                   {t.lineTotal} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
@@ -193,18 +207,18 @@ export default async function InvoicePrintPage({
                 key={item.id}
                 className="border-b font-semibold text-foreground"
               >
-                <td className="px-3 py-2 border border-gray-200">
+                <td className="px-3 py-2 border-2 border-gray-400">
                   <span className="block truncate">{item.quantity}</span>
                 </td>
-                <td className="px-3 py-2 border border-gray-200">
+                <td className="px-3 py-2 border-2 border-gray-400">
                   <span className="block truncate">{item.name}</span>
                 </td>
-                <td className="px-3 py-2 border border-gray-200">
+                <td className="px-3 py-2 border-2 border-gray-400">
                   <span className="block truncate">
                     {formatCurrency(Number(item.unitPrice), lang, true)}
                   </span>
                 </td>
-                <td className="px-3 py-2 border border-gray-200">
+                <td className="px-3 py-2 border-2 border-gray-400">
                   <span className="block truncate">
                     {formatCurrency(
                       Number(item.unitPrice) * item.quantity,
@@ -216,27 +230,36 @@ export default async function InvoicePrintPage({
               </tr>
             ))}
             <tr>
-              <td colSpan={4} className="border-none p-0 pt-4">
-                <div className="flex flex-col items-start gap-1 border-t pt-4">
-                  {previousDebtsTotal > 0 ? (
-                    <>
-                      <p className="text-sm font-semibold text-foreground print:text-xs">
-                        {t.total}: {formatCurrency(itemsTotal, lang, false)}
-                      </p>
-                      <p className="text-sm font-semibold text-foreground print:text-xs">
-                        {t.previousDebts}:{" "}
-                        {formatCurrency(previousDebtsTotal, lang, false)}
-                      </p>
-                      <p className="text-lg font-bold print:text-sm">
-                        {t.grandTotal}:{" "}
-                        {formatCurrency(grandTotal, lang, false)}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-lg font-bold print:text-sm">
-                      {t.grandTotal}: {formatCurrency(grandTotal, lang, false)}
-                    </p>
-                  )}
+              <td colSpan={4} className="border-none p-0 pt-5 print:pt-3">
+                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t-2 border-gray-400 pt-3 text-sm font-semibold text-foreground print:pt-2 print:text-xs">
+                  <p>
+                    {t.itemsCount}: <span className="font-bold">{itemsCount}</span>
+                  </p>
+                  <p>
+                    {t.totalWeight}:{" "}
+                    <span className="font-bold" dir="ltr">
+                      {totalWeight.toFixed(2)} kg
+                    </span>
+                  </p>
+                </div>
+
+                <div className="mt-2 flex flex-col gap-1 text-sm font-semibold text-foreground print:text-xs">
+                  <p>
+                    {t.total}: {formatCurrency(itemsTotal, lang, false)}
+                  </p>
+                  <p>
+                    {t.previousDebts}:{" "}
+                    {formatCurrency(previousDebtsTotal, lang, false)}
+                  </p>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between rounded-md border-2 border-gray-400 bg-gray-100 px-4 py-2 print:mt-2 print:py-1.5 print:[print-color-adjust:exact] print:[-webkit-print-color-adjust:exact]">
+                  <p className="text-base font-bold print:text-sm">
+                    {t.grandTotal}
+                  </p>
+                  <p className="text-lg font-bold print:text-base">
+                    {formatCurrency(grandTotal, lang, false)}
+                  </p>
                 </div>
 
                 {invoice.notes && (

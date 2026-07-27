@@ -94,6 +94,7 @@ export default async function ProductsPage({
             price2: Number(editingProduct.price2),
             price3: Number(editingProduct.price3),
             purchasePrice: Number(editingProduct.purchasePrice),
+            weight: Number(editingProduct.weight),
           }
         }
         categoryOptions={categoryOptions}

@@ -48,6 +48,7 @@ type ProductRecord = {
   price2: number;
   price3: number;
   purchasePrice: number;
+  weight: number;
   status: "ACTIVE" | "INACTIVE";
   images: UploadedImage[];
 } | null;
@@ -89,6 +90,7 @@ export function ProductFormSheet({
       price2: product?.price2 ?? 0,
       price3: product?.price3 ?? 0,
       purchasePrice: product?.purchasePrice ?? 0,
+      weight: product?.weight ?? 0,
       status: product?.status ?? "ACTIVE",
       images: product?.images ?? [],
     },
@@ -285,6 +287,20 @@ export function ProductFormSheet({
             <p className="text-sm text-destructive">
               {errors.purchasePrice.message}
             </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="product-weight">الوزن (kg) (اختياري)</Label>
+          <Input
+            id="product-weight"
+            type="number"
+            min={0}
+            step="0.001"
+            {...register("weight")}
+          />
+          {errors.weight && (
+            <p className="text-sm text-destructive">{errors.weight.message}</p>
           )}
         </div>
 
