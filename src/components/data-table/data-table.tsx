@@ -26,11 +26,15 @@ export function DataTable<TData extends { id: string }, TValue>({
   columns,
   data,
   onDeleteSelected,
+  requireDeletePassword = false,
 }: {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   /** When provided, enables row checkboxes and a bulk-delete bar. */
-  onDeleteSelected?: (ids: string[]) => Promise<DeleteResult>;
+  onDeleteSelected?: (ids: string[], password?: string) => Promise<DeleteResult>;
+  /** Passed through to BulkDeleteBar — requires DELETE_CONFIRM_PASSWORD
+   * before the bulk delete runs. */
+  requireDeletePassword?: boolean;
 }) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const selectable = Boolean(onDeleteSelected);
@@ -77,8 +81,9 @@ export function DataTable<TData extends { id: string }, TValue>({
         <BulkDeleteBar
           count={selectedIds.length}
           onClearSelection={() => setRowSelection({})}
-          onConfirm={async () => {
-            const result = await onDeleteSelected!(selectedIds);
+          requirePassword={requireDeletePassword}
+          onConfirm={async (password) => {
+            const result = await onDeleteSelected!(selectedIds, password);
             if (!result?.error) setRowSelection({});
             return result;
           }}

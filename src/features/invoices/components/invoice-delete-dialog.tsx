@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { formatCurrency } from "@/lib/currency";
@@ -148,6 +149,71 @@ export function InvoiceBalanceDeleteContent({
   );
 }
 
+/** The terminal step of every password-gated delete flow in this file:
+ * collects DELETE_CONFIRM_PASSWORD and fires onConfirm(password). Shared by
+ * the single-row dialog below and the bulk-delete queue in
+ * invoices-table.tsx, which reach it via different paths (with or without
+ * an رصيد question first) but must both end here. */
+export function DeletePasswordStep({
+  disabled,
+  onConfirm,
+  onCancel,
+}: {
+  disabled?: boolean;
+  onConfirm: (password: string) => void;
+  onCancel: () => void;
+}) {
+  const [password, setPassword] = useState("");
+
+  return (
+    <>
+      <AlertDialogHeader>
+        <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-destructive/10">
+          <ShieldAlert className="size-6 text-destructive" />
+        </div>
+        <AlertDialogTitle className="text-center">
+          {ar.common.confirmDeleteTitle}
+        </AlertDialogTitle>
+        <AlertDialogDescription className="text-center">
+          {ar.common.confirmDeleteDescription}
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <div className="space-y-2 px-1">
+        <Label htmlFor="invoice-delete-password">كلمة مرور الحذف</Label>
+        <Input
+          id="invoice-delete-password"
+          type="password"
+          dir="ltr"
+          autoFocus
+          disabled={disabled}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && password) {
+              event.preventDefault();
+              onConfirm(password);
+            }
+          }}
+          placeholder="أدخل كلمة المرور للمتابعة"
+        />
+      </div>
+      <AlertDialogFooter>
+        <Button variant="outline" disabled={disabled} onClick={onCancel}>
+          {ar.common.cancel}
+        </Button>
+        <Button
+          variant="destructive"
+          disabled={disabled || !password}
+          onClick={() => onConfirm(password)}
+        >
+          {disabled && <Loader2 className="size-4 animate-spin" />}
+          {disabled ? "جاري الحذف..." : ar.common.delete}
+        </Button>
+      </AlertDialogFooter>
+    </>
+  );
+}
+
 export function InvoiceDeleteDialog({
   invoice,
 }: {
@@ -155,14 +221,22 @@ export function InvoiceDeleteDialog({
 }) {
   const [open, setOpen] = useState(false);
   // "confirm" is always shown first; "balance" only follows it when
-  // deleting this invoice would actually change رصيد.
-  const [stage, setStage] = useState<"confirm" | "balance">("confirm");
+  // deleting this invoice would actually change رصيد; "password" is always
+  // the terminal step.
+  const [stage, setStage] = useState<"confirm" | "balance" | "password">(
+    "confirm",
+  );
+  const [pendingApplyBalanceChange, setPendingApplyBalanceChange] =
+    useState<boolean>();
   const [isPending, startTransition] = useTransition();
   const hasBalanceEffect = Math.abs(invoice.balanceEffectApplied) > 0.005;
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
-    if (!nextOpen) setStage("confirm");
+    if (!nextOpen) {
+      setStage("confirm");
+      setPendingApplyBalanceChange(undefined);
+    }
   }
 
   function handleConfirm() {
@@ -170,18 +244,27 @@ export function InvoiceDeleteDialog({
       setStage("balance");
       return;
     }
-    handleDelete();
+    setStage("password");
   }
 
-  function handleDelete(applyBalanceChange?: boolean) {
+  function handleBalanceAnswered(applyBalanceChange: boolean) {
+    setPendingApplyBalanceChange(applyBalanceChange);
+    setStage("password");
+  }
+
+  function handleDelete(password: string) {
     startTransition(async () => {
-      const result = await deleteInvoice(invoice.id, { applyBalanceChange });
+      const result = await deleteInvoice(invoice.id, {
+        applyBalanceChange: pendingApplyBalanceChange,
+        password,
+      });
       if (result?.error) {
         toast.error(result.error);
         return;
       }
       setOpen(false);
       setStage("confirm");
+      setPendingApplyBalanceChange(undefined);
     });
   }
 
@@ -199,8 +282,14 @@ export function InvoiceDeleteDialog({
           <InvoiceBalanceDeleteContent
             invoice={invoice}
             disabled={isPending}
-            onConfirm={(applyBalanceChange) => handleDelete(applyBalanceChange)}
-            onCancel={() => setOpen(false)}
+            onConfirm={handleBalanceAnswered}
+            onCancel={() => handleOpenChange(false)}
+          />
+        ) : stage === "password" ? (
+          <DeletePasswordStep
+            disabled={isPending}
+            onConfirm={handleDelete}
+            onCancel={() => handleOpenChange(false)}
           />
         ) : (
           <>

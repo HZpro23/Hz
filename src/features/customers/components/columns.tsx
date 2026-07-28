@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Pencil, UserCircle } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
+import { PasswordConfirmDeleteDialog } from "@/components/shared/password-confirm-delete-dialog";
 import { deleteCustomer } from "@/features/customers/actions";
 import { formatCurrency } from "@/lib/currency";
 import { ar } from "@/i18n/ar";
@@ -106,8 +106,8 @@ export function getCustomerColumns(
           >
             <Pencil className="size-4" />
           </Button>
-          <ConfirmDeleteDialog
-            action={() => deleteCustomer(row.original.id)}
+          <PasswordConfirmDeleteDialog
+            action={(password) => deleteCustomer(row.original.id, password)}
             description={`سيتم حذف العميل "${row.original.name}" نهائياً.`}
           />
         </div>

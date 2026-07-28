@@ -24,6 +24,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Combobox,
+  useComboboxFilter,
+  ComboboxValue,
+  ComboboxTrigger,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxEmpty,
+  ComboboxList,
+  ComboboxItem,
+} from "@/components/ui/combobox";
+import {
   inventoryMovementSchema,
   type InventoryMovementInput,
   type InventoryMovementOutput,
@@ -38,6 +49,53 @@ type ProductOption = {
   sku: string;
   quantity: number;
 };
+
+const NONE_PRODUCT: ProductOption = { id: "", name: "اختر منتجاً...", sku: "", quantity: 0 };
+
+function productLabel(product: ProductOption) {
+  return product.id ? `${product.name} (${product.sku})` : product.name;
+}
+
+function ProductPickerField({
+  value,
+  onChange,
+  products,
+}: {
+  value: string;
+  onChange: (product: ProductOption | null) => void;
+  products: ProductOption[];
+}) {
+  const { contains } = useComboboxFilter();
+  const items = [NONE_PRODUCT, ...products];
+  const selected = items.find((item) => item.id === value) ?? NONE_PRODUCT;
+
+  return (
+    <Combobox
+      items={items}
+      value={selected}
+      onValueChange={(product: ProductOption | null) => onChange(product)}
+      isItemEqualToValue={(a: ProductOption, b: ProductOption) => a.id === b.id}
+      itemToStringValue={(item: ProductOption) => item.id}
+      itemToStringLabel={productLabel}
+      filter={contains}
+    >
+      <ComboboxTrigger className="w-full">
+        <ComboboxValue />
+      </ComboboxTrigger>
+      <ComboboxContent>
+        <ComboboxInput placeholder="ابحث بالاسم أو SKU..." />
+        <ComboboxEmpty>لا توجد نتائج</ComboboxEmpty>
+        <ComboboxList>
+          {(item: ProductOption) => (
+            <ComboboxItem key={item.id} value={item}>
+              {productLabel(item)}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  );
+}
 
 export function RecordMovementDialog({
   products,
@@ -103,18 +161,11 @@ export function RecordMovementDialog({
               control={control}
               name="productId"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="اختر المنتج" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name} ({product.sku})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ProductPickerField
+                  value={field.value ?? ""}
+                  products={products}
+                  onChange={(product) => field.onChange(product?.id ?? "")}
+                />
               )}
             />
             {errors.productId && (

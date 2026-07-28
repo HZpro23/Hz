@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { invoiceSchema } from "@/features/invoices/schema";
 import { computePaymentStatus } from "@/lib/money";
 import { adjustCustomerBalance, computeBalanceEffect } from "@/features/customers/balance";
+import { isDeletePasswordValid, DELETE_PASSWORD_ERROR } from "@/lib/delete-guard";
 import { ar } from "@/i18n/ar";
 import type {
   InvoiceLanguage,
@@ -228,10 +229,13 @@ async function reverseInvoiceBalanceOnDelete(
 
 export async function deleteInvoice(
   id: string,
-  options?: { applyBalanceChange?: boolean },
+  options?: { applyBalanceChange?: boolean; password?: string },
 ): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { error: "غير مصرح" };
+  if (!isDeletePasswordValid(options?.password)) {
+    return { error: DELETE_PASSWORD_ERROR };
+  }
 
   const existing = await prisma.invoice.findUnique({ where: { id } });
   if (!existing) return { error: "الفاتورة غير موجودة" };
@@ -252,10 +256,12 @@ export async function deleteInvoice(
 
 export async function deleteInvoices(
   decisions: { id: string; applyBalanceChange?: boolean }[],
+  password?: string,
 ): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { error: "غير مصرح" };
   if (decisions.length === 0) return { success: true };
+  if (!isDeletePasswordValid(password)) return { error: DELETE_PASSWORD_ERROR };
 
   const decisionById = new Map(decisions.map((d) => [d.id, d.applyBalanceChange]));
   const ids = decisions.map((d) => d.id);
@@ -522,6 +528,80 @@ export async function updatePayment(
     });
   } catch {
     return { error: "حدث خطأ أثناء تعديل الدفعة" };
+  }
+
+  revalidatePath(`/dashboard/invoices/${invoice.id}`);
+  revalidatePath("/dashboard/invoices");
+  if (invoice.customerId) {
+    revalidatePath(`/dashboard/customers/${invoice.customerId}`);
+  }
+  return { success: true };
+}
+
+/**
+ * Removes a payment entirely. Recomputes the invoice's paidAmount and
+ * paymentStatus from the *remaining* payments only (so a fully-refunded
+ * invoice correctly falls back to غير مدفوع, including the zero-total edge
+ * case computePaymentStatus already guards), and reverses whatever رصيد
+ * effect this payment contributed — same delta-against-balanceEffectApplied
+ * approach updatePayment uses, just against an empty slot instead of an
+ * edited one.
+ */
+export async function deletePayment(
+  paymentId: string,
+  password: string,
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+  if (!isDeletePasswordValid(password)) return { error: DELETE_PASSWORD_ERROR };
+
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    include: { invoice: { include: { payments: true } } },
+  });
+  if (!payment) return { error: "الدفعة غير موجودة" };
+
+  const invoice = payment.invoice;
+  const total = Number(invoice.total);
+  const otherPayments = invoice.payments.filter((p) => p.id !== paymentId);
+  const newPaidAmount = otherPayments.reduce(
+    (sum, p) => sum + Number(p.amount),
+    0,
+  );
+  const paymentStatus = computePaymentStatus(total, newPaidAmount);
+
+  const newBalanceEffect = computeBalanceEffect(
+    total,
+    otherPayments.map((p) => ({
+      amount: Number(p.amount),
+      method: p.method as string,
+    })),
+  );
+  const previousBalanceEffect = Number(invoice.balanceEffectApplied);
+  const delta = newBalanceEffect - previousBalanceEffect;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.delete({ where: { id: paymentId } });
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          paidAmount: newPaidAmount,
+          paymentStatus,
+          balanceEffectApplied: newBalanceEffect,
+        },
+      });
+
+      if (invoice.customerId) {
+        await adjustCustomerBalance(tx, invoice.customerId, delta, {
+          reason: "INVOICE_EDIT",
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+        });
+      }
+    });
+  } catch {
+    return { error: "حدث خطأ أثناء حذف الدفعة" };
   }
 
   revalidatePath(`/dashboard/invoices/${invoice.id}`);

@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/currency";
 import { PAYMENT_METHOD_LABELS } from "@/features/invoices/schema";
 import { EditPaymentDialog } from "@/features/invoices/components/edit-payment-dialog";
+import { PasswordConfirmDeleteDialog } from "@/components/shared/password-confirm-delete-dialog";
+import { deletePayment } from "@/features/invoices/actions";
 import { ar } from "@/i18n/ar";
 
 type PaymentRow = {
@@ -52,6 +54,10 @@ export function PaymentHistory({ payments }: { payments: PaymentRow[] }) {
                     initialAmount={payment.amount}
                     initialMethod={payment.method}
                     initialNote={payment.note}
+                  />
+                  <PasswordConfirmDeleteDialog
+                    action={(password) => deletePayment(payment.id, password)}
+                    description={`سيتم حذف دفعة بقيمة ${formatCurrency(payment.amount)} نهائياً.`}
                   />
                 </div>
               </li>

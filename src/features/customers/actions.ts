@@ -7,6 +7,7 @@ import { customerSchema } from "@/features/customers/schema";
 import { normalizeArabicName } from "@/lib/arabic-name";
 import { findCustomerByPhone } from "@/features/customers/queries";
 import { adjustCustomerBalance } from "@/features/customers/balance";
+import { isDeletePasswordValid, DELETE_PASSWORD_ERROR } from "@/lib/delete-guard";
 
 type ActionResult = { error?: string; success?: boolean };
 type CreateCustomerResult = ActionResult & { customerId?: string };
@@ -114,9 +115,13 @@ export async function findCustomerByPhoneAction(
   return findCustomerByPhone(phone, excludeId);
 }
 
-export async function deleteCustomer(id: string): Promise<ActionResult> {
+export async function deleteCustomer(
+  id: string,
+  password: string,
+): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { error: "غير مصرح" };
+  if (!isDeletePasswordValid(password)) return { error: DELETE_PASSWORD_ERROR };
 
   try {
     await prisma.customer.delete({ where: { id } });
@@ -128,10 +133,14 @@ export async function deleteCustomer(id: string): Promise<ActionResult> {
   return { success: true };
 }
 
-export async function deleteCustomers(ids: string[]): Promise<ActionResult> {
+export async function deleteCustomers(
+  ids: string[],
+  password?: string,
+): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { error: "غير مصرح" };
   if (ids.length === 0) return { success: true };
+  if (!isDeletePasswordValid(password)) return { error: DELETE_PASSWORD_ERROR };
 
   let failedCount = 0;
   for (const id of ids) {

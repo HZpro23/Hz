@@ -24,6 +24,7 @@ export function CustomersTable({ data }: { data: CustomerRow[] }) {
       columns={getCustomerColumns(editHref)}
       data={data}
       onDeleteSelected={deleteCustomers}
+      requireDeletePassword
     />
   );
 }

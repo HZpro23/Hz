@@ -87,7 +87,7 @@ export function InvoicesTable({
     resolve?.(applyBalanceChange);
   }
 
-  async function handleBulkDelete(ids: string[]) {
+  async function handleBulkDelete(ids: string[], password?: string) {
     const decisions: { id: string; applyBalanceChange?: boolean }[] = [];
     for (const id of ids) {
       const invoice = data.find((row) => row.id === id);
@@ -98,7 +98,7 @@ export function InvoicesTable({
         decisions.push({ id });
       }
     }
-    return deleteInvoices(decisions);
+    return deleteInvoices(decisions, password);
   }
 
   return (
@@ -133,6 +133,7 @@ export function InvoicesTable({
         columns={invoiceColumns}
         data={paged}
         onDeleteSelected={handleBulkDelete}
+        requireDeletePassword
       />
       <AlertDialog
         open={Boolean(queueInvoice)}
