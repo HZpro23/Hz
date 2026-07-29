@@ -60,6 +60,7 @@ export async function getCustomersPage({
       name: string;
       phone: string;
       email: string | null;
+      isFavorite: boolean;
       ordersCount: bigint;
       totalPurchased: string;
       totalPaid: string;
@@ -69,7 +70,7 @@ export async function getCustomersPage({
     }[]
   >`
     SELECT
-      c.id, c.name, c.phone, c.email,
+      c.id, c.name, c.phone, c.email, c."isFavorite",
       COALESCE(ord.orders_count, 0)::bigint AS "ordersCount",
       COALESCE(inv.total_purchased, 0)::numeric AS "totalPurchased",
       COALESCE(inv.total_paid, 0)::numeric AS "totalPaid",
@@ -94,7 +95,7 @@ export async function getCustomersPage({
       GROUP BY "customerId"
     ) ord ON ord."customerId" = c.id
     WHERE 1=1 ${searchClause} ${debtClause}
-    ORDER BY ${orderByClause}, c."createdAt" DESC
+    ORDER BY c."isFavorite" DESC, ${orderByClause}, c."createdAt" DESC
     LIMIT ${CUSTOMERS_PAGE_SIZE} OFFSET ${(page - 1) * CUSTOMERS_PAGE_SIZE}
   `;
 
@@ -106,6 +107,7 @@ export async function getCustomersPage({
       name: row.name,
       phone: row.phone,
       email: row.email,
+      isFavorite: row.isFavorite,
       _count: { orders: Number(row.ordersCount) },
       totalPurchased: Number(row.totalPurchased),
       totalPaid: Number(row.totalPaid),

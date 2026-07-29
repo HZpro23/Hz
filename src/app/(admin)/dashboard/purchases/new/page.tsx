@@ -1,7 +1,5 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
+import { BackButton } from "@/components/shared/back-button";
 import { getSupplierOptions } from "@/features/suppliers/queries";
 import { getProductPickerOptions } from "@/features/products/queries";
 import { PurchaseOrderForm } from "@/features/purchases/components/purchase-order-form";
@@ -26,12 +24,7 @@ export default async function NewPurchaseOrderPage() {
     <div className="space-y-6">
       <PageHeader
         title="أمر شراء جديد"
-        action={
-          <Button variant="outline" nativeButton={false} render={<Link href="/dashboard/purchases" />}>
-            <ArrowRight className="size-4" />
-            رجوع
-          </Button>
-        }
+        action={<BackButton fallbackHref="/dashboard/purchases" />}
       />
       <div className="max-w-2xl">
         <PurchaseOrderForm suppliers={suppliers} products={products} />

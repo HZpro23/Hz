@@ -1,7 +1,5 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
+import { BackButton } from "@/components/shared/back-button";
 import { getProductPickerOptions } from "@/features/products/queries";
 import { getCustomerOptions } from "@/features/customers/queries";
 import { getCategoryOptions } from "@/features/categories/queries";
@@ -32,16 +30,7 @@ export default async function NewInvoicePage() {
     <div className="space-y-6">
       <PageHeader
         title="إنشاء فاتورة جديدة"
-        action={
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/dashboard/invoices" />}
-          >
-            <ArrowRight className="size-4" />
-            رجوع
-          </Button>
-        }
+        action={<BackButton fallbackHref="/dashboard/invoices" />}
       />
       <InvoiceForm
         products={products}

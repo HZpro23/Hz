@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowRight,
   Wallet,
   ShoppingCart,
   Receipt,
@@ -12,6 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
+import { BackButton } from "@/components/shared/back-button";
 import { StatCard } from "@/components/shared/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { getCustomerProfile } from "@/features/customers/queries";
@@ -60,16 +60,7 @@ export default async function CustomerProfilePage({
       <PageHeader
         title={customer.name}
         description={ar.customers.profile}
-        action={
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/dashboard/customers" />}
-          >
-            <ArrowRight className="size-4" />
-            رجوع
-          </Button>
-        }
+        action={<BackButton fallbackHref="/dashboard/customers" />}
       />
 
       <div className="grid gap-4 sm:grid-cols-3">

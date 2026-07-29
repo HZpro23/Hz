@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, UserCircle } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { Pencil, UserCircle, Star } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { PasswordConfirmDeleteDialog } from "@/components/shared/password-confirm-delete-dialog";
-import { deleteCustomer } from "@/features/customers/actions";
+import { deleteCustomer, toggleCustomerFavorite } from "@/features/customers/actions";
 import { formatCurrency } from "@/lib/currency";
+import { cn } from "@/lib/utils";
 import { ar } from "@/i18n/ar";
 
 export type CustomerRow = {
@@ -14,6 +17,7 @@ export type CustomerRow = {
   name: string;
   phone: string;
   email: string | null;
+  isFavorite: boolean;
   _count: { orders: number };
   totalPurchased: number;
   totalPaid: number;
@@ -21,10 +25,61 @@ export type CustomerRow = {
   balance: number;
 };
 
+function FavoriteToggle({
+  id,
+  isFavorite,
+}: {
+  id: string;
+  isFavorite: boolean;
+}) {
+  const [optimistic, setOptimistic] = useState(isFavorite);
+  const [isPending, startTransition] = useTransition();
+
+  function handleClick() {
+    const next = !optimistic;
+    setOptimistic(next);
+    startTransition(async () => {
+      const result = await toggleCustomerFavorite(id, next);
+      if (result?.error) {
+        setOptimistic(!next);
+        toast.error(result.error);
+      }
+    });
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className="cursor-pointer"
+      disabled={isPending}
+      onClick={handleClick}
+      title={optimistic ? "إزالة من المفضلة" : "إضافة إلى المفضلة"}
+    >
+      <Star
+        className={cn(
+          "size-4",
+          optimistic && "fill-amber-400 text-amber-400",
+        )}
+      />
+    </Button>
+  );
+}
+
 export function getCustomerColumns(
   editHref: (id: string) => string,
 ): ColumnDef<CustomerRow>[] {
   return [
+    {
+      id: "favorite",
+      header: "",
+      cell: ({ row }) => (
+        <FavoriteToggle
+          id={row.original.id}
+          isFavorite={row.original.isFavorite}
+        />
+      ),
+    },
     { accessorKey: "name", header: "الاسم" },
     {
       accessorKey: "phone",

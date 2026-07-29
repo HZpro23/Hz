@@ -160,3 +160,20 @@ export async function deleteCustomers(
   }
   return { success: true };
 }
+
+export async function toggleCustomerFavorite(
+  id: string,
+  isFavorite: boolean,
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+
+  await prisma.customer.update({
+    where: { id },
+    data: { isFavorite },
+  });
+
+  revalidatePath("/dashboard/customers");
+  revalidatePath(`/dashboard/customers/${id}`);
+  return { success: true };
+}

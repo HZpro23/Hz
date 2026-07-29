@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Printer } from "lucide-react";
+import { Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/shared/page-header";
+import { BackButton } from "@/components/shared/back-button";
 import { getPurchaseOrderById } from "@/features/purchases/queries";
 import { getProductPickerOptions } from "@/features/products/queries";
 import { PurchaseOrderActions } from "@/features/purchases/components/purchase-order-actions";
@@ -66,14 +67,7 @@ export default async function PurchaseOrderDetailPage({
               <Printer className="size-4" />
               Facture en Français
             </Button>
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={<Link href="/dashboard/purchases" />}
-            >
-              <ArrowRight className="size-4" />
-              رجوع
-            </Button>
+            <BackButton fallbackHref="/dashboard/purchases" />
           </div>
         }
       />

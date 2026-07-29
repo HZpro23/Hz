@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/shared/back-button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -33,15 +31,10 @@ export default async function OrdersReportPage({
       <PageHeader
         title="تقرير الطلبات"
         action={
-          <Button
-            variant="outline"
+          <BackButton
+            fallbackHref="/dashboard/reports"
             className="print:hidden"
-            nativeButton={false}
-            render={<Link href="/dashboard/reports" />}
-          >
-            <ArrowRight className="size-4" />
-            رجوع
-          </Button>
+          />
         }
       />
       <ReportExportButtons type="orders" />

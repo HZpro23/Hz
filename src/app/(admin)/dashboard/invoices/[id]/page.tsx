@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Printer } from "lucide-react";
+import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
+import { BackButton } from "@/components/shared/back-button";
 import { getInvoiceById } from "@/features/invoices/queries";
 import { getProductPickerOptions } from "@/features/products/queries";
 import { getCustomerOptions } from "@/features/customers/queries";
@@ -56,14 +57,7 @@ export default async function InvoiceEditPage({
         title={`الفاتورة ${invoice.invoiceNumber}`}
         action={
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={<Link href="/dashboard/invoices" />}
-            >
-              <ArrowRight className="size-4" />
-              رجوع
-            </Button>
+            <BackButton fallbackHref="/dashboard/invoices" />
             <Button
               nativeButton={false}
               render={

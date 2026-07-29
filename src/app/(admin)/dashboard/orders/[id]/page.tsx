@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Phone, MessageCircle } from "lucide-react";
+import { Phone, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
+import { BackButton } from "@/components/shared/back-button";
 import { getOrderById } from "@/features/orders/queries";
 import { getCustomerOptions } from "@/features/customers/queries";
 import { getProductPickerOptions } from "@/features/products/queries";
@@ -62,16 +62,7 @@ export default async function OrderDetailPage({
     <div className="space-y-6">
       <PageHeader
         title={`الطلب ${order.orderNumber}`}
-        action={
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/dashboard/orders" />}
-          >
-            <ArrowRight className="size-4" />
-            رجوع
-          </Button>
-        }
+        action={<BackButton fallbackHref="/dashboard/orders" />}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
