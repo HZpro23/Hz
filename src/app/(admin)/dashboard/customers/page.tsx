@@ -111,6 +111,7 @@ export default async function CustomersPage({
                 email: editingCustomer.email,
                 address: editingCustomer.address,
                 notes: editingCustomer.notes,
+                isFavorite: editingCustomer.isFavorite,
               }
             : null
         }

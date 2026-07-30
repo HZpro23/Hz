@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { customerSchema, type CustomerInput } from "@/features/customers/schema";
+import {
+  customerSchema,
+  type CustomerInput,
+} from "@/features/customers/schema";
 import {
   saveOrderCustomerInfo,
   type ConflictCustomer,
@@ -60,6 +63,7 @@ export function OrderCustomerEditSheet({
       email: customer?.email ?? snapshot.email ?? "",
       address: customer?.address ?? "",
       notes: customer?.notes ?? "",
+      isFavorite: false,
     },
   });
 
@@ -88,7 +92,9 @@ export function OrderCustomerEditSheet({
       }
 
       toast.success(
-        customer ? "تم تحديث بيانات العميل بنجاح" : "تم حفظ بيانات العميل بنجاح",
+        customer
+          ? "تم تحديث بيانات العميل بنجاح"
+          : "تم حفظ بيانات العميل بنجاح",
       );
       onOpenChange(false);
     });
@@ -132,10 +138,12 @@ export function OrderCustomerEditSheet({
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="order-customer-phone">
-                رقم الهاتف / واتساب
-              </Label>
-              <Input id="order-customer-phone" dir="ltr" {...register("phone")} />
+              <Label htmlFor="order-customer-phone">رقم الهاتف / واتساب</Label>
+              <Input
+                id="order-customer-phone"
+                dir="ltr"
+                {...register("phone")}
+              />
               {errors.phone && (
                 <p className="text-sm text-destructive">
                   {errors.phone.message}
@@ -146,7 +154,11 @@ export function OrderCustomerEditSheet({
               <Label htmlFor="order-customer-email">
                 البريد الإلكتروني (اختياري)
               </Label>
-              <Input id="order-customer-email" dir="ltr" {...register("email")} />
+              <Input
+                id="order-customer-email"
+                dir="ltr"
+                {...register("email")}
+              />
               {errors.email && (
                 <p className="text-sm text-destructive">
                   {errors.email.message}
@@ -154,14 +166,16 @@ export function OrderCustomerEditSheet({
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="order-customer-address">
-                العنوان (اختياري)
-              </Label>
+              <Label htmlFor="order-customer-address">العنوان (اختياري)</Label>
               <Input id="order-customer-address" {...register("address")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="order-customer-notes">ملاحظات (اختياري)</Label>
-              <Textarea id="order-customer-notes" rows={3} {...register("notes")} />
+              <Textarea
+                id="order-customer-notes"
+                rows={3}
+                {...register("notes")}
+              />
             </div>
             <Button
               type="submit"

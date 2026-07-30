@@ -37,6 +37,7 @@ export async function createCustomer(
       email: parsed.data.email || null,
       address: parsed.data.address || null,
       notes: parsed.data.notes || null,
+      isFavorite: parsed.data.isFavorite,
     },
   });
 
@@ -71,6 +72,7 @@ export async function updateCustomer(
       email: parsed.data.email || null,
       address: parsed.data.address || null,
       notes: parsed.data.notes || null,
+      isFavorite: parsed.data.isFavorite,
     },
   });
 

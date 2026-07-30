@@ -25,6 +25,7 @@ export const customerSchema = z.object({
   email: z.union([z.email({ error: "البريد الإلكتروني غير صحيح" }), z.literal("")]).optional(),
   address: z.string().optional(),
   notes: z.string().optional(),
+  isFavorite: z.boolean(),
 });
 
 export type CustomerInput = z.infer<typeof customerSchema>;

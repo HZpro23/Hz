@@ -167,6 +167,7 @@ export async function getCustomerOptions() {
       address: true,
       notes: true,
       balance: true,
+      isFavorite: true,
     },
   });
 

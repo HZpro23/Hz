@@ -34,6 +34,7 @@ export type CustomerOption = {
   address?: string | null;
   notes?: string | null;
   balance?: number;
+  isFavorite?: boolean;
 };
 
 const NONE_CUSTOMER: CustomerOption = { id: "", name: "اختر عميلاً...", phone: "" };

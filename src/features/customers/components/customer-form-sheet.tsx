@@ -2,10 +2,10 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Star } from "lucide-react";
 import { FormSheet } from "@/components/shared/form-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
   updateCustomer,
   findCustomerByPhoneAction,
 } from "@/features/customers/actions";
+import { cn } from "@/lib/utils";
 import { ar } from "@/i18n/ar";
 
 type MatchingCustomer = {
@@ -36,6 +37,7 @@ type CustomerRecord = {
   email: string | null;
   address: string | null;
   notes: string | null;
+  isFavorite: boolean;
 } | null;
 
 export function CustomerFormSheet({
@@ -55,6 +57,7 @@ export function CustomerFormSheet({
 
   const {
     register,
+    control,
     handleSubmit,
     watch,
     formState: { errors },
@@ -66,6 +69,7 @@ export function CustomerFormSheet({
       email: customer?.email ?? "",
       address: customer?.address ?? "",
       notes: customer?.notes ?? "",
+      isFavorite: customer?.isFavorite ?? false,
     },
   });
 
@@ -136,6 +140,38 @@ export function CustomerFormSheet({
             <p className="text-sm text-destructive">{errors.name.message}</p>
           )}
         </div>
+        <Controller
+          control={control}
+          name="isFavorite"
+          render={({ field }) => (
+            <button
+              type="button"
+              onClick={() => field.onChange(!field.value)}
+              aria-pressed={field.value}
+              className={cn(
+                "flex w-full cursor-pointer items-center gap-3 rounded-lg border p-3 text-start transition-colors",
+                field.value
+                  ? "border-amber-500/50 bg-amber-500/10"
+                  : "border-input hover:bg-muted/50",
+              )}
+            >
+              <Star
+                className={cn(
+                  "size-5 shrink-0 transition-colors",
+                  field.value
+                    ? "fill-amber-400 text-amber-400"
+                    : "text-muted-foreground",
+                )}
+              />
+              <div>
+                <p className="text-sm font-medium">عميل مفضل</p>
+                <p className="text-xs text-muted-foreground">
+                  يظهر العملاء المفضلون أولاً في قائمة العملاء
+                </p>
+              </div>
+            </button>
+          )}
+        />
         <div className="space-y-2">
           <Label htmlFor="customer-phone">رقم الهاتف / واتساب</Label>
           <Input id="customer-phone" dir="ltr" {...register("phone")} />

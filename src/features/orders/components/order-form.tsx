@@ -494,6 +494,7 @@ export function OrderForm({
             email: selectedCustomer.email ?? null,
             address: selectedCustomer.address ?? null,
             notes: selectedCustomer.notes ?? null,
+            isFavorite: selectedCustomer.isFavorite ?? false,
           }}
           onOpenChange={(open) => {
             setEditCustomerOpen(open);
