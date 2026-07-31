@@ -4,7 +4,10 @@ import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { BackButton } from "@/components/shared/back-button";
-import { getInvoiceById } from "@/features/invoices/queries";
+import {
+  getInvoiceById,
+  getCustomerOutstandingInvoices,
+} from "@/features/invoices/queries";
 import { getProductPickerOptions } from "@/features/products/queries";
 import { getCustomerOptions } from "@/features/customers/queries";
 import { getCategoryOptions } from "@/features/categories/queries";
@@ -32,6 +35,10 @@ export default async function InvoiceEditPage({
   ]);
 
   if (!invoice) notFound();
+
+  const outstandingInvoices = invoice.customerId
+    ? await getCustomerOutstandingInvoices(invoice.customerId)
+    : [];
 
   const products = productRows.map((product) => ({
     id: product.id,
@@ -88,6 +95,12 @@ export default async function InvoiceEditPage({
             remaining={remaining}
             customerBalance={customerBalance}
             hasCustomer={Boolean(invoice.customerId)}
+            customerId={invoice.customerId}
+            outstandingInvoices={outstandingInvoices.map((row) => ({
+              ...row,
+              total: Number(row.total),
+              paidAmount: Number(row.paidAmount),
+            }))}
           />
         )}
       </div>

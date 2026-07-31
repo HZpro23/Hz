@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -21,40 +22,115 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { PAYMENT_METHOD_LABELS } from "@/features/invoices/schema";
-import { recordPayment } from "@/features/invoices/actions";
+import { recordPayment, recordPaymentAcrossInvoices } from "@/features/invoices/actions";
 import { formatCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { ar } from "@/i18n/ar";
 import { BalanceConfirmDialog } from "@/features/invoices/components/balance-confirm-dialog";
 import {
-  checkSinglePaymentConfirmation,
+  checkMultiInvoicePaymentConfirmation,
   type BalanceConfirmRequest,
 } from "@/features/invoices/balance-resolution";
-import type { PaymentMethod } from "@/generated/prisma/client";
+import type { PaymentMethod, PaymentStatus } from "@/generated/prisma/client";
+
+export type OutstandingInvoiceRow = {
+  id: string;
+  invoiceNumber: string;
+  total: number;
+  paidAmount: number;
+  paymentStatus: PaymentStatus;
+  createdAt: Date;
+};
 
 export function RecordPaymentDialog({
   invoiceId,
   remaining,
   customerBalance = 0,
   hasCustomer = false,
+  customerId = null,
+  outstandingInvoices = [],
 }: {
   invoiceId: string;
   remaining: number;
   customerBalance?: number;
   hasCustomer?: boolean;
+  /** Needed to distribute the payment across the customer's other
+   * outstanding invoices — null for invoices with no linked customer. */
+  customerId?: string | null;
+  /** All of this customer's UNPAID/PARTIALLY_PAID invoices, current one
+   * included. Empty when there's no linked customer. */
+  outstandingInvoices?: OutstandingInvoiceRow[];
 }) {
   const [open, setOpen] = useState(false);
   const [method, setMethod] = useState<PaymentMethod>("CASH");
-  const [amount, setAmount] = useState(remaining);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () =>
+      new Set(
+        outstandingInvoices.length > 0
+          ? outstandingInvoices.map((inv) => inv.id)
+          : [invoiceId],
+      ),
+  );
+  const [amount, setAmount] = useState(() =>
+    outstandingInvoices.length > 0
+      ? outstandingInvoices.reduce(
+          (sum, inv) => sum + Math.max(0, inv.total - inv.paidAmount),
+          0,
+        )
+      : remaining,
+  );
   const [isPending, startTransition] = useTransition();
+
+  const canDistribute = Boolean(customerId) && outstandingInvoices.length > 0;
+
+  const selectedInvoices = outstandingInvoices.filter((inv) =>
+    selectedIds.has(inv.id),
+  );
+  const selectedTotal = selectedInvoices.reduce((sum, inv) => sum + inv.total, 0);
+  const selectedPaidSoFar = selectedInvoices.reduce(
+    (sum, inv) => sum + inv.paidAmount,
+    0,
+  );
+  const selectedRemaining = selectedInvoices.reduce(
+    (sum, inv) => sum + Math.max(0, inv.total - inv.paidAmount),
+    0,
+  );
+  const allSelected =
+    outstandingInvoices.length > 0 &&
+    selectedIds.size === outstandingInvoices.length;
+
+  function applySelection(nextIds: Set<string>) {
+    setSelectedIds(nextIds);
+    const nextRemaining = outstandingInvoices
+      .filter((inv) => nextIds.has(inv.id))
+      .reduce((sum, inv) => sum + Math.max(0, inv.total - inv.paidAmount), 0);
+    setAmount(nextRemaining);
+  }
+
+  function toggleInvoice(id: string) {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    applySelection(next);
+  }
+
+  function toggleSelectAll() {
+    if (allSelected) {
+      applySelection(new Set());
+    } else {
+      applySelection(new Set(outstandingInvoices.map((inv) => inv.id)));
+    }
+  }
 
   function handleMethodChange(value: string | null) {
     if (!value) return;
     const nextMethod = value as PaymentMethod;
     setMethod(nextMethod);
     if (nextMethod === "BALANCE") {
-      setAmount(remaining);
+      const cappedByRemaining = canDistribute ? selectedRemaining : remaining;
+      setAmount(Math.min(customerBalance, cappedByRemaining));
     }
   }
 
@@ -62,30 +138,56 @@ export function RecordPaymentDialog({
     null,
   );
   const [pending, setPending] = useState<{
+    invoiceIds: string[];
     amount: number;
     method: PaymentMethod;
     note: string;
   } | null>(null);
 
   function submitPayment(
+    invoiceIds: string[],
     paidAmount: number,
     paidMethod: PaymentMethod,
     note: string,
-    thenAlsoBalance?: number,
+    options?: {
+      excessToBalance?: boolean;
+      allowNegativeBalance?: boolean;
+      thenAlsoBalance?: number;
+    },
   ) {
     startTransition(async () => {
-      const result = await recordPayment(invoiceId, {
+      if (!customerId) {
+        const result = await recordPayment(invoiceId, {
+          amount: paidAmount,
+          method: paidMethod,
+          note,
+        });
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success("تم تسجيل الدفعة بنجاح");
+        setOpen(false);
+        return;
+      }
+
+      const result = await recordPaymentAcrossInvoices(customerId, {
+        invoiceIds,
         amount: paidAmount,
         method: paidMethod,
         note,
+        excessToBalance: options?.excessToBalance,
+        allowNegativeBalance: options?.allowNegativeBalance,
       });
       if (result.error) {
         toast.error(result.error);
         return;
       }
-      if (thenAlsoBalance && thenAlsoBalance > 0) {
-        const second = await recordPayment(invoiceId, {
-          amount: thenAlsoBalance,
+
+      if (options?.thenAlsoBalance && options.thenAlsoBalance > 0) {
+        const second = await recordPaymentAcrossInvoices(customerId, {
+          invoiceIds,
+          amount: options.thenAlsoBalance,
           method: "BALANCE",
         });
         if (second.error) {
@@ -93,6 +195,7 @@ export function RecordPaymentDialog({
           return;
         }
       }
+
       toast.success("تم تسجيل الدفعة بنجاح");
       setOpen(false);
     });
@@ -100,6 +203,11 @@ export function RecordPaymentDialog({
 
   function handleSubmit(formData: FormData) {
     const note = String(formData.get("note") ?? "").trim();
+
+    if (canDistribute && selectedIds.size === 0) {
+      toast.error(ar.invoices.selectAtLeastOneInvoice);
+      return;
+    }
 
     if (!(amount > 0)) {
       toast.error(ar.invoices.invalidAmount);
@@ -111,20 +219,33 @@ export function RecordPaymentDialog({
       return;
     }
 
-    const request = checkSinglePaymentConfirmation({
-      remainingBeforePayment: remaining,
+    const invoiceIds = canDistribute ? Array.from(selectedIds) : [invoiceId];
+
+    if (!canDistribute) {
+      // No linked customer (or no other outstanding invoices to pick from):
+      // fall back to the simple single-invoice flow, capped at its own
+      // remaining — there's no رصيد to route an excess into.
+      if (amount > remaining + 0.005) {
+        toast.error(ar.invoices.invalidAmount);
+        return;
+      }
+      submitPayment(invoiceIds, amount, method, note);
+      return;
+    }
+
+    const request = checkMultiInvoicePaymentConfirmation({
+      selectedRemaining,
       method,
       amount,
       customerBalance,
-      hasCustomer,
     });
     if (request) {
-      setPending({ amount, method, note });
+      setPending({ invoiceIds, amount, method, note });
       setConfirmRequest(request);
       return;
     }
 
-    submitPayment(amount, method, note);
+    submitPayment(invoiceIds, amount, method, note);
   }
 
   function cancelConfirm() {
@@ -135,27 +256,58 @@ export function RecordPaymentDialog({
   function resolveUseAvailable() {
     if (!pending || confirmRequest?.kind !== "insufficient") return;
     setConfirmRequest(null);
-    submitPayment(confirmRequest.availableBalance, "BALANCE", pending.note);
+    submitPayment(
+      pending.invoiceIds,
+      confirmRequest.availableBalance,
+      "BALANCE",
+      pending.note,
+    );
   }
 
   function resolveGoNegative() {
     if (!pending) return;
     setConfirmRequest(null);
-    submitPayment(pending.amount, pending.method, pending.note);
+    submitPayment(pending.invoiceIds, pending.amount, pending.method, pending.note, {
+      allowNegativeBalance: true,
+    });
   }
 
   function resolveUseBalance() {
     if (!pending || confirmRequest?.kind !== "offer-balance") return;
-    const balanceAmount = Math.min(confirmRequest.remaining, confirmRequest.availableBalance);
+    const balanceAmount = Math.min(
+      confirmRequest.remaining,
+      confirmRequest.availableBalance,
+    );
     setConfirmRequest(null);
-    submitPayment(pending.amount, pending.method, pending.note, balanceAmount);
+    submitPayment(pending.invoiceIds, pending.amount, pending.method, pending.note, {
+      thenAlsoBalance: balanceAmount,
+    });
   }
 
   function resolveDecline() {
     if (!pending) return;
     setConfirmRequest(null);
-    submitPayment(pending.amount, pending.method, pending.note);
+    submitPayment(pending.invoiceIds, pending.amount, pending.method, pending.note);
   }
+
+  function resolveAddExcessToBalance() {
+    if (!pending) return;
+    setConfirmRequest(null);
+    submitPayment(pending.invoiceIds, pending.amount, pending.method, pending.note, {
+      excessToBalance: true,
+    });
+  }
+
+  function resolveDiscardExcess() {
+    if (!pending) return;
+    setConfirmRequest(null);
+    submitPayment(pending.invoiceIds, pending.amount, pending.method, pending.note, {
+      excessToBalance: false,
+    });
+  }
+
+  const remainingAfterPayment = Math.max(0, selectedRemaining - amount);
+  const excessFromPayment = Math.max(0, amount - selectedRemaining);
 
   return (
     <>
@@ -168,12 +320,104 @@ export function RecordPaymentDialog({
           </Button>
         }
       />
-      <DialogContent>
+      <DialogContent className={canDistribute ? "sm:max-w-lg" : undefined}>
         <DialogHeader>
           <DialogTitle>{ar.invoices.recordPayment}</DialogTitle>
         </DialogHeader>
         <form action={handleSubmit} className="space-y-4">
         <fieldset disabled={isPending} className="contents space-y-4">
+          {canDistribute && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>{ar.invoices.selectInvoicesToPayTitle}</Label>
+                <button
+                  type="button"
+                  className="cursor-pointer text-xs font-medium text-primary hover:underline"
+                  onClick={toggleSelectAll}
+                >
+                  {ar.invoices.selectAllInvoices}
+                </button>
+              </div>
+              <div
+                className={cn(
+                  "space-y-1.5 rounded-lg border p-2",
+                  outstandingInvoices.length > 4 && "max-h-56 overflow-y-auto",
+                )}
+              >
+                {outstandingInvoices.map((invoice) => {
+                  const invoiceRemaining = Math.max(
+                    0,
+                    invoice.total - invoice.paidAmount,
+                  );
+                  return (
+                    <label
+                      key={invoice.id}
+                      className="flex cursor-pointer items-start gap-2 rounded-md p-1.5 hover:bg-muted/50"
+                    >
+                      <Checkbox
+                        checked={selectedIds.has(invoice.id)}
+                        onCheckedChange={() => toggleInvoice(invoice.id)}
+                        className="mt-0.5"
+                      />
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-sm font-medium" dir="ltr">
+                            {invoice.invoiceNumber}
+                          </span>
+                          <PaymentStatusBadge status={invoice.paymentStatus} />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                          <span>
+                            {new Date(invoice.createdAt).toLocaleDateString(
+                              "fr-FR",
+                            )}
+                          </span>
+                          <span>
+                            {ar.invoices.invoiceTotalLabel}:{" "}
+                            {formatCurrency(invoice.total)}
+                          </span>
+                          <span>
+                            {ar.invoices.totalPaidLabel}:{" "}
+                            {formatCurrency(invoice.paidAmount)}
+                          </span>
+                          <span className="font-medium text-foreground">
+                            {ar.invoices.remainingBalance}:{" "}
+                            {formatCurrency(invoiceRemaining)}
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 rounded-lg border bg-muted/30 p-2.5 text-center text-xs">
+                <div>
+                  <p className="text-muted-foreground">
+                    {ar.invoices.selectedInvoicesTotal}
+                  </p>
+                  <p className="font-medium">{formatCurrency(selectedTotal)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">
+                    {ar.invoices.selectedInvoicesPaidSoFar}
+                  </p>
+                  <p className="font-medium">
+                    {formatCurrency(selectedPaidSoFar)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">
+                    {ar.invoices.selectedInvoicesRemaining}
+                  </p>
+                  <p className="font-medium">
+                    {formatCurrency(selectedRemaining)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="payment-amount">{ar.invoices.amountPaid}</Label>
             <Input
@@ -186,9 +430,28 @@ export function RecordPaymentDialog({
               onChange={(event) => setAmount(event.target.valueAsNumber || 0)}
               required
             />
-            <p className="text-xs text-muted-foreground">
-              {ar.invoices.remainingBalance}: {formatCurrency(remaining)}
-            </p>
+            {canDistribute ? (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                <span>
+                  {ar.invoices.currentPaymentAmount}: {formatCurrency(amount)}
+                </span>
+                {excessFromPayment > 0.005 ? (
+                  <span className="font-medium text-amber-600 dark:text-amber-400">
+                    {ar.invoices.excessFromThisPayment}:{" "}
+                    {formatCurrency(excessFromPayment)}
+                  </span>
+                ) : (
+                  <span>
+                    {ar.invoices.remainingAfterThisPayment}:{" "}
+                    {formatCurrency(remainingAfterPayment)}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {ar.invoices.remainingBalance}: {formatCurrency(remaining)}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label>{ar.invoices.paymentMethod}</Label>
@@ -249,6 +512,8 @@ export function RecordPaymentDialog({
       onGoNegative={resolveGoNegative}
       onUseBalance={resolveUseBalance}
       onDecline={resolveDecline}
+      onAddExcessToBalance={resolveAddExcessToBalance}
+      onDiscardExcess={resolveDiscardExcess}
     />
     </>
   );

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { invoiceSchema } from "@/features/invoices/schema";
+import { getCustomerOutstandingInvoices } from "@/features/invoices/queries";
 import { computePaymentStatus } from "@/lib/money";
 import { adjustCustomerBalance, computeBalanceEffect } from "@/features/customers/balance";
 import { isDeletePasswordValid, DELETE_PASSWORD_ERROR } from "@/lib/delete-guard";
@@ -31,7 +32,35 @@ function balanceEffectReason(delta: number): BalanceChangeReason {
   return delta < 0 ? "BALANCE_USED" : "OVERPAYMENT_CREDIT";
 }
 
-export async function createInvoice(input: unknown): Promise<ActionResult> {
+/** Client-callable wrapper — invoice creation forms need this to offer
+ * distributing an overpayment across a customer's other outstanding
+ * invoices before the new invoice even exists yet. */
+export async function fetchCustomerOutstandingInvoices(customerId: string) {
+  const session = await auth();
+  if (!session?.user) return [];
+  const invoices = await getCustomerOutstandingInvoices(customerId);
+  // Server action return values cross the same serialization boundary as
+  // RSC props — Decimal instances aren't plain objects, so they have to be
+  // converted here rather than left for the caller to convert after the
+  // fact.
+  return invoices.map((invoice) => ({
+    ...invoice,
+    total: Number(invoice.total),
+    paidAmount: Number(invoice.paidAmount),
+  }));
+}
+
+export async function createInvoice(
+  input: unknown,
+  options?: {
+    excessToBalance?: boolean;
+    /** Stamped on this invoice's own payment rows so the print page can
+     * later find other invoices settled in the same session (e.g. when the
+     * overpayment on this new invoice was distributed to older ones via
+     * recordPaymentAcrossInvoices under the same batch). */
+    batchId?: string;
+  },
+): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { error: "غير مصرح" };
 
@@ -44,7 +73,16 @@ export async function createInvoice(input: unknown): Promise<ActionResult> {
   const paymentStatus = computePaymentStatus(total, paidAmount);
   const primaryMethod = payments[0]?.method ?? "CASH";
   const customerId = parsed.data.customerId;
-  const balanceEffect = computeBalanceEffect(total, payments);
+  // computeBalanceEffect nets a من الرصيد draw against any overpayment past
+  // the total. When that nets out positive, it's new credit rather than a
+  // draw — only apply that portion if the admin explicitly opted in;
+  // otherwise cap it at 0 so paying more than the total never silently
+  // grows رصيد on its own.
+  const rawBalanceEffect = computeBalanceEffect(total, payments);
+  const balanceEffect =
+    rawBalanceEffect > 0.005 && !options?.excessToBalance
+      ? 0
+      : rawBalanceEffect;
 
   let invoiceId: string;
   try {
@@ -81,6 +119,7 @@ export async function createInvoice(input: unknown): Promise<ActionResult> {
             invoiceId: created.id,
             amount: line.amount,
             method: line.method,
+            batchId: options?.batchId,
           })),
         });
       }
@@ -289,6 +328,7 @@ export async function getOrCreateInvoiceForOrder(
   options: {
     language: InvoiceLanguage;
     payments: { method: PaymentMethod; amount: number }[];
+    excessToBalance?: boolean;
   },
 ): Promise<ActionResult> {
   const session = await auth();
@@ -318,7 +358,9 @@ export async function getOrCreateInvoiceForOrder(
   const paidAmount = payments.reduce((sum, line) => sum + line.amount, 0);
   const paymentStatus = computePaymentStatus(total, paidAmount);
   const primaryMethod = payments[0]?.method ?? "CASH";
-  const balanceEffect = computeBalanceEffect(total, payments);
+  const rawBalanceEffect = computeBalanceEffect(total, payments);
+  const balanceEffect =
+    rawBalanceEffect > 0.005 && !options.excessToBalance ? 0 : rawBalanceEffect;
 
   let invoiceId: string;
   try {
@@ -447,6 +489,140 @@ export async function recordPayment(
     revalidatePath(`/dashboard/customers/${invoice.customerId}`);
   }
   return { success: true };
+}
+
+/**
+ * Records one payment against a customer's outstanding invoices, oldest
+ * first, capping the amount given to each invoice at that invoice's own
+ * remaining balance — so no single invoice's paidAmount ever exceeds its
+ * total and no invoice silently overflows into رصيد on its own. Any money
+ * left over after every selected invoice is fully paid is the caller's
+ * `excessToBalance` decision: add it to the customer's رصيد as a standalone
+ * credit (not tied to any one invoice), or drop it entirely. This replaces
+ * the old implicit behavior where paying more than a single invoice's total
+ * always became رصيد automatically.
+ */
+export async function recordPaymentAcrossInvoices(
+  customerId: string,
+  input: {
+    invoiceIds: string[];
+    amount: number;
+    method: PaymentMethod;
+    note?: string;
+    excessToBalance?: boolean;
+    /** Lets a BALANCE payment proceed even past the customer's current
+     * رصيد (mirrors the existing single-invoice "allow negative" choice). */
+    allowNegativeBalance?: boolean;
+    /** Reuse an existing batch (e.g. a new invoice's own payments) instead
+     * of starting a fresh one — lets two separate action calls still be
+     * recognized as "the same payment session" later. */
+    batchId?: string;
+  },
+): Promise<ActionResult & { batchId?: string }> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+
+  if (!(input.amount > 0)) {
+    return { error: "الرجاء إدخال مبلغ صحيح" };
+  }
+  if (input.invoiceIds.length === 0) {
+    return { error: ar.invoices.selectAtLeastOneInvoice };
+  }
+
+  const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+  if (!customer) return { error: "العميل غير موجود" };
+
+  const invoices = await prisma.invoice.findMany({
+    where: { id: { in: input.invoiceIds }, customerId },
+    include: { payments: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (invoices.length === 0) return { error: "الفواتير المحددة غير موجودة" };
+
+  if (input.method === "BALANCE" && !input.allowNegativeBalance) {
+    const customerBalance = Number(customer.balance);
+    if (input.amount > customerBalance + 0.005) {
+      return { error: ar.invoices.insufficientBalanceTitle };
+    }
+  }
+
+  let amountLeft = input.amount;
+  const allocations: { invoice: (typeof invoices)[number]; allocated: number }[] =
+    [];
+  for (const invoice of invoices) {
+    if (amountLeft <= 0.005) break;
+    const total = Number(invoice.total);
+    const invoiceRemaining = Math.max(0, total - Number(invoice.paidAmount));
+    if (invoiceRemaining <= 0.005) continue;
+    const allocated = Math.min(invoiceRemaining, amountLeft);
+    allocations.push({ invoice, allocated });
+    amountLeft -= allocated;
+  }
+
+  const excess = Math.max(0, amountLeft);
+  const batchId = input.batchId ?? crypto.randomUUID();
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const { invoice, allocated } of allocations) {
+        if (allocated <= 0.005) continue;
+
+        const total = Number(invoice.total);
+        const newPaidAmount = Number(invoice.paidAmount) + allocated;
+        const paymentStatus = computePaymentStatus(total, newPaidAmount);
+
+        const allPayments = [
+          ...invoice.payments.map((p) => ({
+            amount: Number(p.amount),
+            method: p.method as string,
+          })),
+          { amount: allocated, method: input.method as string },
+        ];
+        const newBalanceEffect = computeBalanceEffect(total, allPayments);
+        const previousBalanceEffect = Number(invoice.balanceEffectApplied);
+        const delta = newBalanceEffect - previousBalanceEffect;
+
+        await tx.payment.create({
+          data: {
+            invoiceId: invoice.id,
+            amount: allocated,
+            method: input.method,
+            note: input.note || null,
+            batchId,
+          },
+        });
+        await tx.invoice.update({
+          where: { id: invoice.id },
+          data: {
+            paidAmount: newPaidAmount,
+            paymentStatus,
+            balanceEffectApplied: newBalanceEffect,
+          },
+        });
+        await adjustCustomerBalance(tx, customerId, delta, {
+          reason: balanceEffectReason(delta),
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+        });
+      }
+
+      if (excess > 0.005 && input.excessToBalance) {
+        await adjustCustomerBalance(tx, customerId, excess, {
+          reason: "OVERPAYMENT_CREDIT",
+          note: `فائض دفعة موزعة على ${allocations.length} فاتورة`,
+        });
+      }
+    });
+  } catch {
+    return { error: "حدث خطأ أثناء تسجيل الدفعة" };
+  }
+
+  revalidatePath("/dashboard/invoices");
+  revalidatePath(`/dashboard/customers/${customerId}`);
+  for (const { invoice } of allocations) {
+    revalidatePath(`/dashboard/invoices/${invoice.id}`);
+  }
+  return { success: true, batchId };
 }
 
 /**

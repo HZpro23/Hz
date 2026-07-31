@@ -19,6 +19,8 @@ export function BalanceConfirmDialog({
   onGoNegative,
   onUseBalance,
   onDecline,
+  onAddExcessToBalance,
+  onDiscardExcess,
 }: {
   request: BalanceConfirmRequest | null;
   onCancel: () => void;
@@ -26,6 +28,9 @@ export function BalanceConfirmDialog({
   onGoNegative: () => void;
   onUseBalance: () => void;
   onDecline: () => void;
+  /** Only needed by callers that can produce an "excess-payment" request. */
+  onAddExcessToBalance?: () => void;
+  onDiscardExcess?: () => void;
 }) {
   return (
     <Dialog open={Boolean(request)} onOpenChange={(open) => !open && onCancel()}>
@@ -79,6 +84,33 @@ export function BalanceConfirmDialog({
                 onClick={onDecline}
               >
                 {ar.invoices.offerBalanceNo}
+              </Button>
+            </div>
+          </>
+        )}
+        {request?.kind === "excess-payment" && (
+          <>
+            <DialogHeader>
+              <DialogTitle>{ar.invoices.excessPaymentTitle}</DialogTitle>
+              <DialogDescription>
+                المبلغ المتبقي من الدفعة بعد تغطية الفواتير المحددة هو{" "}
+                {formatCurrency(request.excessAmount)}. هل تريد إضافته إلى رصيد
+                العميل؟
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 cursor-pointer"
+                onClick={onAddExcessToBalance}
+              >
+                {ar.invoices.excessPaymentAddToBalance}
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 cursor-pointer"
+                onClick={onDiscardExcess}
+              >
+                {ar.invoices.excessPaymentDiscard}
               </Button>
             </div>
           </>

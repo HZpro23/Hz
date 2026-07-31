@@ -93,7 +93,7 @@ export function GenerateInvoiceDialog({
   );
   const [pendingPayments, setPendingPayments] = useState<PaymentLine[] | null>(null);
 
-  function submitPayments(payments: PaymentLine[]) {
+  function submitPayments(payments: PaymentLine[], excessToBalance?: boolean) {
     if (payments.some((line) => line.method === "BALANCE") && !hasCustomer) {
       toast.error(ar.invoices.noCustomerForBalance);
       return;
@@ -103,6 +103,7 @@ export function GenerateInvoiceDialog({
       const result = await getOrCreateInvoiceForOrder(orderId, {
         language,
         payments,
+        excessToBalance,
       });
       if (result?.error) {
         toast.error(result.error);
@@ -155,6 +156,18 @@ export function GenerateInvoiceDialog({
     if (!pendingPayments) return;
     setConfirmRequest(null);
     submitPayments(pendingPayments);
+  }
+
+  function resolveAddExcessToBalance() {
+    if (!pendingPayments) return;
+    setConfirmRequest(null);
+    submitPayments(pendingPayments, true);
+  }
+
+  function resolveDiscardExcess() {
+    if (!pendingPayments) return;
+    setConfirmRequest(null);
+    submitPayments(pendingPayments, false);
   }
 
   return (
@@ -340,6 +353,8 @@ export function GenerateInvoiceDialog({
       onGoNegative={resolveGoNegative}
       onUseBalance={resolveUseBalance}
       onDecline={resolveDecline}
+      onAddExcessToBalance={resolveAddExcessToBalance}
+      onDiscardExcess={resolveDiscardExcess}
     />
     </>
   );

@@ -286,20 +286,34 @@ export async function saveOrderCustomerInfo(
   const customer = await prisma.customer.findUniqueOrThrow({
     where: { id: targetCustomerId },
   });
+  const snapshotData = {
+    customerName: customer.name,
+    customerPhone: customer.phone,
+    customerEmail: customer.email,
+  };
 
-  await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      customerId: customer.id,
-      customerName: customer.name,
-      customerPhone: customer.phone,
-      customerEmail: customer.email,
-    },
-  });
+  // Orders and invoices each keep their own name/phone/email snapshot, so a
+  // correction here needs to be pushed out to every other order and invoice
+  // already linked to this customer too — not just the current order.
+  await prisma.$transaction([
+    prisma.order.update({
+      where: { id: orderId },
+      data: { customerId: customer.id, ...snapshotData },
+    }),
+    prisma.order.updateMany({
+      where: { customerId: customer.id, NOT: { id: orderId } },
+      data: snapshotData,
+    }),
+    prisma.invoice.updateMany({
+      where: { customerId: customer.id },
+      data: snapshotData,
+    }),
+  ]);
 
   revalidatePath("/dashboard/orders");
   revalidatePath(`/dashboard/orders/${orderId}`);
   revalidatePath("/dashboard/customers");
+  revalidatePath("/dashboard/invoices");
   if (customerId) revalidatePath(`/dashboard/customers/${customerId}`);
   revalidatePath(`/dashboard/customers/${customer.id}`);
 

@@ -63,21 +63,36 @@ export async function updateCustomer(
     return { error: "يوجد عميل مسجل بنفس رقم الهاتف بالفعل" };
   }
 
-  await prisma.customer.update({
-    where: { id },
-    data: {
-      name: parsed.data.name,
-      nameNormalized: normalizeArabicName(parsed.data.name),
-      phone: parsed.data.phone,
-      email: parsed.data.email || null,
-      address: parsed.data.address || null,
-      notes: parsed.data.notes || null,
-      isFavorite: parsed.data.isFavorite,
-    },
-  });
+  // Invoices and orders each keep their own snapshot of the customer's
+  // name/phone/email (so historical documents don't shift if the customer
+  // record changes) — but admins expect a plain name correction to show up
+  // everywhere that customer is referenced, not just on the Customer record
+  // itself, so every one of their invoices/orders gets the same update.
+  const customerData = {
+    name: parsed.data.name,
+    nameNormalized: normalizeArabicName(parsed.data.name),
+    phone: parsed.data.phone,
+    email: parsed.data.email || null,
+    address: parsed.data.address || null,
+    notes: parsed.data.notes || null,
+    isFavorite: parsed.data.isFavorite,
+  };
+  const snapshotData = {
+    customerName: parsed.data.name,
+    customerPhone: parsed.data.phone,
+    customerEmail: parsed.data.email || null,
+  };
+
+  await prisma.$transaction([
+    prisma.customer.update({ where: { id }, data: customerData }),
+    prisma.invoice.updateMany({ where: { customerId: id }, data: snapshotData }),
+    prisma.order.updateMany({ where: { customerId: id }, data: snapshotData }),
+  ]);
 
   revalidatePath("/dashboard/customers");
   revalidatePath(`/dashboard/customers/${id}`);
+  revalidatePath("/dashboard/invoices");
+  revalidatePath("/dashboard/orders");
   return { success: true };
 }
 

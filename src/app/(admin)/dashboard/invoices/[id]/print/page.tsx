@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import {
   getInvoiceById,
-  getOtherOutstandingInvoices,
+  getBatchSettledInvoices,
 } from "@/features/invoices/queries";
 import { InvoicePrintButton } from "@/features/invoices/components/invoice-print-button";
 import { InvoicePdfButton } from "@/features/invoices/components/invoice-pdf-button";
@@ -25,6 +25,7 @@ const LABELS: Record<
     unitPrice: string;
     lineTotal: string;
     total: string;
+    previousPayment: string;
     previousDebts: string;
     grandTotal: string;
     itemsCount: string;
@@ -45,6 +46,7 @@ const LABELS: Record<
     unitPrice: "التمن",
     lineTotal: "الإجمالي",
     total: "إجمالي المنتجات",
+    previousPayment: "الدفع السابق",
     previousDebts: "الحساب القديم",
     grandTotal: "الإجمالي الكلي",
     itemsCount: "عدد المنتجات",
@@ -64,6 +66,7 @@ const LABELS: Record<
     unitPrice: "Prix unitaire",
     lineTotal: "Sous-total",
     total: "Total des produits",
+    previousPayment: "Paiement précédent",
     previousDebts: "Ancien compte",
     grandTotal: "Total général",
     itemsCount: "Nombre de produits",
@@ -102,15 +105,14 @@ export default async function InvoicePrintPage({
     0,
   );
 
-  const otherOutstandingInvoices = invoice.customerId
-    ? await getOtherOutstandingInvoices(invoice.customerId, invoice.id)
-    : [];
-  const previousDebtsTotal = otherOutstandingInvoices.reduce(
-    (sum, other) =>
-      sum + Math.max(0, Number(other.total) - Number(other.paidAmount)),
+  const batchSettledInvoices = await getBatchSettledInvoices(invoice.id);
+  const previousDebtsTotal = batchSettledInvoices.reduce(
+    (sum, entry) => sum + entry.amountInBatch,
     0,
   );
-  const grandTotal = itemsTotal + previousDebtsTotal;
+  const isPartiallyPaid = invoice.paymentStatus === "PARTIALLY_PAID";
+  const previousPayment = isPartiallyPaid ? Number(invoice.paidAmount) : 0;
+  const grandTotal = Math.max(0, itemsTotal - previousPayment) + previousDebtsTotal;
 
   return (
     <div
@@ -244,6 +246,12 @@ export default async function InvoicePrintPage({
                   <p>
                     {t.total}: {formatCurrency(itemsTotal, lang, false)}
                   </p>
+                  {isPartiallyPaid && (
+                    <p>
+                      {t.previousPayment}:{" "}
+                      {formatCurrency(previousPayment, lang, false)}
+                    </p>
+                  )}
                   <p>
                     {t.previousDebts}:{" "}
                     {formatCurrency(previousDebtsTotal, lang, false)}

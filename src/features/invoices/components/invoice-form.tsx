@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, UserCircle } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -49,7 +50,12 @@ import {
   type InvoiceOutput,
   INVOICE_LANGUAGE_LABELS,
 } from "@/features/invoices/schema";
-import { createInvoice, updateInvoice } from "@/features/invoices/actions";
+import {
+  createInvoice,
+  updateInvoice,
+  recordPaymentAcrossInvoices,
+  fetchCustomerOutstandingInvoices,
+} from "@/features/invoices/actions";
 import { formatCurrency } from "@/lib/currency";
 import {
   CustomerPicker,
@@ -59,8 +65,13 @@ import { PaymentFieldsSection } from "@/features/invoices/components/payment-fie
 import { PaymentHistory } from "@/features/invoices/components/payment-history";
 import { BalanceConfirmDialog } from "@/features/invoices/components/balance-confirm-dialog";
 import {
+  DistributeExcessDialog,
+  type OutstandingInvoiceRow,
+} from "@/features/invoices/components/distribute-excess-dialog";
+import {
   checkBalanceConfirmation,
   capBalanceLines,
+  capPaymentLinesToTotal,
   type BalanceConfirmRequest,
 } from "@/features/invoices/balance-resolution";
 
@@ -496,12 +507,16 @@ export function InvoiceForm({
   );
   const [confirmRequest, setConfirmRequest] =
     useState<BalanceConfirmRequest | null>(null);
+  const [distributeState, setDistributeState] = useState<{
+    excessAmount: number;
+    invoices: OutstandingInvoiceRow[];
+  } | null>(null);
 
-  function submitInvoice(values: InvoiceOutput) {
+  function submitInvoice(values: InvoiceOutput, excessToBalance?: boolean) {
     startTransition(async () => {
       const result = invoice
         ? await updateInvoice(invoice.id, values)
-        : await createInvoice(values);
+        : await createInvoice(values, { excessToBalance });
 
       if (result?.error) {
         toast.error(result.error);
@@ -512,7 +527,7 @@ export function InvoiceForm({
     });
   }
 
-  function onSubmit(values: InvoiceOutput) {
+  async function onSubmit(values: InvoiceOutput) {
     if (invoice) {
       submitInvoice(values);
       return;
@@ -526,6 +541,27 @@ export function InvoiceForm({
     });
     if (request) {
       setPendingValues(values);
+
+      // An overpayment on a brand-new invoice can pay off this customer's
+      // other outstanding invoices instead of just becoming رصيد — offer
+      // that first when there's actually something to pay off.
+      if (request.kind === "excess-payment" && values.customerId) {
+        const outstanding = await fetchCustomerOutstandingInvoices(
+          values.customerId,
+        );
+        if (outstanding.length > 0) {
+          setDistributeState({
+            excessAmount: request.excessAmount,
+            invoices: outstanding.map((row) => ({
+              ...row,
+              total: Number(row.total),
+              paidAmount: Number(row.paidAmount),
+            })),
+          });
+          return;
+        }
+      }
+
       setConfirmRequest(request);
       return;
     }
@@ -535,6 +571,48 @@ export function InvoiceForm({
   function cancelConfirm() {
     setConfirmRequest(null);
     setPendingValues(null);
+  }
+
+  function handleDistributeConfirm(invoiceIds: string[]) {
+    if (!pendingValues || !distributeState || !pendingValues.customerId) return;
+    const method = pendingValues.payments[0]?.method ?? "CASH";
+    const cappedPayments = capPaymentLinesToTotal(pendingValues.payments, total);
+    const customerId = pendingValues.customerId;
+    const excessAmount = distributeState.excessAmount;
+    const values = pendingValues;
+    setDistributeState(null);
+    setPendingValues(null);
+
+    startTransition(async () => {
+      const distributed = await recordPaymentAcrossInvoices(customerId, {
+        invoiceIds,
+        amount: excessAmount,
+        method,
+        note: "من فائض دفعة فاتورة جديدة",
+        excessToBalance: true,
+      });
+      if (distributed.error) {
+        toast.error(distributed.error);
+        return;
+      }
+
+      const result = await createInvoice(
+        { ...values, payments: cappedPayments },
+        { batchId: distributed.batchId },
+      );
+      if (result?.error) {
+        toast.error(result.error);
+      }
+    });
+  }
+
+  function handleDistributeSkip() {
+    if (!distributeState) return;
+    setConfirmRequest({
+      kind: "excess-payment",
+      excessAmount: distributeState.excessAmount,
+    });
+    setDistributeState(null);
   }
 
   function resolveUseAvailable() {
@@ -573,6 +651,18 @@ export function InvoiceForm({
     submitInvoice(pendingValues);
   }
 
+  function resolveAddExcessToBalance() {
+    if (!pendingValues) return;
+    setConfirmRequest(null);
+    submitInvoice(pendingValues, true);
+  }
+
+  function resolveDiscardExcess() {
+    if (!pendingValues) return;
+    setConfirmRequest(null);
+    submitInvoice(pendingValues, false);
+  }
+
   return (
     <>
       <div className="max-w-3xl space-y-6 lg:col-span-2">
@@ -580,7 +670,27 @@ export function InvoiceForm({
           <fieldset disabled={isPending} className="contents space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
-                <Label>العميل</Label>
+                <div className="flex items-center justify-between">
+                  <Label>العميل</Label>
+                  {customerId && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto cursor-pointer gap-1 px-2 py-1 text-xs"
+                      nativeButton={false}
+                      render={
+                        <Link
+                          href={`/dashboard/customers/${customerId}`}
+                          target="_blank"
+                        />
+                      }
+                    >
+                      <UserCircle className="size-3.5" />
+                      الذهاب إلى صفحة العميل
+                    </Button>
+                  )}
+                </div>
                 <Controller
                   control={control}
                   name="customerId"
@@ -645,15 +755,6 @@ export function InvoiceForm({
             <div className="space-y-2">
               <Label htmlFor="invoice-notes">ملاحظات (اختياري)</Label>
               <Textarea id="invoice-notes" rows={2} {...register("notes")} />
-            </div>
-
-            <div className="space-y-2 lg:hidden">
-              <CategoryQuickAddPanel
-                categories={categories}
-                brands={brands}
-                products={products}
-                onAddProducts={handleAddFromCategory}
-              />
             </div>
 
             <div className="space-y-3">
@@ -801,6 +902,15 @@ export function InvoiceForm({
               </Button>
             </div>
 
+            <div className="space-y-2">
+              <CategoryQuickAddPanel
+                categories={categories}
+                brands={brands}
+                products={products}
+                onAddProducts={handleAddFromCategory}
+              />
+            </div>
+
             <div className="flex items-center justify-between border-t pt-4">
               <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
               <Button
@@ -825,7 +935,19 @@ export function InvoiceForm({
             onGoNegative={resolveGoNegative}
             onUseBalance={resolveUseBalance}
             onDecline={resolveDecline}
+            onAddExcessToBalance={resolveAddExcessToBalance}
+            onDiscardExcess={resolveDiscardExcess}
           />
+
+          {distributeState && (
+            <DistributeExcessDialog
+              open
+              excessAmount={distributeState.excessAmount}
+              invoices={distributeState.invoices}
+              onConfirm={handleDistributeConfirm}
+              onSkip={handleDistributeSkip}
+            />
+          )}
         </form>
       </div>
 
@@ -835,15 +957,6 @@ export function InvoiceForm({
             <PaymentHistory payments={payments ?? []} />
           </div>
         )}
-
-        <div className="hidden space-y-6 lg:block">
-          <CategoryQuickAddPanel
-            categories={categories}
-            brands={brands}
-            products={products}
-            onAddProducts={handleAddFromCategory}
-          />
-        </div>
       </div>
     </>
   );

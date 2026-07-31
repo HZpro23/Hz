@@ -291,9 +291,16 @@ model Payment {
   amount    Decimal       @db.Decimal(10, 2)
   method    PaymentMethod
   note      String?
+  /// Shared across every Payment row created by the same
+  /// recordPaymentAcrossInvoices call (and the invoice this excess was
+  /// distributed from, when applicable) — lets us find "which other
+  /// invoices were settled together with this one" instead of just
+  /// whatever's currently unpaid.
+  batchId   String?
   createdAt DateTime      @default(now())
 
   @@index([invoiceId])
+  @@index([batchId])
 }
 
 enum BalanceChangeReason {
