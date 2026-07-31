@@ -19,6 +19,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Combobox,
+  useComboboxFilter,
+  ComboboxValue,
+  ComboboxTrigger,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxEmpty,
+  ComboboxList,
+  ComboboxItem,
+} from "@/components/ui/combobox";
+import {
   CloudinaryUploader,
   type UploadedImage,
 } from "@/components/shared/cloudinary-uploader";
@@ -33,6 +44,61 @@ import { createProduct, updateProduct } from "@/features/products/actions";
 import { ar } from "@/i18n/ar";
 
 type Option = { id: string; name: string };
+
+const NONE_OPTION: Option = { id: "", name: "" };
+
+/** Searchable name-based picker for category/brand — a plain Select here
+ * would only ever be able to display the raw id as its value, since there's
+ * no small fixed label map for these (unlike status/method enums). */
+function OptionPickerField({
+  value,
+  onChange,
+  options,
+  placeholder,
+  noneLabel,
+}: {
+  value: string;
+  onChange: (option: Option | null) => void;
+  options: Option[];
+  placeholder: string;
+  /** When provided, adds a leading "no selection" item with this label. */
+  noneLabel?: string;
+}) {
+  const { contains } = useComboboxFilter();
+  const noneItem = { ...NONE_OPTION, name: noneLabel ?? placeholder };
+  const items = noneLabel ? [noneItem, ...options] : options;
+  const selected = items.find((item) => item.id === value) ?? noneItem;
+
+  return (
+    <Combobox
+      items={items}
+      value={selected}
+      onValueChange={(option: Option | null) =>
+        onChange(option && option.id ? option : null)
+      }
+      isItemEqualToValue={(a: Option, b: Option) => a.id === b.id}
+      itemToStringValue={(item: Option) => item.id}
+      itemToStringLabel={(item: Option) => item.name || placeholder}
+      filter={contains}
+    >
+      <ComboboxTrigger className="w-full">
+        <ComboboxValue />
+      </ComboboxTrigger>
+      <ComboboxContent>
+        <ComboboxInput placeholder="ابحث بالاسم..." />
+        <ComboboxEmpty>لا توجد نتائج</ComboboxEmpty>
+        <ComboboxList>
+          {(item: Option) => (
+            <ComboboxItem key={item.id} value={item}>
+              {item.name || placeholder}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  );
+}
+
 type ProductRecord = {
   id: string;
   name: string;
@@ -192,18 +258,12 @@ export function ProductFormSheet({
               control={control}
               name="categoryId"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="اختر القسم" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categoryOptions.map((option) => (
-                      <SelectItem key={option.id} value={option.id}>
-                        {option.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <OptionPickerField
+                  value={field.value ?? ""}
+                  options={categoryOptions}
+                  placeholder="اختر القسم"
+                  onChange={(option) => field.onChange(option?.id ?? "")}
+                />
               )}
             />
             {errors.categoryId && (
@@ -218,24 +278,13 @@ export function ProductFormSheet({
               control={control}
               name="brandId"
               render={({ field }) => (
-                <Select
-                  value={field.value ?? "none"}
-                  onValueChange={(value) =>
-                    field.onChange(value === "none" ? null : value)
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="بدون علامة تجارية" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">بدون علامة تجارية</SelectItem>
-                    {brandOptions.map((option) => (
-                      <SelectItem key={option.id} value={option.id}>
-                        {option.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <OptionPickerField
+                  value={field.value ?? ""}
+                  options={brandOptions}
+                  placeholder="بدون علامة تجارية"
+                  noneLabel="بدون علامة تجارية"
+                  onChange={(option) => field.onChange(option?.id ?? null)}
+                />
               )}
             />
           </div>
