@@ -193,12 +193,12 @@ export default async function InvoicePrintPage({
                 <span className="block truncate">{t.product}</span>
               </th>
               <th className="px-2 py-2 text-start font-bold border-2 border-gray-400">
-                <span className="block leading-tight whitespace-normal break-words">
+                <span className="block leading-tight whitespace-normal wrap-break-word">
                   {t.unitPrice} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
               </th>
               <th className="px-2 py-2 text-start font-bold border-2 border-gray-400">
-                <span className="block leading-tight whitespace-normal break-words">
+                <span className="block leading-tight whitespace-normal wrap-break-word">
                   {t.lineTotal} {`(${CURRENCY_LABEL["fr"]})`}
                 </span>
               </th>
