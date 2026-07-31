@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import {
   getInvoiceById,
-  getBatchSettledInvoices,
+  getOtherOutstandingInvoices,
 } from "@/features/invoices/queries";
 import { InvoicePrintButton } from "@/features/invoices/components/invoice-print-button";
 import { InvoicePdfButton } from "@/features/invoices/components/invoice-pdf-button";
@@ -105,9 +105,16 @@ export default async function InvoicePrintPage({
     0,
   );
 
-  const batchSettledInvoices = await getBatchSettledInvoices(invoice.id);
-  const previousDebtsTotal = batchSettledInvoices.reduce(
-    (sum, entry) => sum + entry.amountInBatch,
+  const otherOutstandingInvoices = invoice.customerId
+    ? await getOtherOutstandingInvoices(invoice.customerId, invoice.id)
+    : [];
+  // Matches "إجمالي المبلغ المتبقي" on the customer profile page: a
+  // مدفوع جزئياً invoice only contributes what's still remaining (total -
+  // paidAmount), not its full price — an UNPAID invoice has paidAmount 0 so
+  // this is the same as its total either way.
+  const previousDebtsTotal = otherOutstandingInvoices.reduce(
+    (sum, other) =>
+      sum + Math.max(0, Number(other.total) - Number(other.paidAmount)),
     0,
   );
   const isPartiallyPaid = invoice.paymentStatus === "PARTIALLY_PAID";
