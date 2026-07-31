@@ -108,10 +108,6 @@ export default async function InvoicePrintPage({
   const otherOutstandingInvoices = invoice.customerId
     ? await getOtherOutstandingInvoices(invoice.customerId, invoice.id)
     : [];
-  // Matches "إجمالي المبلغ المتبقي" on the customer profile page: a
-  // مدفوع جزئياً invoice only contributes what's still remaining (total -
-  // paidAmount), not its full price — an UNPAID invoice has paidAmount 0 so
-  // this is the same as its total either way.
   const previousDebtsTotal = otherOutstandingInvoices.reduce(
     (sum, other) =>
       sum + Math.max(0, Number(other.total) - Number(other.paidAmount)),
@@ -119,7 +115,8 @@ export default async function InvoicePrintPage({
   );
   const isPartiallyPaid = invoice.paymentStatus === "PARTIALLY_PAID";
   const previousPayment = isPartiallyPaid ? Number(invoice.paidAmount) : 0;
-  const grandTotal = Math.max(0, itemsTotal - previousPayment) + previousDebtsTotal;
+  const grandTotal =
+    Math.max(0, itemsTotal - previousPayment) + previousDebtsTotal;
 
   return (
     <div
@@ -239,7 +236,8 @@ export default async function InvoicePrintPage({
               <td colSpan={4} className="border-none p-0 pt-5 print:pt-3">
                 <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t-2 border-gray-400 pt-3 text-sm font-semibold text-foreground print:pt-2 print:text-xs">
                   <p>
-                    {t.itemsCount}: <span className="font-bold">{itemsCount}</span>
+                    {t.itemsCount}:{" "}
+                    <span className="font-bold">{itemsCount}</span>
                   </p>
                   <p>
                     {t.totalWeight}:{" "}
