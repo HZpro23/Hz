@@ -5,6 +5,7 @@ import {
 } from "@/features/invoices/queries";
 import { InvoicePrintButton } from "@/features/invoices/components/invoice-print-button";
 import { InvoicePdfButton } from "@/features/invoices/components/invoice-pdf-button";
+import { InvoicePrintTotals } from "@/features/invoices/components/invoice-print-totals";
 import { ar as arDict } from "@/i18n/ar";
 import { CURRENCY_LABEL, formatCurrency } from "@/lib/currency";
 
@@ -27,6 +28,9 @@ const LABELS: Record<
     total: string;
     previousPayment: string;
     previousDebts: string;
+    oldAccountPrompt: string;
+    includeOldAccount: string;
+    excludeOldAccount: string;
     grandTotal: string;
     itemsCount: string;
     totalWeight: string;
@@ -48,6 +52,9 @@ const LABELS: Record<
     total: "إجمالي المنتجات",
     previousPayment: "الدفع السابق",
     previousDebts: "الحساب القديم",
+    oldAccountPrompt: "يوجد على هذا العميل حساب قديم بقيمة",
+    includeOldAccount: "تضمين الحساب القديم",
+    excludeOldAccount: "بدون الحساب القديم",
     grandTotal: "الإجمالي الكلي",
     itemsCount: "عدد المنتجات",
     totalWeight: "الوزن الإجمالي (kg)",
@@ -68,6 +75,9 @@ const LABELS: Record<
     total: "Total des produits",
     previousPayment: "Paiement précédent",
     previousDebts: "Ancien compte",
+    oldAccountPrompt: "Ce client a un ancien compte de",
+    includeOldAccount: "Inclure l'ancien compte",
+    excludeOldAccount: "Sans l'ancien compte",
     grandTotal: "Total général",
     itemsCount: "Nombre de produits",
     totalWeight: "Poids total (kg)",
@@ -115,8 +125,6 @@ export default async function InvoicePrintPage({
   );
   const isPartiallyPaid = invoice.paymentStatus === "PARTIALLY_PAID";
   const previousPayment = isPartiallyPaid ? Number(invoice.paidAmount) : 0;
-  const grandTotal =
-    Math.max(0, itemsTotal - previousPayment) + previousDebtsTotal;
 
   return (
     <div
@@ -247,30 +255,22 @@ export default async function InvoicePrintPage({
                   </p>
                 </div>
 
-                <div className="mt-2 flex flex-col gap-1 text-sm font-semibold text-foreground print:text-xs">
-                  <p>
-                    {t.total}: {formatCurrency(itemsTotal, lang, false)}
-                  </p>
-                  {isPartiallyPaid && (
-                    <p>
-                      {t.previousPayment}:{" "}
-                      {formatCurrency(previousPayment, lang, false)}
-                    </p>
-                  )}
-                  <p>
-                    {t.previousDebts}:{" "}
-                    {formatCurrency(previousDebtsTotal, lang, false)}
-                  </p>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between rounded-md border-2 border-gray-400 bg-gray-100 px-4 py-2 print:mt-2 print:py-1.5 print:[print-color-adjust:exact] print:[-webkit-print-color-adjust:exact]">
-                  <p className="text-base font-bold print:text-sm">
-                    {t.grandTotal}
-                  </p>
-                  <p className="text-lg font-bold print:text-base">
-                    {formatCurrency(grandTotal, lang, false)}
-                  </p>
-                </div>
+                <InvoicePrintTotals
+                  lang={lang}
+                  labels={{
+                    total: t.total,
+                    previousPayment: t.previousPayment,
+                    previousDebts: t.previousDebts,
+                    oldAccountPrompt: t.oldAccountPrompt,
+                    includeOldAccount: t.includeOldAccount,
+                    excludeOldAccount: t.excludeOldAccount,
+                    grandTotal: t.grandTotal,
+                  }}
+                  itemsTotal={itemsTotal}
+                  previousPayment={previousPayment}
+                  showPreviousPayment={isPartiallyPaid}
+                  previousDebtsTotal={previousDebtsTotal}
+                />
 
                 {invoice.notes && (
                   <p className="mt-4 text-sm font-semibold text-foreground print:text-xs">
