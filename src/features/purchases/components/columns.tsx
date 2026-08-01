@@ -8,13 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { deletePurchaseOrder } from "@/features/purchases/actions";
 import { PURCHASE_ORDER_STATUS_LABELS } from "@/features/purchases/schema";
+import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { formatCurrency } from "@/lib/currency";
+import type { PaymentStatus } from "@/generated/prisma/client";
 
 export type PurchaseOrderRow = {
   id: string;
   orderNumber: string;
   total: number;
   status: string;
+  paymentStatus: PaymentStatus;
   createdAt: Date;
   supplier: { name: string };
 };
@@ -50,6 +53,13 @@ export const purchaseOrderColumns: ColumnDef<PurchaseOrderRow>[] = [
         {PURCHASE_ORDER_STATUS_LABELS[row.original.status] ??
           row.original.status}
       </Badge>
+    ),
+  },
+  {
+    id: "paymentStatus",
+    header: "حالة الدفع",
+    cell: ({ row }) => (
+      <PaymentStatusBadge status={row.original.paymentStatus} />
     ),
   },
   {

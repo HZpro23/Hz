@@ -182,19 +182,34 @@ enum PurchaseOrderStatus {
 }
 
 model PurchaseOrder {
-  id          String              @id @default(cuid())
-  orderNumber String              @unique
-  supplierId  String
-  supplier    Supplier            @relation(fields: [supplierId], references: [id])
-  status      PurchaseOrderStatus @default(PENDING)
-  language    InvoiceLanguage     @default(AR)
-  items       PurchaseOrderItem[]
-  total       Decimal             @db.Decimal(10, 2)
-  receivedAt  DateTime?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id            String              @id @default(cuid())
+  orderNumber   String              @unique
+  supplierId    String
+  supplier      Supplier            @relation(fields: [supplierId], references: [id])
+  status        PurchaseOrderStatus @default(PENDING)
+  language      InvoiceLanguage     @default(AR)
+  items         PurchaseOrderItem[]
+  total         Decimal             @db.Decimal(10, 2)
+  paymentStatus PaymentStatus       @default(UNPAID)
+  paidAmount    Decimal             @default(0) @db.Decimal(10, 2)
+  payments      SupplierPayment[]
+  receivedAt    DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
   @@index([supplierId])
+}
+
+model SupplierPayment {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  amount          Decimal       @db.Decimal(10, 2)
+  method          PaymentMethod
+  note            String?
+  createdAt       DateTime      @default(now())
+
+  @@index([purchaseOrderId])
 }
 
 model PurchaseOrderItem {

@@ -27,6 +27,7 @@ export async function getPurchaseOrderById(id: string) {
           product: { select: { name: true, sku: true, weight: true } },
         },
       },
+      payments: { orderBy: { createdAt: "desc" } },
     },
   });
 }

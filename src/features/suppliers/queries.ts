@@ -38,3 +38,48 @@ export async function getSupplierOptions() {
 export async function getSupplierById(id: string) {
   return prisma.supplier.findUnique({ where: { id } });
 }
+
+export async function getSupplierProfile(id: string) {
+  const supplier = await prisma.supplier.findUnique({ where: { id } });
+  if (!supplier) return null;
+
+  const purchaseOrders = await prisma.purchaseOrder.findMany({
+    where: { supplierId: id },
+    orderBy: { createdAt: "desc" },
+    include: {
+      items: true,
+      payments: { orderBy: { createdAt: "desc" } },
+    },
+  });
+
+  const totalPurchased = purchaseOrders.reduce(
+    (sum, order) => sum + Number(order.total),
+    0,
+  );
+  const totalPaid = purchaseOrders.reduce(
+    (sum, order) => sum + Number(order.paidAmount),
+    0,
+  );
+  const totalOutstanding = purchaseOrders.reduce(
+    (sum, order) =>
+      sum + Math.max(0, Number(order.total) - Number(order.paidAmount)),
+    0,
+  );
+
+  const payments = purchaseOrders
+    .flatMap((order) =>
+      order.payments.map((payment) => ({
+        ...payment,
+        orderNumber: order.orderNumber,
+        purchaseOrderId: order.id,
+      })),
+    )
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  return {
+    supplier,
+    purchaseOrders,
+    payments,
+    totals: { totalPurchased, totalPaid, totalOutstanding },
+  };
+}

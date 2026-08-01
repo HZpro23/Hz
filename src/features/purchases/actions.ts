@@ -4,10 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { computePaymentStatus } from "@/lib/money";
+import { isDeletePasswordValid, DELETE_PASSWORD_ERROR } from "@/lib/delete-guard";
 import {
   purchaseOrderSchema,
   purchaseOrderItemsSchema,
 } from "@/features/purchases/schema";
+import type { PaymentMethod } from "@/generated/prisma/client";
 
 type ActionResult = { error?: string; success?: boolean };
 
@@ -95,6 +98,102 @@ export async function updatePurchaseOrderItems(
 
   revalidatePath("/dashboard/purchases");
   revalidatePath(`/dashboard/purchases/${id}`);
+  return { success: true };
+}
+
+/** Records money paid to the supplier against this purchase order, capped
+ * at its own remaining balance — mirrors recordPayment for invoices, just
+ * one-directional (money out, no رصيد/credit concept for suppliers). */
+export async function recordSupplierPayment(
+  purchaseOrderId: string,
+  input: { amount: number; method: PaymentMethod; note?: string },
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+
+  if (!(input.amount > 0)) {
+    return { error: "الرجاء إدخال مبلغ صحيح" };
+  }
+
+  const order = await prisma.purchaseOrder.findUnique({
+    where: { id: purchaseOrderId },
+  });
+  if (!order) return { error: "أمر الشراء غير موجود" };
+
+  const total = Number(order.total);
+  const remaining = Math.max(0, total - Number(order.paidAmount));
+  if (input.amount > remaining + 0.005) {
+    return { error: "المبلغ أكبر من المبلغ المتبقي على أمر الشراء" };
+  }
+
+  const newPaidAmount = Number(order.paidAmount) + input.amount;
+  const paymentStatus = computePaymentStatus(total, newPaidAmount);
+
+  try {
+    await prisma.$transaction([
+      prisma.supplierPayment.create({
+        data: {
+          purchaseOrderId,
+          amount: input.amount,
+          method: input.method,
+          note: input.note || null,
+        },
+      }),
+      prisma.purchaseOrder.update({
+        where: { id: purchaseOrderId },
+        data: { paidAmount: newPaidAmount, paymentStatus },
+      }),
+    ]);
+  } catch {
+    return { error: "حدث خطأ أثناء تسجيل الدفعة" };
+  }
+
+  revalidatePath("/dashboard/purchases");
+  revalidatePath(`/dashboard/purchases/${purchaseOrderId}`);
+  revalidatePath(`/dashboard/suppliers/${order.supplierId}`);
+  return { success: true };
+}
+
+/** Deletes a recorded supplier payment and rolls this purchase order's
+ * paidAmount/paymentStatus back to reflect its remaining payments. */
+export async function deleteSupplierPayment(
+  paymentId: string,
+  password: string,
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+  if (!isDeletePasswordValid(password)) return { error: DELETE_PASSWORD_ERROR };
+
+  const payment = await prisma.supplierPayment.findUnique({
+    where: { id: paymentId },
+    include: { purchaseOrder: { include: { payments: true } } },
+  });
+  if (!payment) return { error: "الدفعة غير موجودة" };
+
+  const order = payment.purchaseOrder;
+  const total = Number(order.total);
+  const remainingPayments = order.payments.filter((p) => p.id !== paymentId);
+  const newPaidAmount = remainingPayments.reduce(
+    (sum, p) => sum + Number(p.amount),
+    0,
+  );
+  const paymentStatus = computePaymentStatus(total, newPaidAmount);
+
+  try {
+    await prisma.$transaction([
+      prisma.supplierPayment.delete({ where: { id: paymentId } }),
+      prisma.purchaseOrder.update({
+        where: { id: order.id },
+        data: { paidAmount: newPaidAmount, paymentStatus },
+      }),
+    ]);
+  } catch {
+    return { error: "حدث خطأ أثناء حذف الدفعة" };
+  }
+
+  revalidatePath("/dashboard/purchases");
+  revalidatePath(`/dashboard/purchases/${order.id}`);
+  revalidatePath(`/dashboard/suppliers/${order.supplierId}`);
   return { success: true };
 }
 

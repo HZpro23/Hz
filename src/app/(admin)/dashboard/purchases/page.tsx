@@ -40,7 +40,11 @@ export default async function PurchasesPage({
       ) : (
         <>
           <PurchaseOrdersTable
-            data={items.map((item) => ({ ...item, total: Number(item.total) }))}
+            data={items.map((item) => ({
+              ...item,
+              total: Number(item.total),
+              paidAmount: Number(item.paidAmount),
+            }))}
           />
           <DataTablePagination
             page={page}
