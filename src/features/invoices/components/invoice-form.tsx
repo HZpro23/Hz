@@ -462,7 +462,9 @@ export function InvoiceForm({
   });
   const dragSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -576,7 +578,10 @@ export function InvoiceForm({
   function handleDistributeConfirm(invoiceIds: string[]) {
     if (!pendingValues || !distributeState || !pendingValues.customerId) return;
     const method = pendingValues.payments[0]?.method ?? "CASH";
-    const cappedPayments = capPaymentLinesToTotal(pendingValues.payments, total);
+    const cappedPayments = capPaymentLinesToTotal(
+      pendingValues.payments,
+      total,
+    );
     const customerId = pendingValues.customerId;
     const excessAmount = distributeState.excessAmount;
     const values = pendingValues;
@@ -665,11 +670,11 @@ export function InvoiceForm({
 
   return (
     <>
-      <div className="max-w-3xl space-y-6 lg:col-span-2">
+      <div className="@container max-w-3xl space-y-6 lg:col-span-2">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <fieldset disabled={isPending} className="contents space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2 sm:col-span-2">
+            <div className="grid gap-4 @md:grid-cols-2">
+              <div className="space-y-2 @md:col-span-2">
                 <div className="flex items-center justify-between">
                   <Label>العميل</Label>
                   {customerId && (
@@ -781,15 +786,17 @@ export function InvoiceForm({
                       <SortableItem
                         key={field.id}
                         id={field.id}
-                        className="grid grid-cols-1 items-start gap-2 rounded-lg border p-3 sm:grid-cols-[auto_1fr_1fr_auto_auto_auto]"
+                        className="grid grid-cols-1 items-start gap-2 rounded-lg border p-3 @2xl:grid-cols-[auto_1fr_1fr_auto_auto_auto]"
                       >
                         {(dragHandle) => (
                           <>
-                            <div className="flex items-center justify-center pt-1 sm:pt-6">
+                            <div className="flex items-center justify-center pt-1 @2xl:pt-6">
                               {dragHandle}
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">اختر من المنتجات</Label>
+                              <Label className="text-xs">
+                                اختر من المنتجات
+                              </Label>
                               <Controller
                                 control={control}
                                 name={`items.${index}.productId`}
@@ -856,7 +863,7 @@ export function InvoiceForm({
                               </div>
                             </div>
                             <div className="space-y-1">
-                              <Label className="hidden text-xs sm:block">
+                              <Label className="hidden text-xs @2xl:block">
                                 &nbsp;
                               </Label>
                               <Button
@@ -902,7 +909,7 @@ export function InvoiceForm({
               </Button>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 lg:hidden">
               <CategoryQuickAddPanel
                 categories={categories}
                 brands={brands}
@@ -957,6 +964,14 @@ export function InvoiceForm({
             <PaymentHistory payments={payments ?? []} />
           </div>
         )}
+        <div className="space-y-2 hidden lg:block">
+          <CategoryQuickAddPanel
+            categories={categories}
+            brands={brands}
+            products={products}
+            onAddProducts={handleAddFromCategory}
+          />
+        </div>
       </div>
     </>
   );

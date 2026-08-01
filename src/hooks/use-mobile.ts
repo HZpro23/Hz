@@ -1,6 +1,10 @@
 import * as React from "react"
 
-const MOBILE_BREAKPOINT = 768
+// Covers phones and the full tablet range (including landscape — e.g.
+// iPad Pro 12.9" is 1366px wide) so tablets get the same off-canvas
+// drawer sidebar as phones. Only genuine desktop/laptop widths get the
+// permanently-open sidebar.
+const MOBILE_BREAKPOINT = 1280
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
