@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { Eye, Printer } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +82,18 @@ export const invoiceColumns: ColumnDef<InvoiceRow>[] = [
           render={<Link href={`/dashboard/invoices/${row.original.id}`} />}
         >
           <Eye className="size-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          nativeButton={false}
+          render={
+            <Link
+              href={`/dashboard/invoices/${row.original.id}/print?lang=${row.original.language.toLowerCase()}`}
+            />
+          }
+        >
+          <Printer className="size-4" />
         </Button>
         <InvoiceDeleteDialog
           invoice={{

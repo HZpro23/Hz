@@ -55,7 +55,6 @@ export default async function PurchaseOrderDetailPage({
               render={
                 <Link
                   href={`/dashboard/purchases/${order.id}/print?lang=ar`}
-                  target="_blank"
                 />
               }
             >
@@ -68,7 +67,6 @@ export default async function PurchaseOrderDetailPage({
               render={
                 <Link
                   href={`/dashboard/purchases/${order.id}/print?lang=fr`}
-                  target="_blank"
                 />
               }
             >
@@ -117,10 +115,7 @@ export default async function PurchaseOrderDetailPage({
                 className="h-auto cursor-pointer gap-1 px-2 py-1 text-xs"
                 nativeButton={false}
                 render={
-                  <Link
-                    href={`/dashboard/suppliers/${order.supplierId}`}
-                    target="_blank"
-                  />
+                  <Link href={`/dashboard/suppliers/${order.supplierId}`} />
                 }
               >
                 <UserCircle className="size-3.5" />

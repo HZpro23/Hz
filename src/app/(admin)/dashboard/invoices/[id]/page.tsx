@@ -70,7 +70,6 @@ export default async function InvoiceEditPage({
               render={
                 <Link
                   href={`/dashboard/invoices/${invoice.id}/print?lang=${invoice.language.toLowerCase()}`}
-                  target="_blank"
                 />
               }
             >

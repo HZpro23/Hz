@@ -684,12 +684,7 @@ export function InvoiceForm({
                       size="sm"
                       className="h-auto cursor-pointer gap-1 px-2 py-1 text-xs"
                       nativeButton={false}
-                      render={
-                        <Link
-                          href={`/dashboard/customers/${customerId}`}
-                          target="_blank"
-                        />
-                      }
+                      render={<Link href={`/dashboard/customers/${customerId}`} />}
                     >
                       <UserCircle className="size-3.5" />
                       الذهاب إلى صفحة العميل
