@@ -68,7 +68,13 @@ export const invoiceColumns: ColumnDef<InvoiceRow>[] = [
     id: "createdAt",
     header: "التاريخ",
     cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("fr-FR"),
+      new Date(row.original.createdAt).toLocaleString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
   },
   {
     id: "actions",

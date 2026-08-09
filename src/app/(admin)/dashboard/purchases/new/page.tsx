@@ -2,14 +2,18 @@ import { PageHeader } from "@/components/shared/page-header";
 import { BackButton } from "@/components/shared/back-button";
 import { getSupplierOptions } from "@/features/suppliers/queries";
 import { getProductPickerOptions } from "@/features/products/queries";
+import { getCategoryOptions } from "@/features/categories/queries";
+import { getBrandOptions } from "@/features/brands/queries";
 import { PurchaseOrderForm } from "@/features/purchases/components/purchase-order-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewPurchaseOrderPage() {
-  const [suppliers, productRows] = await Promise.all([
+  const [suppliers, productRows, categories, brands] = await Promise.all([
     getSupplierOptions(),
     getProductPickerOptions(),
+    getCategoryOptions(),
+    getBrandOptions(),
   ]);
   const products = productRows.map((product) => ({
     id: product.id,
@@ -18,6 +22,8 @@ export default async function NewPurchaseOrderPage() {
     price1: Number(product.price1),
     price2: Number(product.price2),
     price3: Number(product.price3),
+    categoryId: product.categoryId,
+    brandId: product.brandId,
   }));
 
   return (
@@ -26,9 +32,12 @@ export default async function NewPurchaseOrderPage() {
         title="أمر شراء جديد"
         action={<BackButton fallbackHref="/dashboard/purchases" />}
       />
-      <div className="max-w-2xl">
-        <PurchaseOrderForm suppliers={suppliers} products={products} />
-      </div>
+      <PurchaseOrderForm
+        suppliers={suppliers}
+        products={products}
+        categories={categories}
+        brands={brands}
+      />
     </div>
   );
 }

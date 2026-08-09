@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ import {
 import { INVOICE_LANGUAGE_LABELS } from "@/features/invoices/schema";
 import { createPurchaseOrder } from "@/features/purchases/actions";
 import { formatCurrency } from "@/lib/currency";
+import { CategoryQuickAddPanel } from "@/features/products/components/category-quick-add-panel";
 import type { InvoiceLanguage } from "@/generated/prisma/client";
 
 type Option = { id: string; name: string };
@@ -44,6 +45,8 @@ type ProductOption = {
   price1: number;
   price2: number;
   price3: number;
+  categoryId: string;
+  brandId: string | null;
 };
 
 const NONE_SUPPLIER: Option = { id: "", name: "اختر مورداً..." };
@@ -54,6 +57,8 @@ const NONE_PRODUCT: ProductOption = {
   price1: 0,
   price2: 0,
   price3: 0,
+  categoryId: "",
+  brandId: null,
 };
 
 const CUSTOM_PRICE = "سعر مخصص";
@@ -153,14 +158,22 @@ function ProductPickerField({
   value,
   onChange,
   products,
+  autoOpen,
 }: {
   value: string;
   onChange: (product: ProductOption | null) => void;
   products: ProductOption[];
+  autoOpen?: boolean;
 }) {
   const { contains } = useComboboxFilter();
   const items = [NONE_PRODUCT, ...products];
   const selected = items.find((item) => item.id === value) ?? NONE_PRODUCT;
+  // Only the row that was just added needs to be a controlled combobox (so
+  // it can force itself open on mount) — every other row stays uncontrolled
+  // so clicking it opens instantly via Base UI's own handling, with no
+  // React round-trip in the way.
+  const [isAutoOpenRow] = useState(() => autoOpen === true);
+  const [open, setOpen] = useState(isAutoOpenRow);
 
   return (
     <Combobox
@@ -171,6 +184,7 @@ function ProductPickerField({
       itemToStringValue={(item: ProductOption) => item.id}
       itemToStringLabel={productLabel}
       filter={contains}
+      {...(isAutoOpenRow ? { open, onOpenChange: setOpen } : {})}
     >
       <ComboboxTrigger className="w-full">
         <ComboboxValue />
@@ -193,9 +207,13 @@ function ProductPickerField({
 export function PurchaseOrderForm({
   suppliers,
   products,
+  categories,
+  brands,
 }: {
   suppliers: Option[];
   products: ProductOption[];
+  categories: Option[];
+  brands: Option[];
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -219,12 +237,31 @@ export function PurchaseOrderForm({
     products.map((product) => [product.id, product]),
   );
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
+  const [autoOpenIndex, setAutoOpenIndex] = useState<number | null>(null);
   const items = watch("items");
   const total = items.reduce(
     (sum, item) =>
       sum + (Number(item.quantity) || 0) * (Number(item.unitCost) || 0),
     0,
   );
+
+  function handleAddFromCategory(selected: ProductOption[]) {
+    const isOnlyEmptyRow = fields.length === 1 && !items?.[0]?.productId;
+
+    selected.forEach((product, index) => {
+      if (index === 0 && isOnlyEmptyRow) {
+        setValue("items.0.productId", product.id);
+        setValue("items.0.quantity", 1);
+        setValue("items.0.unitCost", product.price1);
+        return;
+      }
+      append({ productId: product.id, quantity: 1, unitCost: product.price1 });
+    });
+
+    toast.success(
+      `تمت إضافة ${selected.length.toLocaleString("ar")} منتج إلى أمر الشراء`,
+    );
+  }
 
   function onSubmit(values: PurchaseOrderOutput) {
     startTransition(async () => {
@@ -238,6 +275,8 @@ export function PurchaseOrderForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
     <fieldset disabled={isPending} className="contents space-y-6">
+      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="space-y-6 lg:col-span-2">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>المورد</Label>
@@ -313,6 +352,7 @@ export function PurchaseOrderForm({
                     <ProductPickerField
                       value={productField.value ?? ""}
                       products={products}
+                      autoOpen={index === autoOpenIndex}
                       onChange={(product) => {
                         productField.onChange(product?.id ?? "");
                         if (product?.id) {
@@ -372,7 +412,10 @@ export function PurchaseOrderForm({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => append({ productId: "", quantity: 1, unitCost: 0 })}
+          onClick={() => {
+            setAutoOpenIndex(fields.length);
+            append({ productId: "", quantity: 1, unitCost: 0 });
+          }}
         >
           <Plus className="size-4" />
           إضافة عنصر
@@ -385,6 +428,17 @@ export function PurchaseOrderForm({
           {isPending && <Loader2 className="size-4 animate-spin" />}
           {isPending ? "جاري الحفظ..." : "إنشاء أمر الشراء"}
         </Button>
+      </div>
+      </div>
+
+      <div className="space-y-6">
+        <CategoryQuickAddPanel
+          categories={categories}
+          brands={brands}
+          products={products}
+          onAddProducts={handleAddFromCategory}
+        />
+      </div>
       </div>
       </fieldset>
     </form>

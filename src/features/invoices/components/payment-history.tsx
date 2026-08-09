@@ -49,7 +49,13 @@ export function PaymentHistory({ payments }: { payments: PaymentRow[] }) {
                 </div>
                 <div className="flex items-center gap-1">
                   <p className="text-xs text-muted-foreground">
-                    {new Date(payment.createdAt).toLocaleDateString("fr-FR")}
+                    {new Date(payment.createdAt).toLocaleString("fr-FR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                   <EditPaymentDialog
                     paymentId={payment.id}

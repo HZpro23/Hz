@@ -8,6 +8,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { BackButton } from "@/components/shared/back-button";
 import { getPurchaseOrderById } from "@/features/purchases/queries";
 import { getProductPickerOptions } from "@/features/products/queries";
+import { getCategoryOptions } from "@/features/categories/queries";
+import { getBrandOptions } from "@/features/brands/queries";
 import { PurchaseOrderActions } from "@/features/purchases/components/purchase-order-actions";
 import { PurchaseOrderItemsForm } from "@/features/purchases/components/purchase-order-items-form";
 import { RecordSupplierPaymentDialog } from "@/features/purchases/components/record-supplier-payment-dialog";
@@ -24,9 +26,11 @@ export default async function PurchaseOrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [order, productRows] = await Promise.all([
+  const [order, productRows, categories, brands] = await Promise.all([
     getPurchaseOrderById(id),
     getProductPickerOptions(),
+    getCategoryOptions(),
+    getBrandOptions(),
   ]);
   if (!order) notFound();
 
@@ -37,6 +41,8 @@ export default async function PurchaseOrderDetailPage({
     price1: Number(product.price1),
     price2: Number(product.price2),
     price3: Number(product.price3),
+    categoryId: product.categoryId,
+    brandId: product.brandId,
   }));
 
   const orderTotal = Number(order.total);
@@ -79,33 +85,18 @@ export default async function PurchaseOrderDetailPage({
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>العناصر</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {order.status === "RECEIVED" && (
-                <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-800 dark:text-amber-400">
-                  تم استلام هذا الأمر بالفعل وأُضيفت كمياته إلى المخزون. تعديل
-                  العناصر هنا يُحدّث سجل أمر الشراء فقط، ولا يُعدّل كميات
-                  المخزون التي أُضيفت مسبقاً.
-                </p>
-              )}
-              <PurchaseOrderItemsForm
-                purchaseOrderId={order.id}
-                items={order.items.map((item) => ({
-                  productId: item.productId,
-                  quantity: item.quantity,
-                  unitCost: Number(item.unitCost),
-                }))}
-                products={products}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
+        <PurchaseOrderItemsForm
+          purchaseOrderId={order.id}
+          items={order.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitCost: Number(item.unitCost),
+          }))}
+          products={products}
+          categories={categories}
+          brands={brands}
+          statusWarning={order.status === "RECEIVED"}
+        >
           <Card>
             <CardHeader className="flex items-center justify-between">
               <CardTitle>بيانات المورد</CardTitle>
@@ -189,7 +180,7 @@ export default async function PurchaseOrderDetailPage({
               amount: Number(payment.amount),
             }))}
           />
-        </div>
+        </PurchaseOrderItemsForm>
       </div>
     </div>
   );

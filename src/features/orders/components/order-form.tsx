@@ -52,6 +52,7 @@ import {
 } from "@/features/orders/schema";
 import { createOrder } from "@/features/orders/actions";
 import { formatCurrency } from "@/lib/currency";
+import { CategoryQuickAddPanel } from "@/features/products/components/category-quick-add-panel";
 import {
   CustomerPicker,
   type CustomerOption,
@@ -66,6 +67,8 @@ type ProductOption = {
   price1: number;
   price2: number;
   price3: number;
+  categoryId: string;
+  brandId: string | null;
 };
 
 const NONE_PRODUCT: ProductOption = {
@@ -75,6 +78,8 @@ const NONE_PRODUCT: ProductOption = {
   price1: 0,
   price2: 0,
   price3: 0,
+  categoryId: "",
+  brandId: null,
 };
 
 const CUSTOM_PRICE = "سعر مخصص";
@@ -133,14 +138,22 @@ function ProductPickerField({
   value,
   onChange,
   products,
+  autoOpen,
 }: {
   value: string;
   onChange: (product: ProductOption | null) => void;
   products: ProductOption[];
+  autoOpen?: boolean;
 }) {
   const { contains } = useComboboxFilter();
   const items = [NONE_PRODUCT, ...products];
   const selected = items.find((item) => item.id === value) ?? NONE_PRODUCT;
+  // Only the row that was just added needs to be a controlled combobox (so
+  // it can force itself open on mount) — every other row stays uncontrolled
+  // so clicking it opens instantly via Base UI's own handling, with no
+  // React round-trip in the way.
+  const [isAutoOpenRow] = useState(() => autoOpen === true);
+  const [open, setOpen] = useState(isAutoOpenRow);
 
   return (
     <Combobox
@@ -151,6 +164,7 @@ function ProductPickerField({
       itemToStringValue={(item: ProductOption) => item.id}
       itemToStringLabel={productLabel}
       filter={contains}
+      {...(isAutoOpenRow ? { open, onOpenChange: setOpen } : {})}
     >
       <ComboboxTrigger className="w-full">
         <ComboboxValue />
@@ -173,9 +187,13 @@ function ProductPickerField({
 export function OrderForm({
   products,
   customers,
+  categories,
+  brands,
 }: {
   products: ProductOption[];
   customers: CustomerOption[];
+  categories: { id: string; name: string }[];
+  brands: { id: string; name: string }[];
 }) {
   const [isPending, startTransition] = useTransition();
   const [selectedCustomer, setSelectedCustomer] =
@@ -205,6 +223,7 @@ export function OrderForm({
     control,
     name: "items",
   });
+  const [autoOpenIndex, setAutoOpenIndex] = useState<number | null>(null);
   const dragSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -222,6 +241,24 @@ export function OrderForm({
       sum + (Number(item.quantity) || 0) * (Number(item.price) || 0),
     0,
   );
+
+  function handleAddFromCategory(selected: ProductOption[]) {
+    const isOnlyEmptyRow = fields.length === 1 && !items?.[0]?.productId;
+
+    selected.forEach((product, index) => {
+      if (index === 0 && isOnlyEmptyRow) {
+        setValue("items.0.productId", product.id);
+        setValue("items.0.quantity", 1);
+        setValue("items.0.price", product.price1);
+        return;
+      }
+      append({ productId: product.id, quantity: 1, price: product.price1 });
+    });
+
+    toast.success(
+      `تمت إضافة ${selected.length.toLocaleString("ar")} منتج إلى الطلب`,
+    );
+  }
 
   function onSubmit(values: CreateOrderOutput) {
     startTransition(async () => {
@@ -286,6 +323,7 @@ export function OrderForm({
                                   <ProductPickerField
                                     value={productField.value ?? ""}
                                     products={products}
+                                    autoOpen={index === autoOpenIndex}
                                     onChange={(product) => {
                                       productField.onChange(product?.id ?? "");
                                       if (product?.id) {
@@ -367,9 +405,10 @@ export function OrderForm({
                 variant="outline"
                 size="sm"
                 className="cursor-pointer"
-                onClick={() =>
-                  append({ productId: "", quantity: 1, price: 0 })
-                }
+                onClick={() => {
+                  setAutoOpenIndex(fields.length);
+                  append({ productId: "", quantity: 1, price: 0 });
+                }}
               >
                 <Plus className="size-4" />
                 إضافة منتج
@@ -480,6 +519,13 @@ export function OrderForm({
               </p>
             </CardContent>
           </Card>
+
+          <CategoryQuickAddPanel
+            categories={categories}
+            brands={brands}
+            products={products}
+            onAddProducts={handleAddFromCategory}
+          />
         </div>
       </div>
       </fieldset>
