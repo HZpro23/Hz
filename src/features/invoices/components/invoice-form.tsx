@@ -544,9 +544,6 @@ export function InvoiceForm({
     if (request) {
       setPendingValues(values);
 
-      // An overpayment on a brand-new invoice can pay off this customer's
-      // other outstanding invoices instead of just becoming رصيد — offer
-      // that first when there's actually something to pay off.
       if (request.kind === "excess-payment" && values.customerId) {
         const outstanding = await fetchCustomerOutstandingInvoices(
           values.customerId,
@@ -684,7 +681,9 @@ export function InvoiceForm({
                       size="sm"
                       className="h-auto cursor-pointer gap-1 px-2 py-1 text-xs"
                       nativeButton={false}
-                      render={<Link href={`/dashboard/customers/${customerId}`} />}
+                      render={
+                        <Link href={`/dashboard/customers/${customerId}`} />
+                      }
                     >
                       <UserCircle className="size-3.5" />
                       الذهاب إلى صفحة العميل
@@ -954,19 +953,30 @@ export function InvoiceForm({
       </div>
 
       <div className="space-y-6 lg:col-span-1">
-        {invoice && (
-          <div className="space-y-6">
-            <PaymentHistory payments={payments ?? []} />
+        {invoice ? (
+          <>
+            <div className="space-y-6">
+              <PaymentHistory payments={payments ?? []} />
+            </div>
+            <div className="space-y-6 hidden lg:block">
+              <CategoryQuickAddPanel
+                categories={categories}
+                brands={brands}
+                products={products}
+                onAddProducts={handleAddFromCategory}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="space-y-6 hidden lg:block">
+            <CategoryQuickAddPanel
+              categories={categories}
+              brands={brands}
+              products={products}
+              onAddProducts={handleAddFromCategory}
+            />
           </div>
         )}
-        <div className="space-y-2 hidden lg:block">
-          <CategoryQuickAddPanel
-            categories={categories}
-            brands={brands}
-            products={products}
-            onAddProducts={handleAddFromCategory}
-          />
-        </div>
       </div>
     </>
   );

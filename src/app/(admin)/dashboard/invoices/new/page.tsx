@@ -32,12 +32,14 @@ export default async function NewInvoicePage() {
         title="إنشاء فاتورة جديدة"
         action={<BackButton fallbackHref="/dashboard/invoices" />}
       />
-      <InvoiceForm
-        products={products}
-        customers={customers}
-        categories={categories}
-        brands={brands}
-      />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <InvoiceForm
+          products={products}
+          customers={customers}
+          categories={categories}
+          brands={brands}
+        />
+      </div>
     </div>
   );
 }
