@@ -21,6 +21,7 @@ import { PaymentHistory } from "@/features/invoices/components/payment-history";
 import { BalanceHistoryCard } from "@/features/customers/components/balance-history-card";
 import { AdjustBalanceDialog } from "@/features/customers/components/adjust-balance-dialog";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 import { ar } from "@/i18n/ar";
 
 export const dynamic = "force-dynamic";
@@ -153,7 +154,7 @@ export default async function CustomerProfilePage({
           )}
           <p>
             <span className="text-muted-foreground">تاريخ التسجيل: </span>
-            {new Date(customer.createdAt).toLocaleDateString("fr-FR")}
+            {formatDate(customer.createdAt)}
           </p>
           <Button
             variant="outline"

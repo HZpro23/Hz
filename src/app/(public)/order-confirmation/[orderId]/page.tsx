@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { formatDate } from "@/lib/date";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -64,7 +65,7 @@ export default async function OrderConfirmationPage({
               </div>
               <div>
                 <dt className="text-muted-foreground">التاريخ</dt>
-                <dd>{new Date(order.createdAt).toLocaleDateString("fr-FR")}</dd>
+                <dd>{formatDate(order.createdAt)}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">الحالة</dt>

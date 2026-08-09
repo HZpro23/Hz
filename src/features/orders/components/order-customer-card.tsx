@@ -12,6 +12,7 @@ import {
 import { OrderCustomerEditSheet } from "@/features/orders/components/order-customer-edit-sheet";
 import { InvoiceLockedNotice } from "@/features/orders/components/invoice-locked-notice";
 import { reassignOrderCustomer } from "@/features/orders/actions";
+import { formatDate } from "@/lib/date";
 import { ar } from "@/i18n/ar";
 
 type OrderCustomer = {
@@ -93,7 +94,7 @@ export function OrderCustomerCard({
           )}
           <p>
             <span className="text-muted-foreground">تاريخ الطلب: </span>
-            {new Date(createdAt).toLocaleDateString("fr-FR")}
+            {formatDate(createdAt)}
           </p>
           {notes && (
             <p>

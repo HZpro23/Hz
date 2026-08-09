@@ -10,6 +10,7 @@ import { deletePurchaseOrder } from "@/features/purchases/actions";
 import { PURCHASE_ORDER_STATUS_LABELS } from "@/features/purchases/schema";
 import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 import type { PaymentStatus } from "@/generated/prisma/client";
 
 export type PurchaseOrderRow = {
@@ -66,7 +67,7 @@ export const purchaseOrderColumns: ColumnDef<PurchaseOrderRow>[] = [
     id: "createdAt",
     header: "التاريخ",
     cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("fr-FR"),
+      formatDate(row.original.createdAt),
   },
   {
     id: "actions",

@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 import { PAYMENT_METHOD_LABELS } from "@/features/invoices/schema";
 import { PasswordConfirmDeleteDialog } from "@/components/shared/password-confirm-delete-dialog";
 import { deleteSupplierPayment } from "@/features/purchases/actions";
@@ -51,7 +52,7 @@ export function SupplierPaymentHistory({
                 </div>
                 <div className="flex items-center gap-1">
                   <p className="text-xs text-muted-foreground">
-                    {new Date(payment.createdAt).toLocaleDateString("fr-FR")}
+                    {formatDate(payment.createdAt)}
                   </p>
                   <PasswordConfirmDeleteDialog
                     action={(password) =>

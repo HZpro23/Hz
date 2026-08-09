@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 import { ar } from "@/i18n/ar";
 import { deleteInvoice } from "@/features/invoices/actions";
 import type { PaymentStatus } from "@/generated/prisma/client";
@@ -70,7 +71,7 @@ function InvoiceSummaryDetails({ invoice }: { invoice: InvoiceDeleteSummary }) {
         {ar.invoices.paymentStatus}:{" "}
         <PaymentStatusBadge status={invoice.paymentStatus} />
       </p>
-      <p>{new Date(invoice.createdAt).toLocaleDateString("fr-FR")}</p>
+      <p>{formatDate(invoice.createdAt)}</p>
     </>
   );
 }

@@ -26,6 +26,7 @@ import { PaymentStatusBadge } from "@/features/invoices/components/payment-statu
 import { PAYMENT_METHOD_LABELS } from "@/features/invoices/schema";
 import { recordPayment, recordPaymentAcrossInvoices } from "@/features/invoices/actions";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { ar } from "@/i18n/ar";
 import { BalanceConfirmDialog } from "@/features/invoices/components/balance-confirm-dialog";
@@ -367,11 +368,7 @@ export function RecordPaymentDialog({
                           <PaymentStatusBadge status={invoice.paymentStatus} />
                         </div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                          <span>
-                            {new Date(invoice.createdAt).toLocaleDateString(
-                              "fr-FR",
-                            )}
-                          </span>
+                          <span>{formatDate(invoice.createdAt)}</span>
                           <span>
                             {ar.invoices.invoiceTotalLabel}:{" "}
                             {formatCurrency(invoice.total)}

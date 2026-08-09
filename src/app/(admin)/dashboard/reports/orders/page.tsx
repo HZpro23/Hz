@@ -14,6 +14,7 @@ import { getOrdersReportPage } from "@/features/reports/queries";
 import { ReportExportButtons } from "@/features/reports/components/report-export-buttons";
 import { ORDER_STATUS_LABELS } from "@/features/orders/schema";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +67,7 @@ export default async function OrdersReportPage({
                 </Badge>
               </TableCell>
               <TableCell>
-                {new Date(order.createdAt).toLocaleDateString("fr-FR")}
+                {formatDate(order.createdAt)}
               </TableCell>
             </TableRow>
           ))}

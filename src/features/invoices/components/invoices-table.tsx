@@ -67,11 +67,10 @@ export function InvoicesTable({
     setPage(1);
   }
 
-  // Bulk delete must ask about كل فاتورة تغيّر رصيد العميل on its own —
-  // never apply one answer to the whole selection. This queues the
-  // invoices that need a decision and resolves them one dialog at a time.
   const [queueInvoice, setQueueInvoice] = useState<InvoiceRow | null>(null);
-  const resolverRef = useRef<((applyBalanceChange: boolean) => void) | null>(null);
+  const resolverRef = useRef<((applyBalanceChange: boolean) => void) | null>(
+    null,
+  );
 
   function askApplyBalanceChange(invoice: InvoiceRow): Promise<boolean> {
     return new Promise((resolve) => {
@@ -106,7 +105,7 @@ export function InvoicesTable({
       {searchable && (
         <div className="flex flex-wrap items-end gap-3">
           <div className="relative max-w-sm flex-1">
-            <Search className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute inset-e-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(event) => handleQueryChange(event.target.value)}
@@ -145,7 +144,9 @@ export function InvoicesTable({
           {queueInvoice && (
             <InvoiceBalanceDeleteContent
               invoice={queueInvoice}
-              onConfirm={(applyBalanceChange) => answerQueue(applyBalanceChange)}
+              onConfirm={(applyBalanceChange) =>
+                answerQueue(applyBalanceChange)
+              }
               onCancel={() => answerQueue(false)}
             />
           )}

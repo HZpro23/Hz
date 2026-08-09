@@ -18,6 +18,7 @@ import { getSupplierProfile } from "@/features/suppliers/queries";
 import { PurchaseOrdersTable } from "@/features/purchases/components/purchase-orders-table";
 import { SupplierPaymentHistory } from "@/features/purchases/components/supplier-payment-history";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
@@ -127,7 +128,7 @@ export default async function SupplierProfilePage({
           )}
           <p>
             <span className="text-muted-foreground">تاريخ التسجيل: </span>
-            {new Date(supplier.createdAt).toLocaleDateString("fr-FR")}
+            {formatDate(supplier.createdAt)}
           </p>
           <Button
             variant="outline"

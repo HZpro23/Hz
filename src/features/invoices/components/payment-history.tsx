@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/currency";
+import { formatDateTime } from "@/lib/date";
 import { PAYMENT_METHOD_LABELS } from "@/features/invoices/schema";
 import { EditPaymentDialog } from "@/features/invoices/components/edit-payment-dialog";
 import { PasswordConfirmDeleteDialog } from "@/components/shared/password-confirm-delete-dialog";
@@ -49,13 +50,7 @@ export function PaymentHistory({ payments }: { payments: PaymentRow[] }) {
                 </div>
                 <div className="flex items-center gap-1">
                   <p className="text-xs text-muted-foreground">
-                    {new Date(payment.createdAt).toLocaleString("fr-FR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatDateTime(payment.createdAt)}
                   </p>
                   <EditPaymentDialog
                     paymentId={payment.id}

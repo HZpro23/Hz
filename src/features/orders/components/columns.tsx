@@ -9,6 +9,7 @@ import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { deleteOrder } from "@/features/orders/actions";
 import { ORDER_STATUS_LABELS } from "@/features/orders/schema";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 
 export type OrderRow = {
   id: string;
@@ -56,7 +57,7 @@ export const orderColumns: ColumnDef<OrderRow>[] = [
     id: "createdAt",
     header: "التاريخ",
     cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("fr-FR"),
+      formatDate(row.original.createdAt),
   },
   {
     id: "actions",

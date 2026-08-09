@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 import { ar } from "@/i18n/ar";
 
 const PAGE_SIZE = 10;
@@ -83,7 +84,7 @@ export function BalanceHistoryCard({ entries }: { entries: BalanceHistoryRow[] }
                       {formatCurrency(entry.change)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(entry.createdAt).toLocaleDateString("fr-FR")}
+                      {formatDate(entry.createdAt)}
                     </p>
                   </div>
                 </li>

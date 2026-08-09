@@ -19,6 +19,7 @@ import {
 } from "@/features/products/queries";
 import { RecordMovementDialog } from "@/features/inventory/components/record-movement-dialog";
 import { MOVEMENT_TYPE_LABELS } from "@/features/inventory/schema";
+import { formatDate } from "@/lib/date";
 import { ar } from "@/i18n/ar";
 
 export const dynamic = "force-dynamic";
@@ -152,11 +153,7 @@ export default async function InventoryPage({
                       <TableCell className="text-muted-foreground">
                         {movement.reason ?? "—"}
                       </TableCell>
-                      <TableCell>
-                        {new Date(movement.createdAt).toLocaleDateString(
-                          "fr-FR",
-                        )}
-                      </TableCell>
+                      <TableCell>{formatDate(movement.createdAt)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

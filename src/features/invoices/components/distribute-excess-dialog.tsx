@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { ar } from "@/i18n/ar";
 import type { PaymentStatus } from "@/generated/prisma/client";
@@ -128,7 +129,7 @@ export function DistributeExcessDialog({
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                       <span>
-                        {new Date(invoice.createdAt).toLocaleDateString("fr-FR")}
+                        {formatDate(invoice.createdAt)}
                       </span>
                       <span>
                         {ar.invoices.invoiceTotalLabel}:{" "}

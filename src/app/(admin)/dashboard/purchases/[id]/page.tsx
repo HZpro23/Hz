@@ -17,6 +17,7 @@ import { SupplierPaymentHistory } from "@/features/purchases/components/supplier
 import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { PURCHASE_ORDER_STATUS_LABELS } from "@/features/purchases/schema";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
@@ -126,7 +127,7 @@ export default async function PurchaseOrderDetailPage({
               )}
               <p>
                 <span className="text-muted-foreground">التاريخ: </span>
-                {new Date(order.createdAt).toLocaleDateString("fr-FR")}
+                {formatDate(order.createdAt)}
               </p>
             </CardContent>
           </Card>
@@ -143,7 +144,7 @@ export default async function PurchaseOrderDetailPage({
               {order.receivedAt && (
                 <p className="text-xs text-muted-foreground">
                   تم الاستلام في{" "}
-                  {new Date(order.receivedAt).toLocaleDateString("fr-FR")}
+                  {formatDate(order.receivedAt)}
                 </p>
               )}
             </CardContent>

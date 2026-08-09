@@ -9,6 +9,7 @@ import { InvoiceDeleteDialog } from "@/features/invoices/components/invoice-dele
 import { INVOICE_LANGUAGE_LABELS } from "@/features/invoices/schema";
 import { PaymentStatusBadge } from "@/features/invoices/components/payment-status-badge";
 import { formatCurrency } from "@/lib/currency";
+import { formatDateTime } from "@/lib/date";
 import type { PaymentStatus } from "@/generated/prisma/client";
 
 export type InvoiceRow = {
@@ -67,14 +68,7 @@ export const invoiceColumns: ColumnDef<InvoiceRow>[] = [
   {
     id: "createdAt",
     header: "التاريخ",
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleString("fr-FR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+    cell: ({ row }) => formatDateTime(row.original.createdAt),
   },
   {
     id: "actions",

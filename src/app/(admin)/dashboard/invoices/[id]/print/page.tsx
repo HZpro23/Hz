@@ -8,6 +8,7 @@ import { InvoicePdfButton } from "@/features/invoices/components/invoice-pdf-but
 import { InvoicePrintTotals } from "@/features/invoices/components/invoice-print-totals";
 import { ar as arDict } from "@/i18n/ar";
 import { CURRENCY_LABEL, formatCurrency } from "@/lib/currency";
+import { formatDateTime } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
@@ -174,13 +175,7 @@ export default async function InvoicePrintPage({
                     </p>
                     <p className="text-sm font-semibold text-foreground print:text-xs">
                       {t.date}:{" "}
-                      {new Date(invoice.createdAt).toLocaleString("fr-FR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      <span dir="ltr">{formatDateTime(invoice.createdAt)}</span>
                     </p>
                   </div>
                 </div>

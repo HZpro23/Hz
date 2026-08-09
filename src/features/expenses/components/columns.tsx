@@ -9,6 +9,7 @@ import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { deleteExpense } from "@/features/expenses/actions";
 import { EXPENSE_CATEGORY_LABELS } from "@/features/expenses/schema";
 import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 
 export type ExpenseRow = {
   id: string;
@@ -46,7 +47,7 @@ export function getExpenseColumns(
       id: "date",
       header: "التاريخ",
       cell: ({ row }) =>
-        new Date(row.original.date).toLocaleDateString("fr-FR"),
+        formatDate(row.original.date),
     },
     {
       id: "actions",

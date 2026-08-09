@@ -4,6 +4,7 @@ import { InvoicePrintButton } from "@/features/invoices/components/invoice-print
 import { InvoicePdfButton } from "@/features/invoices/components/invoice-pdf-button";
 import { ar as arDict } from "@/i18n/ar";
 import { CURRENCY_LABEL, formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
@@ -132,7 +133,7 @@ export default async function PurchaseOrderPrintPage({
                     </p>
                     <p className="text-sm font-semibold text-foreground print:text-xs">
                       {t.date}:{" "}
-                      {new Date(order.createdAt).toLocaleDateString("fr-FR")}
+                      {formatDate(order.createdAt)}
                     </p>
                   </div>
                 </div>
