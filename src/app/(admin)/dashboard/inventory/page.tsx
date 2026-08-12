@@ -133,13 +133,17 @@ export default async function InventoryPage({
                     <TableRow key={movement.id} dir="rtl">
                       <TableCell>
                         <div>
-                          <p className="font-medium">{movement.product.name}</p>
-                          <p
-                            dir="rtl"
-                            className="text-xs text-muted-foreground"
-                          >
-                            {movement.product.sku}
+                          <p className="font-medium">
+                            {movement.product?.name ?? "منتج محذوف"}
                           </p>
+                          {movement.product && (
+                            <p
+                              dir="rtl"
+                              className="text-xs text-muted-foreground"
+                            >
+                              {movement.product.sku}
+                            </p>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
