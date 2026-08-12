@@ -24,6 +24,7 @@ export default async function NewInvoicePage() {
     price3: Number(product.price3),
     categoryId: product.categoryId,
     brandId: product.brandId,
+    quantity: product.quantity,
   }));
 
   return (

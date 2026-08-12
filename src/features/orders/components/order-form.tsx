@@ -54,6 +54,10 @@ import { createOrder } from "@/features/orders/actions";
 import { formatCurrency } from "@/lib/currency";
 import { CategoryQuickAddPanel } from "@/features/products/components/category-quick-add-panel";
 import {
+  InsufficientStockDialog,
+  type StockWarning,
+} from "@/components/shared/insufficient-stock-dialog";
+import {
   CustomerPicker,
   type CustomerOption,
 } from "@/features/customers/components/customer-picker";
@@ -69,6 +73,7 @@ type ProductOption = {
   price3: number;
   categoryId: string;
   brandId: string | null;
+  quantity: number;
 };
 
 const NONE_PRODUCT: ProductOption = {
@@ -80,6 +85,7 @@ const NONE_PRODUCT: ProductOption = {
   price3: 0,
   categoryId: "",
   brandId: null,
+  quantity: 0,
 };
 
 const CUSTOM_PRICE = "سعر مخصص";
@@ -199,6 +205,7 @@ export function OrderForm({
   const [selectedCustomer, setSelectedCustomer] =
     useState<CustomerOption | null>(null);
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
+  const [stockWarning, setStockWarning] = useState<StockWarning>(null);
 
   const {
     register,
@@ -344,12 +351,36 @@ export function OrderForm({
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">الكمية</Label>
-                              <Input
-                                type="number"
-                                min={1}
-                                className="w-20"
-                                {...register(`items.${index}.quantity`)}
-                              />
+                              {(() => {
+                                const selectedProduct = productsById.get(
+                                  items?.[index]?.productId ?? "",
+                                );
+                                const requestedQty =
+                                  Number(items?.[index]?.quantity) || 0;
+                                const isOverStock =
+                                  Boolean(selectedProduct?.id) &&
+                                  requestedQty > (selectedProduct?.quantity ?? 0);
+                                return (
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    className="w-20"
+                                    aria-invalid={isOverStock}
+                                    {...register(`items.${index}.quantity`, {
+                                      onBlur: () => {
+                                        if (isOverStock && selectedProduct) {
+                                          setStockWarning({
+                                            productName: selectedProduct.name,
+                                            requestedQuantity: requestedQty,
+                                            availableQuantity:
+                                              selectedProduct.quantity,
+                                          });
+                                        }
+                                      },
+                                    })}
+                                  />
+                                );
+                              })()}
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">السعر</Label>
@@ -529,6 +560,11 @@ export function OrderForm({
         </div>
       </div>
       </fieldset>
+
+      <InsufficientStockDialog
+        warning={stockWarning}
+        onClose={() => setStockWarning(null)}
+      />
 
       {selectedCustomer && (
         <CustomerFormSheet

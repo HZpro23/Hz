@@ -19,6 +19,11 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
+import {
+  InsufficientStockDialog,
+  type StockWarning,
+} from "@/components/shared/insufficient-stock-dialog";
+import { cn } from "@/lib/utils";
 import { createOrderFromCart } from "../actions";
 
 const CUSTOMER_INFO_STORAGE_KEY = "hz-customer-info";
@@ -60,6 +65,7 @@ export function CartPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState(getInitialFormData);
+  const [stockWarning, setStockWarning] = useState<StockWarning>(null);
 
   if (cart.items.length === 0) {
     return (
@@ -158,15 +164,35 @@ export function CartPageContent() {
                         >
                           −
                         </Button>
-                        <span className="w-8 text-center">{item.quantity}</span>
+                        <span
+                          className={cn(
+                            "w-8 rounded-md border border-transparent text-center",
+                            item.maxStock !== undefined &&
+                              item.quantity >= item.maxStock &&
+                              "border-destructive text-destructive",
+                          )}
+                        >
+                          {item.quantity}
+                        </span>
                         <Button
                           size="sm"
                           variant="outline"
                           className="cursor-pointer"
                           disabled={isSubmitting}
-                          onClick={() =>
-                            updateQuantity(item.productId, item.quantity + 1)
-                          }
+                          onClick={() => {
+                            if (
+                              item.maxStock !== undefined &&
+                              item.quantity >= item.maxStock
+                            ) {
+                              setStockWarning({
+                                productName: item.productName,
+                                requestedQuantity: item.quantity + 1,
+                                availableQuantity: item.maxStock,
+                              });
+                              return;
+                            }
+                            updateQuantity(item.productId, item.quantity + 1);
+                          }}
                         >
                           +
                         </Button>
@@ -293,6 +319,11 @@ export function CartPageContent() {
           </CardContent>
         </Card>
       </div>
+
+      <InsufficientStockDialog
+        warning={stockWarning}
+        onClose={() => setStockWarning(null)}
+      />
     </div>
   );
 }

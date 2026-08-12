@@ -49,6 +49,7 @@ export default async function InvoiceEditPage({
     price3: Number(product.price3),
     categoryId: product.categoryId,
     brandId: product.brandId,
+    quantity: product.quantity,
   }));
 
   const total = Number(invoice.total);

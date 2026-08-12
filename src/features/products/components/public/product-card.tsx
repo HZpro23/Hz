@@ -65,6 +65,7 @@ export function ProductCard({
             size="sm"
             productId={product.id}
             productName={product.name}
+            stock={product.quantity}
             className="w-full"
           />
         )}

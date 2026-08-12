@@ -78,6 +78,7 @@ export default async function ProductDetailPage({
             <AddToCartButton
               productId={product.id}
               productName={product.name}
+              stock={product.quantity}
             />
           )}
         </div>

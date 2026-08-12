@@ -130,6 +130,25 @@ export async function createInvoice(
         invoiceNumber: created.invoiceNumber,
       });
 
+      // Sold items leave the shelf the moment the invoice exists — decrement
+      // stock and log it the same way order completion does, so the
+      // inventory movement history reflects every sale, not just orders.
+      for (const item of parsed.data.items) {
+        if (!item.productId) continue;
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { quantity: { decrement: item.quantity } },
+        });
+        await tx.inventoryMovement.create({
+          data: {
+            productId: item.productId,
+            type: "OUT",
+            quantity: item.quantity,
+            reason: `فاتورة رقم ${created.invoiceNumber}`,
+          },
+        });
+      }
+
       return created.id;
     });
   } catch {
@@ -138,6 +157,7 @@ export async function createInvoice(
 
   revalidatePath("/dashboard/invoices");
   revalidatePath(`/dashboard/customers/${customerId}`);
+  revalidatePath("/dashboard/inventory");
   redirect(`/dashboard/invoices/${invoiceId}`);
 }
 
@@ -153,7 +173,7 @@ export async function updateInvoice(
 
   const existing = await prisma.invoice.findUnique({
     where: { id },
-    include: { payments: true },
+    include: { payments: true, items: true },
   });
   if (!existing) return { error: "الفاتورة غير موجودة" };
 
@@ -169,6 +189,30 @@ export async function updateInvoice(
   );
   const previousBalanceEffect = Number(existing.balanceEffectApplied);
   const newCustomerId = parsed.data.customerId;
+
+  // Net stock change per product between the old and new item lists — only
+  // the difference moves, so raising one line's quantity while another
+  // drops doesn't touch products that didn't actually change.
+  const oldQtyByProduct = new Map<string, number>();
+  for (const item of existing.items) {
+    if (!item.productId) continue;
+    oldQtyByProduct.set(
+      item.productId,
+      (oldQtyByProduct.get(item.productId) ?? 0) + item.quantity,
+    );
+  }
+  const newQtyByProduct = new Map<string, number>();
+  for (const item of parsed.data.items) {
+    if (!item.productId) continue;
+    newQtyByProduct.set(
+      item.productId,
+      (newQtyByProduct.get(item.productId) ?? 0) + item.quantity,
+    );
+  }
+  const changedProductIds = new Set([
+    ...oldQtyByProduct.keys(),
+    ...newQtyByProduct.keys(),
+  ]);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -222,6 +266,25 @@ export async function updateInvoice(
           invoiceNumber: existing.invoiceNumber,
         });
       }
+
+      for (const productId of changedProductIds) {
+        const stockDelta =
+          (newQtyByProduct.get(productId) ?? 0) -
+          (oldQtyByProduct.get(productId) ?? 0);
+        if (stockDelta === 0) continue;
+        await tx.product.update({
+          where: { id: productId },
+          data: { quantity: { decrement: stockDelta } },
+        });
+        await tx.inventoryMovement.create({
+          data: {
+            productId,
+            type: stockDelta > 0 ? "OUT" : "IN",
+            quantity: Math.abs(stockDelta),
+            reason: `تعديل الفاتورة رقم ${existing.invoiceNumber}`,
+          },
+        });
+      }
     });
   } catch {
     return { error: "حدث خطأ أثناء تحديث الفاتورة" };
@@ -229,6 +292,7 @@ export async function updateInvoice(
 
   revalidatePath("/dashboard/invoices");
   revalidatePath(`/dashboard/invoices/${id}`);
+  revalidatePath("/dashboard/inventory");
   if (existing.customerId) revalidatePath(`/dashboard/customers/${existing.customerId}`);
   if (newCustomerId !== existing.customerId) {
     revalidatePath(`/dashboard/customers/${newCustomerId}`);
@@ -266,6 +330,33 @@ async function reverseInvoiceBalanceOnDelete(
   });
 }
 
+/** Deleting an invoice always gives back whatever stock it had taken —
+ * unlike رصيد reversal, this isn't opt-in, since the items it sold no
+ * longer exist in the system's records once the invoice is gone. */
+async function restoreInvoiceStockOnDelete(
+  tx: Prisma.TransactionClient,
+  invoice: {
+    invoiceNumber: string;
+    items: { productId: string | null; quantity: number }[];
+  },
+) {
+  for (const item of invoice.items) {
+    if (!item.productId) continue;
+    await tx.product.update({
+      where: { id: item.productId },
+      data: { quantity: { increment: item.quantity } },
+    });
+    await tx.inventoryMovement.create({
+      data: {
+        productId: item.productId,
+        type: "IN",
+        quantity: item.quantity,
+        reason: `حذف الفاتورة رقم ${invoice.invoiceNumber}`,
+      },
+    });
+  }
+}
+
 export async function deleteInvoice(
   id: string,
   options?: { applyBalanceChange?: boolean; password?: string },
@@ -276,12 +367,16 @@ export async function deleteInvoice(
     return { error: DELETE_PASSWORD_ERROR };
   }
 
-  const existing = await prisma.invoice.findUnique({ where: { id } });
+  const existing = await prisma.invoice.findUnique({
+    where: { id },
+    include: { items: true },
+  });
   if (!existing) return { error: "الفاتورة غير موجودة" };
 
   try {
     await prisma.$transaction(async (tx) => {
       await reverseInvoiceBalanceOnDelete(tx, existing, options?.applyBalanceChange);
+      await restoreInvoiceStockOnDelete(tx, existing);
       await tx.invoice.delete({ where: { id } });
     });
   } catch {
@@ -289,6 +384,7 @@ export async function deleteInvoice(
   }
 
   revalidatePath("/dashboard/invoices");
+  revalidatePath("/dashboard/inventory");
   if (existing.customerId) revalidatePath(`/dashboard/customers/${existing.customerId}`);
   return { success: true };
 }
@@ -307,10 +403,14 @@ export async function deleteInvoices(
 
   try {
     await prisma.$transaction(async (tx) => {
-      const invoices = await tx.invoice.findMany({ where: { id: { in: ids } } });
+      const invoices = await tx.invoice.findMany({
+        where: { id: { in: ids } },
+        include: { items: true },
+      });
 
       for (const invoice of invoices) {
         await reverseInvoiceBalanceOnDelete(tx, invoice, decisionById.get(invoice.id));
+        await restoreInvoiceStockOnDelete(tx, invoice);
       }
 
       await tx.invoice.deleteMany({ where: { id: { in: ids } } });
@@ -320,6 +420,7 @@ export async function deleteInvoices(
   }
 
   revalidatePath("/dashboard/invoices");
+  revalidatePath("/dashboard/inventory");
   return { success: true };
 }
 

@@ -17,21 +17,31 @@ import { cn } from "@/lib/utils";
 interface AddToCartButtonProps extends ComponentProps<typeof Button> {
   productId: string;
   productName: string;
+  /** Current stock level — used to warn the customer if the requested
+   * quantity (on top of whatever's already in the cart) isn't available. */
+  stock: number;
 }
 
 export function AddToCartButton({
   productId,
   productName,
+  stock,
   className,
   size = "lg",
   ...props
 }: AddToCartButtonProps) {
-  const { addItem } = useCart();
+  const { cart, addItem } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
+  const alreadyInCart =
+    cart.items.find((item) => item.productId === productId)?.quantity ?? 0;
+  const availableToAdd = Math.max(0, stock - alreadyInCart);
+  const isOverStock = quantity > availableToAdd;
+
   const handleAddToCart = () => {
-    addItem(productId, productName, quantity);
+    if (isOverStock) return;
+    addItem(productId, productName, quantity, stock);
     setIsOpen(false);
     setQuantity(1);
   };
@@ -63,11 +73,21 @@ export function AddToCartButton({
                 min="1"
                 max="999"
                 value={quantity}
+                aria-invalid={isOverStock}
                 onChange={(e) =>
                   setQuantity(Math.max(1, parseInt(e.target.value) || 1))
                 }
                 className="text-center"
               />
+              {isOverStock && (
+                <p className="text-sm text-destructive">
+                  الكمية المطلوبة أكبر من الكمية المتوفرة في المخزون
+                  {alreadyInCart > 0
+                    ? ` (المتبقي المتاح: ${availableToAdd.toLocaleString("ar")}، لديك بالفعل ${alreadyInCart.toLocaleString("ar")} في السلة)`
+                    : ` (المتوفر: ${stock.toLocaleString("ar")})`}
+                  .
+                </p>
+              )}
             </div>
 
             <div className="flex gap-2">
@@ -80,6 +100,7 @@ export function AddToCartButton({
               </Button>
               <Button
                 onClick={handleAddToCart}
+                disabled={isOverStock}
                 className="flex-1 cursor-pointer"
               >
                 إضافة إلى السلة

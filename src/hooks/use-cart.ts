@@ -7,6 +7,9 @@ export interface CartItem {
   productName: string;
   quantity: number;
   price?: number;
+  /** Stock level captured when the item was added — used to warn the
+   * customer if they try to raise the quantity past what's available. */
+  maxStock?: number;
 }
 
 export interface Cart {
@@ -85,7 +88,12 @@ export function useCart() {
   }, []);
 
   const addItem = useCallback(
-    (productId: string, productName: string, quantity: number = 1) => {
+    (
+      productId: string,
+      productName: string,
+      quantity: number = 1,
+      maxStock?: number,
+    ) => {
       setCart((prev) => {
         const existingItem = prev.items.find(
           (item) => item.productId === productId,
@@ -95,13 +103,20 @@ export function useCart() {
               ...prev,
               items: prev.items.map((item) =>
                 item.productId === productId
-                  ? { ...item, quantity: item.quantity + quantity }
+                  ? {
+                      ...item,
+                      quantity: item.quantity + quantity,
+                      maxStock: maxStock ?? item.maxStock,
+                    }
                   : item,
               ),
             }
           : {
               ...prev,
-              items: [...prev.items, { productId, productName, quantity }],
+              items: [
+                ...prev.items,
+                { productId, productName, quantity, maxStock },
+              ],
             };
         persistAndBroadcast(next);
         return next;

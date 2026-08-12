@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -58,6 +59,10 @@ import {
 import { formatCurrency } from "@/lib/currency";
 import { CategoryQuickAddPanel } from "@/features/products/components/category-quick-add-panel";
 import {
+  InsufficientStockDialog,
+  type StockWarning,
+} from "@/components/shared/insufficient-stock-dialog";
+import {
   CustomerPicker,
   type CustomerOption,
 } from "@/features/customers/components/customer-picker";
@@ -84,6 +89,7 @@ type ProductOption = {
   price3: number;
   categoryId: string;
   brandId: string | null;
+  quantity: number;
 };
 
 const NONE_PRODUCT: ProductOption = {
@@ -95,6 +101,7 @@ const NONE_PRODUCT: ProductOption = {
   price3: 0,
   categoryId: "",
   brandId: null,
+  quantity: 0,
 };
 
 const CUSTOM_PRICE = "سعر مخصص";
@@ -284,6 +291,24 @@ export function InvoiceForm({
     control,
     name: "items",
   });
+  // Quantity a row already held before this edit started, keyed by the
+  // field's stable id (not its index, since drag-reordering changes index
+  // but not id) — a row that's just keeping or lowering its own
+  // already-committed quantity was never actually asking for more stock,
+  // so it should never trip the insufficient-stock warning.
+  const [initialItemByFieldId] = useState(() => {
+    const map = new Map<string, { productId: string; quantity: number }>();
+    fields.forEach((field, i) => {
+      const original = invoice?.items[i];
+      if (original) {
+        map.set(field.id, {
+          productId: original.productId ?? "",
+          quantity: original.quantity,
+        });
+      }
+    });
+    return map;
+  });
   const [autoOpenIndex, setAutoOpenIndex] = useState<number | null>(null);
   const dragSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -304,6 +329,29 @@ export function InvoiceForm({
       sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
     0,
   );
+
+  const [allowNegativeStock, setAllowNegativeStock] = useState(false);
+  const stockIssues = items
+    .map((item, index) => {
+      const selectedProduct = productsById.get(item.productId ?? "");
+      if (!selectedProduct?.id) return null;
+      const requestedQty = Number(item.quantity) || 0;
+      const originalItem = initialItemByFieldId.get(fields[index]?.id ?? "");
+      const alreadyAllocated =
+        originalItem?.productId === selectedProduct.id
+          ? (originalItem?.quantity ?? 0)
+          : 0;
+      const effectiveAvailable = selectedProduct.quantity + alreadyAllocated;
+      if (requestedQty <= effectiveAvailable) return null;
+      return {
+        productName: selectedProduct.name,
+        requestedQuantity: requestedQty,
+        availableQuantity: effectiveAvailable,
+      };
+    })
+    .filter((issue): issue is NonNullable<typeof issue> => issue !== null);
+  const hasStockIssue = stockIssues.length > 0;
+
   function handleAddFromCategory(selected: ProductOption[]) {
     const isOnlyEmptyRow =
       fields.length === 1 && !items?.[0]?.productId && !items?.[0]?.name;
@@ -332,6 +380,7 @@ export function InvoiceForm({
   const [pendingValues, setPendingValues] = useState<InvoiceOutput | null>(
     null,
   );
+  const [stockWarning, setStockWarning] = useState<StockWarning>(null);
   const [confirmRequest, setConfirmRequest] =
     useState<BalanceConfirmRequest | null>(null);
   const [distributeState, setDistributeState] = useState<{
@@ -355,6 +404,11 @@ export function InvoiceForm({
   }
 
   async function onSubmit(values: InvoiceOutput) {
+    if (hasStockIssue && !allowNegativeStock) {
+      setStockWarning(stockIssues[0]);
+      return;
+    }
+
     if (invoice) {
       submitInvoice(values);
       return;
@@ -654,12 +708,45 @@ export function InvoiceForm({
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">الكمية</Label>
-                              <Input
-                                type="number"
-                                min={1}
-                                className="w-20"
-                                {...register(`items.${index}.quantity`)}
-                              />
+                              {(() => {
+                                const selectedProduct = productsById.get(
+                                  items?.[index]?.productId ?? "",
+                                );
+                                const requestedQty =
+                                  Number(items?.[index]?.quantity) || 0;
+                                const originalItem = initialItemByFieldId.get(
+                                  field.id,
+                                );
+                                const alreadyAllocated =
+                                  originalItem?.productId === selectedProduct?.id
+                                    ? (originalItem?.quantity ?? 0)
+                                    : 0;
+                                const effectiveAvailable =
+                                  (selectedProduct?.quantity ?? 0) +
+                                  alreadyAllocated;
+                                const isOverStock =
+                                  Boolean(selectedProduct?.id) &&
+                                  requestedQty > effectiveAvailable;
+                                return (
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    className="w-20"
+                                    aria-invalid={isOverStock}
+                                    {...register(`items.${index}.quantity`, {
+                                      onBlur: () => {
+                                        if (isOverStock && selectedProduct) {
+                                          setStockWarning({
+                                            productName: selectedProduct.name,
+                                            requestedQuantity: requestedQty,
+                                            availableQuantity: effectiveAvailable,
+                                          });
+                                        }
+                                      },
+                                    })}
+                                  />
+                                );
+                              })()}
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">السعر</Label>
@@ -739,6 +826,22 @@ export function InvoiceForm({
               />
             </div>
 
+            {hasStockIssue && (
+              <label className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                <Checkbox
+                  checked={allowNegativeStock}
+                  onCheckedChange={(checked) =>
+                    setAllowNegativeStock(checked === true)
+                  }
+                />
+                <span className="text-destructive">
+                  الكمية المطلوبة من بعض المنتجات أكبر من المتوفر في المخزون.
+                  أوافق على المتابعة رغم ذلك (سيصبح مخزون هذه المنتجات
+                  سالباً).
+                </span>
+              </label>
+            )}
+
             <div className="flex items-center justify-between border-t pt-4">
               <p className="font-medium">الإجمالي: {formatCurrency(total)}</p>
               <Button
@@ -755,6 +858,11 @@ export function InvoiceForm({
               </Button>
             </div>
           </fieldset>
+
+          <InsufficientStockDialog
+            warning={stockWarning}
+            onClose={() => setStockWarning(null)}
+          />
 
           <BalanceConfirmDialog
             request={confirmRequest}

@@ -150,6 +150,7 @@ export async function getProductPickerOptions() {
       price3: true,
       categoryId: true,
       brandId: true,
+      quantity: true,
     },
   });
 }
