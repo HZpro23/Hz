@@ -59,10 +59,6 @@ import {
 import { formatCurrency } from "@/lib/currency";
 import { CategoryQuickAddPanel } from "@/features/products/components/category-quick-add-panel";
 import {
-  InsufficientStockDialog,
-  type StockWarning,
-} from "@/components/shared/insufficient-stock-dialog";
-import {
   CustomerPicker,
   type CustomerOption,
 } from "@/features/customers/components/customer-picker";
@@ -238,8 +234,7 @@ export function InvoiceForm({
   categories: { id: string; name: string }[];
   brands: { id: string; name: string }[];
   orderId?: string;
-  /** Only present when editing an existing invoice — renders the سجل
-   * الدفعات sidebar alongside the quick-add-by-category panel. */
+
   payments?: {
     id: string;
     amount: number;
@@ -291,11 +286,6 @@ export function InvoiceForm({
     control,
     name: "items",
   });
-  // Quantity a row already held before this edit started, keyed by the
-  // field's stable id (not its index, since drag-reordering changes index
-  // but not id) — a row that's just keeping or lowering its own
-  // already-committed quantity was never actually asking for more stock,
-  // so it should never trip the insufficient-stock warning.
   const [initialItemByFieldId] = useState(() => {
     const map = new Map<string, { productId: string; quantity: number }>();
     fields.forEach((field, i) => {
@@ -380,7 +370,6 @@ export function InvoiceForm({
   const [pendingValues, setPendingValues] = useState<InvoiceOutput | null>(
     null,
   );
-  const [stockWarning, setStockWarning] = useState<StockWarning>(null);
   const [confirmRequest, setConfirmRequest] =
     useState<BalanceConfirmRequest | null>(null);
   const [distributeState, setDistributeState] = useState<{
@@ -405,7 +394,9 @@ export function InvoiceForm({
 
   async function onSubmit(values: InvoiceOutput) {
     if (hasStockIssue && !allowNegativeStock) {
-      setStockWarning(stockIssues[0]);
+      toast.error(
+        "الكمية المطلوبة من بعض المنتجات أكبر من المتوفر في المخزون. الرجاء الموافقة على المتابعة أو تعديل الكميات.",
+      );
       return;
     }
 
@@ -718,7 +709,8 @@ export function InvoiceForm({
                                   field.id,
                                 );
                                 const alreadyAllocated =
-                                  originalItem?.productId === selectedProduct?.id
+                                  originalItem?.productId ===
+                                  selectedProduct?.id
                                     ? (originalItem?.quantity ?? 0)
                                     : 0;
                                 const effectiveAvailable =
@@ -733,17 +725,7 @@ export function InvoiceForm({
                                     min={1}
                                     className="w-20"
                                     aria-invalid={isOverStock}
-                                    {...register(`items.${index}.quantity`, {
-                                      onBlur: () => {
-                                        if (isOverStock && selectedProduct) {
-                                          setStockWarning({
-                                            productName: selectedProduct.name,
-                                            requestedQuantity: requestedQty,
-                                            availableQuantity: effectiveAvailable,
-                                          });
-                                        }
-                                      },
-                                    })}
+                                    {...register(`items.${index}.quantity`)}
                                   />
                                 );
                               })()}
@@ -836,8 +818,7 @@ export function InvoiceForm({
                 />
                 <span className="text-destructive">
                   الكمية المطلوبة من بعض المنتجات أكبر من المتوفر في المخزون.
-                  أوافق على المتابعة رغم ذلك (سيصبح مخزون هذه المنتجات
-                  سالباً).
+                  أوافق على المتابعة رغم ذلك (سيصبح مخزون هذه المنتجات سالباً).
                 </span>
               </label>
             )}
@@ -858,11 +839,6 @@ export function InvoiceForm({
               </Button>
             </div>
           </fieldset>
-
-          <InsufficientStockDialog
-            warning={stockWarning}
-            onClose={() => setStockWarning(null)}
-          />
 
           <BalanceConfirmDialog
             request={confirmRequest}

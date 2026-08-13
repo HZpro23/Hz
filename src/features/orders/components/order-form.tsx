@@ -54,10 +54,6 @@ import { createOrder } from "@/features/orders/actions";
 import { formatCurrency } from "@/lib/currency";
 import { CategoryQuickAddPanel } from "@/features/products/components/category-quick-add-panel";
 import {
-  InsufficientStockDialog,
-  type StockWarning,
-} from "@/components/shared/insufficient-stock-dialog";
-import {
   CustomerPicker,
   type CustomerOption,
 } from "@/features/customers/components/customer-picker";
@@ -205,7 +201,6 @@ export function OrderForm({
   const [selectedCustomer, setSelectedCustomer] =
     useState<CustomerOption | null>(null);
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
-  const [stockWarning, setStockWarning] = useState<StockWarning>(null);
 
   const {
     register,
@@ -366,18 +361,7 @@ export function OrderForm({
                                     min={1}
                                     className="w-20"
                                     aria-invalid={isOverStock}
-                                    {...register(`items.${index}.quantity`, {
-                                      onBlur: () => {
-                                        if (isOverStock && selectedProduct) {
-                                          setStockWarning({
-                                            productName: selectedProduct.name,
-                                            requestedQuantity: requestedQty,
-                                            availableQuantity:
-                                              selectedProduct.quantity,
-                                          });
-                                        }
-                                      },
-                                    })}
+                                    {...register(`items.${index}.quantity`)}
                                   />
                                 );
                               })()}
@@ -560,11 +544,6 @@ export function OrderForm({
         </div>
       </div>
       </fieldset>
-
-      <InsufficientStockDialog
-        warning={stockWarning}
-        onClose={() => setStockWarning(null)}
-      />
 
       {selectedCustomer && (
         <CustomerFormSheet
