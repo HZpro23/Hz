@@ -63,7 +63,7 @@ model Product {
   price2        Decimal             @default(0) @db.Decimal(10, 2)
   price3        Decimal             @default(0) @db.Decimal(10, 2)
   purchasePrice Decimal             @default(0) @db.Decimal(10, 2)
-  weight        Decimal?             @default(0) @db.Decimal(10, 3)
+  weight        Decimal?            @default(0) @db.Decimal(10, 3)
   status        ProductStatus       @default(ACTIVE)
   images        ProductImage[]
   orderItems    OrderItem[]
@@ -353,6 +353,8 @@ model InvoiceItem {
   name      String
   quantity  Int
   unitPrice Decimal  @db.Decimal(10, 2)
+  position  Int      @default(1)
+  createdAt DateTime @default(now())
 
   @@index([invoiceId])
   @@index([productId])

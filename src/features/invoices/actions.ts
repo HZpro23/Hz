@@ -103,11 +103,12 @@ export async function createInvoice(
           paidAmount,
           balanceEffectApplied: balanceEffect,
           items: {
-            create: parsed.data.items.map((item) => ({
+            create: parsed.data.items.map((item, index) => ({
               productId: item.productId || null,
               name: item.name,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
+              position: index + 1,
             })),
           },
         },
@@ -231,11 +232,12 @@ export async function updateInvoice(
           paymentStatus,
           balanceEffectApplied: newBalanceEffect,
           items: {
-            create: parsed.data.items.map((item) => ({
+            create: parsed.data.items.map((item, index) => ({
               productId: item.productId || null,
               name: item.name,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
+              position: index + 1,
             })),
           },
         },
@@ -481,11 +483,12 @@ export async function getOrCreateInvoiceForOrder(
           paidAmount,
           balanceEffectApplied: balanceEffect,
           items: {
-            create: order.items.map((item) => ({
+            create: order.items.map((item, index) => ({
               productId: item.productId,
               name: item.product.name,
               quantity: item.quantity,
               unitPrice: item.price,
+              position: index + 1,
             })),
           },
         },

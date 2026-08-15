@@ -45,6 +45,7 @@ export async function getInvoiceById(id: string) {
     where: { id },
     include: {
       items: {
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
         include: {
           product: { select: { name: true, sku: true, weight: true } },
         },
