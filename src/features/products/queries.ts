@@ -140,7 +140,7 @@ export async function getProductSelectOptions() {
  * admin choose one of the product's prices or type a custom price. */
 export async function getProductPickerOptions() {
   return prisma.product.findMany({
-    orderBy: { name: "asc" },
+    orderBy: { createdAt: "asc" },
     select: {
       id: true,
       name: true,
