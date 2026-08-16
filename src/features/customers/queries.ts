@@ -82,7 +82,7 @@ export async function getCustomersPage({
       SELECT
         "customerId",
         SUM(total) AS total_purchased,
-        SUM("paidAmount") AS total_paid,
+        SUM(CASE WHEN "paymentStatus" = 'PAID' THEN total ELSE 0 END) AS total_paid,
         SUM(CASE WHEN "paymentStatus" IN ('UNPAID', 'PARTIALLY_PAID') THEN total - "paidAmount" ELSE 0 END) AS outstanding
       FROM "Invoice"
       WHERE "customerId" IS NOT NULL
@@ -266,11 +266,9 @@ export async function getCustomerProfile(id: string) {
     (sum, invoice) => sum + Number(invoice.total),
     0,
   );
-  const totalPaid = invoices.reduce(
-    (sum, invoice) =>
-      sum + Math.min(Number(invoice.paidAmount), Number(invoice.total)),
-    0,
-  );
+  const totalPaid = invoices
+    .filter((invoice) => invoice.paymentStatus === "PAID")
+    .reduce((sum, invoice) => sum + Number(invoice.total), 0);
 
   const payments = invoices
     .flatMap((invoice) =>
