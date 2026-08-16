@@ -267,7 +267,8 @@ export async function getCustomerProfile(id: string) {
     0,
   );
   const totalPaid = invoices.reduce(
-    (sum, invoice) => sum + Number(invoice.paidAmount),
+    (sum, invoice) =>
+      sum + Math.min(Number(invoice.paidAmount), Number(invoice.total)),
     0,
   );
 
