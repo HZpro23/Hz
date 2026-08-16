@@ -621,11 +621,6 @@ export function InvoiceForm({
               />
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="invoice-notes">ملاحظات (اختياري)</Label>
-              <Textarea id="invoice-notes" rows={2} {...register("notes")} />
-            </div>
-
             <div className="space-y-3">
               <Label>المنتجات ({fields.length})</Label>
 
