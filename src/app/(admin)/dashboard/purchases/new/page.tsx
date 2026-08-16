@@ -22,6 +22,7 @@ export default async function NewPurchaseOrderPage() {
     price1: Number(product.price1),
     price2: Number(product.price2),
     price3: Number(product.price3),
+    purchasePrice: Number(product.purchasePrice),
     categoryId: product.categoryId,
     brandId: product.brandId,
   }));

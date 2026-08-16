@@ -9,13 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Combobox,
   useComboboxFilter,
   ComboboxValue,
@@ -43,6 +36,7 @@ type ProductOption = {
   price1: number;
   price2: number;
   price3: number;
+  purchasePrice: number;
   categoryId: string;
   brandId: string | null;
 };
@@ -54,60 +48,13 @@ const NONE_PRODUCT: ProductOption = {
   price1: 0,
   price2: 0,
   price3: 0,
+  purchasePrice: 0,
   categoryId: "",
   brandId: null,
 };
 
-const CUSTOM_PRICE = "سعر مخصص";
-
 function productLabel(product: ProductOption) {
   return product.id ? `${product.name} (${product.sku})` : product.name;
-}
-
-function priceTierLabel(price: number, product: ProductOption) {
-  if (price === product.price1) return "السعر الأول";
-  if (price === product.price2) return "السعر الثاني";
-  if (price === product.price3) return "السعر الثالث";
-  return CUSTOM_PRICE;
-}
-
-function PriceTierField({
-  price,
-  product,
-  onChange,
-}: {
-  price: number;
-  product: ProductOption | undefined;
-  onChange: (price: number) => void;
-}) {
-  if (!product?.id) return null;
-
-  return (
-    <Select
-      value={priceTierLabel(price, product)}
-      onValueChange={(label) => {
-        if (label === "السعر الأول") onChange(product.price1);
-        else if (label === "السعر الثاني") onChange(product.price2);
-        else if (label === "السعر الثالث") onChange(product.price3);
-      }}
-    >
-      <SelectTrigger className="w-full">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="السعر الأول">
-          ({formatCurrency(product.price1)})
-        </SelectItem>
-        <SelectItem value="السعر الثاني">
-          ({formatCurrency(product.price2)})
-        </SelectItem>
-        <SelectItem value="السعر الثالث">
-          ({formatCurrency(product.price3)})
-        </SelectItem>
-        <SelectItem value={CUSTOM_PRICE}>{CUSTOM_PRICE}</SelectItem>
-      </SelectContent>
-    </Select>
-  );
 }
 
 function ProductPickerField({
@@ -195,7 +142,6 @@ export function PurchaseOrderItemsForm({
     },
   });
 
-  const productsById = new Map(products.map((product) => [product.id, product]));
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
   const [autoOpenIndex, setAutoOpenIndex] = useState<number | null>(null);
   const watchedItems = watch("items");
@@ -212,10 +158,14 @@ export function PurchaseOrderItemsForm({
       if (index === 0 && isOnlyEmptyRow) {
         setValue("items.0.productId", product.id);
         setValue("items.0.quantity", 1);
-        setValue("items.0.unitCost", product.price1);
+        setValue("items.0.unitCost", product.purchasePrice);
         return;
       }
-      append({ productId: product.id, quantity: 1, unitCost: product.price1 });
+      append({
+        productId: product.id,
+        quantity: 1,
+        unitCost: product.purchasePrice,
+      });
     });
 
     toast.success(
@@ -276,7 +226,10 @@ export function PurchaseOrderItemsForm({
                       onChange={(product) => {
                         productField.onChange(product?.id ?? "");
                         if (product?.id) {
-                          setValue(`items.${index}.unitCost`, product.price1);
+                          setValue(
+                            `items.${index}.unitCost`,
+                            product.purchasePrice,
+                          );
                         }
                       }}
                     />
@@ -294,23 +247,13 @@ export function PurchaseOrderItemsForm({
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">تكلفة الوحدة</Label>
-                <div className="flex w-32 flex-col gap-1.5">
-                  <PriceTierField
-                    price={Number(watchedItems?.[index]?.unitCost) || 0}
-                    product={productsById.get(
-                      watchedItems?.[index]?.productId ?? "",
-                    )}
-                    onChange={(price) =>
-                      setValue(`items.${index}.unitCost`, price)
-                    }
-                  />
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    {...register(`items.${index}.unitCost`)}
-                  />
-                </div>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="w-32"
+                  {...register(`items.${index}.unitCost`)}
+                />
               </div>
               <Button
                 type="button"

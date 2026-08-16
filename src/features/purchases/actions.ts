@@ -33,23 +33,35 @@ export async function createPurchaseOrder(
     0,
   );
 
-  const order = await prisma.purchaseOrder.create({
-    data: {
-      orderNumber: generatePurchaseOrderNumber(),
-      supplierId: parsed.data.supplierId,
-      language: parsed.data.language,
-      total,
-      items: {
-        create: parsed.data.items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          unitCost: item.unitCost,
-        })),
+  const order = await prisma.$transaction(async (tx) => {
+    const created = await tx.purchaseOrder.create({
+      data: {
+        orderNumber: generatePurchaseOrderNumber(),
+        supplierId: parsed.data.supplierId,
+        language: parsed.data.language,
+        total,
+        items: {
+          create: parsed.data.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitCost: item.unitCost,
+          })),
+        },
       },
-    },
+    });
+
+    for (const item of parsed.data.items) {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { purchasePrice: item.unitCost },
+      });
+    }
+
+    return created;
   });
 
   revalidatePath("/dashboard/purchases");
+  revalidatePath("/dashboard/products");
   redirect(`/dashboard/purchases/${order.id}`);
 }
 
@@ -60,6 +72,7 @@ export async function createPurchaseOrder(
  * recorded against whatever items existed at receive time. Editing items
  * afterward is purely a correction to the order's own record; if the stock
  * itself needs adjusting too, that's a separate manual inventory action.
+ * It does sync each item's unit cost onto its product's purchasePrice.
  */
 export async function updatePurchaseOrderItems(
   id: string,
@@ -91,6 +104,12 @@ export async function updatePurchaseOrderItems(
         })),
       }),
       prisma.purchaseOrder.update({ where: { id }, data: { total } }),
+      ...parsed.data.items.map((item) =>
+        prisma.product.update({
+          where: { id: item.productId },
+          data: { purchasePrice: item.unitCost },
+        }),
+      ),
     ]);
   } catch {
     return { error: "حدث خطأ أثناء تحديث عناصر أمر الشراء" };
@@ -98,6 +117,7 @@ export async function updatePurchaseOrderItems(
 
   revalidatePath("/dashboard/purchases");
   revalidatePath(`/dashboard/purchases/${id}`);
+  revalidatePath("/dashboard/products");
   return { success: true };
 }
 

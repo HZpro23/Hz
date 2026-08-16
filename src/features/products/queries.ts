@@ -148,6 +148,7 @@ export async function getProductPickerOptions() {
       price1: true,
       price2: true,
       price3: true,
+      purchasePrice: true,
       categoryId: true,
       brandId: true,
       quantity: true,
