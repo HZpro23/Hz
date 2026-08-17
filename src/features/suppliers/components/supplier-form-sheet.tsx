@@ -16,6 +16,7 @@ import {
 } from "@/features/suppliers/schema";
 import { createSupplier, updateSupplier } from "@/features/suppliers/actions";
 import { ar } from "@/i18n/ar";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type SupplierRecord = {
   id: string;
@@ -40,7 +41,9 @@ export function SupplierFormSheet({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    reset,
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<SupplierInput>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
@@ -50,6 +53,8 @@ export function SupplierFormSheet({
       address: supplier?.address ?? "",
     },
   });
+
+  useUnsavedChangesGuard(open && isDirty);
 
   function close() {
     const params = new URLSearchParams(searchParams.toString());
@@ -73,6 +78,7 @@ export function SupplierFormSheet({
       toast.success(
         supplier ? "تم تحديث بيانات المورد" : "تم إضافة المورد بنجاح",
       );
+      reset(getValues());
       close();
     });
   }

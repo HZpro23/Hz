@@ -27,6 +27,7 @@ import {
 } from "@/features/expenses/schema";
 import { createExpense, updateExpense } from "@/features/expenses/actions";
 import { ar } from "@/i18n/ar";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type ExpenseRecord = {
   id: string;
@@ -56,7 +57,9 @@ export function ExpenseFormSheet({
     register,
     control,
     handleSubmit,
-    formState: { errors },
+    reset,
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<ExpenseInput, unknown, ExpenseOutput>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
@@ -68,6 +71,8 @@ export function ExpenseFormSheet({
         : toDateInputValue(new Date()),
     },
   });
+
+  useUnsavedChangesGuard(open && isDirty);
 
   function close() {
     const params = new URLSearchParams(searchParams.toString());
@@ -91,6 +96,7 @@ export function ExpenseFormSheet({
       toast.success(
         expense ? "تم تحديث المصروف بنجاح" : "تم إضافة المصروف بنجاح",
       );
+      reset(getValues());
       close();
     });
   }

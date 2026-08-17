@@ -181,9 +181,9 @@ export default async function InvoicePrintPage({
                 </div>
 
                 <div className="mt-6 print:mt-4">
-                  <p className="text-sm font-semibold text-foreground print:text-xs">
+                  <p className="relative text-sm font-semibold text-foreground print:text-xs">
                     {t.billTo}:
-                    <span className="font-bold mx-1.5">
+                    <span className="absolute left-1/2 -translate-x-1/2 font-bold text-2xl">
                       {invoice.customerName}
                     </span>
                   </p>

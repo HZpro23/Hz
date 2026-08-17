@@ -19,6 +19,7 @@ import {
   type ConflictCustomer,
 } from "@/features/orders/actions";
 import { PhoneConflictDialog } from "@/features/orders/components/phone-conflict-dialog";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type CustomerRecord = {
   id: string;
@@ -54,7 +55,9 @@ export function OrderCustomerEditSheet({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    reset,
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<CustomerInput>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -66,6 +69,8 @@ export function OrderCustomerEditSheet({
       isFavorite: false,
     },
   });
+
+  useUnsavedChangesGuard(open && isDirty);
 
   function submit(
     values: CustomerInput,
@@ -96,6 +101,7 @@ export function OrderCustomerEditSheet({
           ? "تم تحديث بيانات العميل بنجاح"
           : "تم حفظ بيانات العميل بنجاح",
       );
+      reset(getValues());
       onOpenChange(false);
     });
   }

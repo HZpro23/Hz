@@ -14,6 +14,7 @@ import { CloudinaryUploader } from "@/components/shared/cloudinary-uploader";
 import { brandSchema, type BrandInput } from "@/features/brands/schema";
 import { createBrand, updateBrand } from "@/features/brands/actions";
 import { ar } from "@/i18n/ar";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type BrandRecord = {
   id: string;
@@ -39,7 +40,9 @@ export function BrandFormSheet({
     register,
     control,
     handleSubmit,
-    formState: { errors },
+    reset,
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<BrandInput>({
     resolver: zodResolver(brandSchema),
     defaultValues: {
@@ -51,6 +54,8 @@ export function BrandFormSheet({
           : null,
     },
   });
+
+  useUnsavedChangesGuard(open && isDirty);
 
   function close() {
     const params = new URLSearchParams(searchParams.toString());
@@ -74,6 +79,7 @@ export function BrandFormSheet({
       toast.success(
         brand ? "تم تحديث العلامة التجارية" : "تم إضافة العلامة التجارية",
       );
+      reset(getValues());
       close();
     });
   }

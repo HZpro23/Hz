@@ -42,6 +42,7 @@ import {
 } from "@/features/products/schema";
 import { createProduct, updateProduct } from "@/features/products/actions";
 import { ar } from "@/i18n/ar";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type Option = { id: string; name: string };
 
@@ -139,7 +140,9 @@ export function ProductFormSheet({
     register,
     control,
     handleSubmit,
-    formState: { errors },
+    reset,
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<ProductInput, unknown, ProductOutput>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -161,6 +164,8 @@ export function ProductFormSheet({
       images: product?.images ?? [],
     },
   });
+
+  useUnsavedChangesGuard(open && isDirty);
 
   function close() {
     const params = new URLSearchParams(searchParams.toString());
@@ -184,6 +189,7 @@ export function ProductFormSheet({
       toast.success(
         product ? "تم تحديث المنتج بنجاح" : "تم إضافة المنتج بنجاح",
       );
+      reset(getValues());
       close();
     });
   }

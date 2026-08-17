@@ -320,7 +320,10 @@ export async function saveOrderCustomerInfo(
   return { success: true };
 }
 
-export async function createOrder(input: unknown): Promise<ActionResult> {
+export async function createOrder(
+  input: unknown,
+  options?: { allowNegativeStock?: boolean },
+): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { error: "غير مصرح" };
 
@@ -340,7 +343,7 @@ export async function createOrder(input: unknown): Promise<ActionResult> {
   for (const item of parsed.data.items) {
     const product = productById.get(item.productId);
     if (!product) return { error: "أحد المنتجات غير موجود" };
-    if (item.quantity > product.quantity) {
+    if (!options?.allowNegativeStock && item.quantity > product.quantity) {
       return {
         error: `الكمية المطلوبة من "${product.name}" أكبر من الكمية المتوفرة في المخزون`,
       };

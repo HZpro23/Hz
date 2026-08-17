@@ -22,6 +22,7 @@ import {
 } from "@/features/customers/actions";
 import { cn } from "@/lib/utils";
 import { ar } from "@/i18n/ar";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type MatchingCustomer = {
   id: string;
@@ -60,7 +61,9 @@ export function CustomerFormSheet({
     control,
     handleSubmit,
     watch,
-    formState: { errors },
+    reset,
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<CustomerInput>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -89,6 +92,8 @@ export function CustomerFormSheet({
     return () => clearTimeout(timeout);
   }, [phoneValue, customer]);
 
+  useUnsavedChangesGuard(open && isDirty);
+
   function close() {
     if (onOpenChange) {
       onOpenChange(false);
@@ -115,6 +120,7 @@ export function CustomerFormSheet({
       toast.success(
         customer ? "تم تحديث بيانات العميل" : "تم إضافة العميل بنجاح",
       );
+      reset(getValues());
       close();
     });
   }

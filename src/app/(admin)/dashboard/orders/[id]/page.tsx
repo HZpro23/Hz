@@ -52,6 +52,7 @@ export default async function OrderDetailPage({
     price1: Number(product.price1),
     price2: Number(product.price2),
     price3: Number(product.price3),
+    quantity: product.quantity,
   }));
 
   const message = buildDefaultMessage(order);

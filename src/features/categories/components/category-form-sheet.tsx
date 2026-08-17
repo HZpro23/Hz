@@ -24,6 +24,7 @@ import {
 } from "@/features/categories/schema";
 import { createCategory, updateCategory } from "@/features/categories/actions";
 import { ar } from "@/i18n/ar";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type CategoryOption = { id: string; name: string };
 type CategoryRecord = {
@@ -55,7 +56,9 @@ export function CategoryFormSheet({
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    reset,
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<CategoryInput>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
@@ -71,6 +74,8 @@ export function CategoryFormSheet({
           : null,
     },
   });
+
+  useUnsavedChangesGuard(open && isDirty);
 
   function close() {
     const params = new URLSearchParams(searchParams.toString());
@@ -92,6 +97,7 @@ export function CategoryFormSheet({
       }
 
       toast.success(category ? "تم تحديث القسم بنجاح" : "تم إضافة القسم بنجاح");
+      reset(getValues());
       close();
     });
   }

@@ -75,6 +75,7 @@ import {
   capPaymentLinesToTotal,
   type BalanceConfirmRequest,
 } from "@/features/invoices/balance-resolution";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type ProductOption = {
   id: string;
@@ -252,7 +253,9 @@ export function InvoiceForm({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    reset,
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<InvoiceInput, unknown, InvoiceOutput>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
@@ -274,6 +277,8 @@ export function InvoiceForm({
         : [{ productId: "", name: "", quantity: 1, unitPrice: 0 }],
     },
   });
+
+  useUnsavedChangesGuard(isDirty);
 
   const customerId = watch("customerId");
   const selectedCustomer = customers.find((c) => c.id === customerId);
@@ -388,7 +393,10 @@ export function InvoiceForm({
         return;
       }
 
-      if (invoice) toast.success("تم تحديث الفاتورة بنجاح");
+      if (invoice) {
+        toast.success("تم تحديث الفاتورة بنجاح");
+        reset(getValues());
+      }
     });
   }
 

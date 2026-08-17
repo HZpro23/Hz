@@ -33,6 +33,7 @@ import {
 } from "@/features/purchases/schema";
 import { INVOICE_LANGUAGE_LABELS } from "@/features/invoices/schema";
 import { createPurchaseOrder } from "@/features/purchases/actions";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import { formatCurrency } from "@/lib/currency";
 import { CategoryQuickAddPanel } from "@/features/products/components/category-quick-add-panel";
 import type { InvoiceLanguage } from "@/generated/prisma/client";
@@ -177,7 +178,7 @@ export function PurchaseOrderForm({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<PurchaseOrderInput, unknown, PurchaseOrderOutput>({
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: {
@@ -186,6 +187,8 @@ export function PurchaseOrderForm({
       items: [{ productId: "", quantity: 1, unitCost: 0 }],
     },
   });
+
+  useUnsavedChangesGuard(isDirty);
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
   const [autoOpenIndex, setAutoOpenIndex] = useState<number | null>(null);

@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -53,6 +54,7 @@ import {
 import { createOrder } from "@/features/orders/actions";
 import { formatCurrency } from "@/lib/currency";
 import { CategoryQuickAddPanel } from "@/features/products/components/category-quick-add-panel";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 import {
   CustomerPicker,
   type CustomerOption,
@@ -208,7 +210,7 @@ export function OrderForm({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<CreateOrderInput, unknown, CreateOrderOutput>({
     resolver: zodResolver(createOrderSchema),
     defaultValues: {
@@ -217,6 +219,8 @@ export function OrderForm({
       items: [{ productId: "", quantity: 1, price: 0 }],
     },
   });
+
+  useUnsavedChangesGuard(isDirty);
 
   const productsById = new Map(
     products.map((product) => [product.id, product]),
@@ -244,6 +248,22 @@ export function OrderForm({
     0,
   );
 
+  const [allowNegativeStock, setAllowNegativeStock] = useState(false);
+  const stockIssues = items
+    .map((item) => {
+      const selectedProduct = productsById.get(item.productId ?? "");
+      if (!selectedProduct?.id) return null;
+      const requestedQty = Number(item.quantity) || 0;
+      if (requestedQty <= selectedProduct.quantity) return null;
+      return {
+        productName: selectedProduct.name,
+        requestedQuantity: requestedQty,
+        availableQuantity: selectedProduct.quantity,
+      };
+    })
+    .filter((issue): issue is NonNullable<typeof issue> => issue !== null);
+  const hasStockIssue = stockIssues.length > 0;
+
   function handleAddFromCategory(selected: ProductOption[]) {
     const isOnlyEmptyRow = fields.length === 1 && !items?.[0]?.productId;
 
@@ -263,8 +283,15 @@ export function OrderForm({
   }
 
   function onSubmit(values: CreateOrderOutput) {
+    if (hasStockIssue && !allowNegativeStock) {
+      toast.error(
+        "الكمية المطلوبة من بعض المنتجات أكبر من المتوفر في المخزون. الرجاء الموافقة على المتابعة أو تعديل الكميات.",
+      );
+      return;
+    }
+
     startTransition(async () => {
-      const result = await createOrder(values);
+      const result = await createOrder(values, { allowNegativeStock });
       if (result?.error) {
         toast.error(result.error);
       }
@@ -439,7 +466,22 @@ export function OrderForm({
             <CardHeader>
               <CardTitle>الإجراءات</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              {hasStockIssue && (
+                <label className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                  <Checkbox
+                    checked={allowNegativeStock}
+                    onCheckedChange={(checked) =>
+                      setAllowNegativeStock(checked === true)
+                    }
+                  />
+                  <span className="text-destructive">
+                    الكمية المطلوبة من بعض المنتجات أكبر من المتوفر في
+                    المخزون. أوافق على المتابعة رغم ذلك (سيصبح مخزون هذه
+                    المنتجات سالباً).
+                  </span>
+                </label>
+              )}
               <Button
                 type="submit"
                 disabled={isPending}

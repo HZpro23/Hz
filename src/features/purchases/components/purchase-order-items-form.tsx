@@ -28,6 +28,7 @@ import {
 import { updatePurchaseOrderItems } from "@/features/purchases/actions";
 import { formatCurrency } from "@/lib/currency";
 import { CategoryQuickAddPanel } from "@/features/products/components/category-quick-add-panel";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type ProductOption = {
   id: string;
@@ -134,13 +135,17 @@ export function PurchaseOrderItemsForm({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    reset,
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<PurchaseOrderItemsInput, unknown, PurchaseOrderItemsOutput>({
     resolver: zodResolver(purchaseOrderItemsSchema),
     defaultValues: {
       items: items.length ? items : [{ productId: "", quantity: 1, unitCost: 0 }],
     },
   });
+
+  useUnsavedChangesGuard(isDirty);
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
   const [autoOpenIndex, setAutoOpenIndex] = useState<number | null>(null);
@@ -181,6 +186,7 @@ export function PurchaseOrderItemsForm({
         return;
       }
       toast.success("تم تحديث عناصر أمر الشراء بنجاح");
+      reset(getValues());
     });
   }
 

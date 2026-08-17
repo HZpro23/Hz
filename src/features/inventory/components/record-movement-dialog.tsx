@@ -42,6 +42,7 @@ import {
   MOVEMENT_TYPE_VALUE_BY_LABEL,
 } from "@/features/inventory/schema";
 import { recordInventoryMovement } from "@/features/inventory/actions";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type ProductOption = {
   id: string;
@@ -111,11 +112,13 @@ export function RecordMovementDialog({
     handleSubmit,
     watch,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<InventoryMovementInput, unknown, InventoryMovementOutput>({
     resolver: zodResolver(inventoryMovementSchema),
     defaultValues: { productId: "", type: "IN", quantity: 0, reason: "" },
   });
+
+  useUnsavedChangesGuard(open && isDirty);
 
   const selectedProductId = watch("productId");
   const selectedType = watch("type");

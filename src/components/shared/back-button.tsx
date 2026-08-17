@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useConfirmNavigation } from "@/hooks/use-unsaved-changes-guard";
 
 /** Goes to the actual previous page (browser history) instead of a fixed
  * route, so it lands wherever the admin actually came from — a filtered
@@ -19,8 +20,10 @@ export function BackButton({
   className?: string;
 }) {
   const router = useRouter();
+  const confirmNavigation = useConfirmNavigation();
 
   function handleClick() {
+    if (!confirmNavigation()) return;
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {

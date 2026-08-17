@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, type ReactNode } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -62,6 +63,7 @@ import {
 } from "@/features/orders/components/product-details-dialog";
 import { InvoiceLockedNotice } from "@/features/orders/components/invoice-locked-notice";
 import { formatCurrency } from "@/lib/currency";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes-guard";
 
 type ProductOption = {
   id: string;
@@ -70,6 +72,7 @@ type ProductOption = {
   price1: number;
   price2: number;
   price3: number;
+  quantity: number;
 };
 
 const NONE_PRODUCT: ProductOption = {
@@ -79,6 +82,7 @@ const NONE_PRODUCT: ProductOption = {
   price1: 0,
   price2: 0,
   price3: 0,
+  quantity: 0,
 };
 
 const CUSTOM_PRICE = "سعر مخصص";
@@ -244,7 +248,9 @@ export function OrderItemsPriceForm({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    reset,
+    getValues,
+    formState: { errors, isDirty },
   } = useForm<OrderItemsInput, unknown, OrderItemsOutput>({
     resolver: zodResolver(orderItemsSchema),
     defaultValues: {
@@ -257,9 +263,25 @@ export function OrderItemsPriceForm({
     },
   });
 
+  useUnsavedChangesGuard(!locked && isDirty);
+
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: "items",
+  });
+
+  const [initialItemByFieldId] = useState(() => {
+    const map = new Map<string, { productId: string; quantity: number }>();
+    fields.forEach((field, i) => {
+      const original = items[i];
+      if (original) {
+        map.set(field.id, {
+          productId: original.productId,
+          quantity: original.quantity,
+        });
+      }
+    });
+    return map;
   });
 
   const dragSensors = useSensors(
@@ -288,7 +310,36 @@ export function OrderItemsPriceForm({
     return sum + price * quantity;
   }, 0);
 
+  const [allowNegativeStock, setAllowNegativeStock] = useState(false);
+  const stockIssues = (watchedItems ?? [])
+    .map((item, index) => {
+      const selectedProduct = productsById.get(item.productId ?? "");
+      if (!selectedProduct?.id) return null;
+      const requestedQty = Number(item.quantity) || 0;
+      const originalItem = initialItemByFieldId.get(fields[index]?.id ?? "");
+      const alreadyAllocated =
+        originalItem?.productId === selectedProduct.id
+          ? (originalItem?.quantity ?? 0)
+          : 0;
+      const effectiveAvailable = selectedProduct.quantity + alreadyAllocated;
+      if (requestedQty <= effectiveAvailable) return null;
+      return {
+        productName: selectedProduct.name,
+        requestedQuantity: requestedQty,
+        availableQuantity: effectiveAvailable,
+      };
+    })
+    .filter((issue): issue is NonNullable<typeof issue> => issue !== null);
+  const hasStockIssue = stockIssues.length > 0;
+
   function onSubmit(values: OrderItemsOutput) {
+    if (hasStockIssue && !allowNegativeStock) {
+      toast.error(
+        "الكمية المطلوبة من بعض المنتجات أكبر من المتوفر في المخزون. الرجاء الموافقة على المتابعة أو تعديل الكميات.",
+      );
+      return;
+    }
+
     startTransition(async () => {
       const result = await updateOrderItems(orderId, values);
       if (result?.error) {
@@ -296,6 +347,7 @@ export function OrderItemsPriceForm({
         return;
       }
       toast.success("تم تحديث الطلب بنجاح");
+      reset(getValues());
     });
   }
 
@@ -420,12 +472,32 @@ export function OrderItemsPriceForm({
                   )}
                 </TableCell>
                 <TableCell>
-                  <Input
-                    type="number"
-                    min={1}
-                    className="w-20"
-                    {...register(`items.${index}.quantity`)}
-                  />
+                  {(() => {
+                    const requestedQty = quantity;
+                    const currentProductId =
+                      existingItem?.productId ??
+                      watchedItems?.[index]?.productId ??
+                      "";
+                    const originalItem = initialItemByFieldId.get(field.id);
+                    const alreadyAllocated =
+                      originalItem?.productId === currentProductId
+                        ? (originalItem?.quantity ?? 0)
+                        : 0;
+                    const effectiveAvailable =
+                      (selectedProduct?.quantity ?? 0) + alreadyAllocated;
+                    const isOverStock =
+                      Boolean(currentProductId) &&
+                      requestedQty > effectiveAvailable;
+                    return (
+                      <Input
+                        type="number"
+                        min={1}
+                        className="w-20"
+                        aria-invalid={isOverStock}
+                        {...register(`items.${index}.quantity`)}
+                      />
+                    );
+                  })()}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1.5">
@@ -482,6 +554,21 @@ export function OrderItemsPriceForm({
         <Plus className="size-4" />
         إضافة منتج
       </Button>
+
+      {hasStockIssue && (
+        <label className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+          <Checkbox
+            checked={allowNegativeStock}
+            onCheckedChange={(checked) =>
+              setAllowNegativeStock(checked === true)
+            }
+          />
+          <span className="text-destructive">
+            الكمية المطلوبة من بعض المنتجات أكبر من المتوفر في المخزون. أوافق
+            على المتابعة رغم ذلك (سيصبح مخزون هذه المنتجات سالباً).
+          </span>
+        </label>
+      )}
 
       <div className="flex items-center justify-between border-t pt-4">
         <p className="font-medium">الإجمالي الكلي: {formatCurrency(total)}</p>
