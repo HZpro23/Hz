@@ -80,13 +80,19 @@ export async function getCustomersPage({
     FROM "Customer" c
     LEFT JOIN (
       SELECT
-        "customerId",
-        SUM(total) AS total_purchased,
-        SUM(CASE WHEN "paymentStatus" = 'PAID' THEN total ELSE 0 END) AS total_paid,
-        SUM(CASE WHEN "paymentStatus" IN ('UNPAID', 'PARTIALLY_PAID') THEN total - "paidAmount" ELSE 0 END) AS outstanding
-      FROM "Invoice"
-      WHERE "customerId" IS NOT NULL
-      GROUP BY "customerId"
+        i."customerId",
+        SUM(i.total) AS total_purchased,
+        SUM(CASE WHEN i."paymentStatus" = 'PAID' THEN COALESCE(p.non_balance_paid, 0) ELSE 0 END) AS total_paid,
+        SUM(CASE WHEN i."paymentStatus" IN ('UNPAID', 'PARTIALLY_PAID') THEN i.total - i."paidAmount" ELSE 0 END) AS outstanding
+      FROM "Invoice" i
+      LEFT JOIN (
+        SELECT "invoiceId", SUM(amount) AS non_balance_paid
+        FROM "Payment"
+        WHERE method != 'BALANCE'
+        GROUP BY "invoiceId"
+      ) p ON p."invoiceId" = i.id
+      WHERE i."customerId" IS NOT NULL
+      GROUP BY i."customerId"
     ) inv ON inv."customerId" = c.id
     LEFT JOIN (
       SELECT "customerId", COUNT(*) AS orders_count
@@ -267,8 +273,20 @@ export async function getCustomerProfile(id: string) {
     0,
   );
   const totalPaid = invoices
-    .filter((invoice) => invoice.paymentStatus === "PAID")
-    .reduce((sum, invoice) => sum + Number(invoice.total), 0);
+    .filter(
+      (invoice) =>
+        invoice.paymentStatus === "PAID" ||
+        invoice.paymentStatus === "PARTIALLY_PAID",
+    )
+    .reduce((sum, invoice) => {
+      const nonBalancePaid = invoice.payments
+        .filter((payment) => payment.method !== "BALANCE")
+        .reduce(
+          (paymentSum, payment) => paymentSum + Number(payment.amount),
+          0,
+        );
+      return sum + nonBalancePaid;
+    }, 0);
 
   const payments = invoices
     .flatMap((invoice) =>
