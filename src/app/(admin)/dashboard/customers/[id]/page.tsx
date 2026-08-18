@@ -20,6 +20,7 @@ import { InvoicesTable } from "@/features/invoices/components/invoices-table";
 import { PaymentHistory } from "@/features/invoices/components/payment-history";
 import { BalanceHistoryCard } from "@/features/customers/components/balance-history-card";
 import { AdjustBalanceDialog } from "@/features/customers/components/adjust-balance-dialog";
+import { CustomerStatementPanel } from "@/features/customers/components/customer-statement-panel";
 import { formatCurrency } from "@/lib/currency";
 import { formatDate } from "@/lib/date";
 import { ar } from "@/i18n/ar";
@@ -121,51 +122,59 @@ export default async function CustomerProfilePage({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{ar.customers.personalInfo}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <p>
-            <span className="text-muted-foreground">الاسم: </span>
-            {customer.name}
-          </p>
-          <p>
-            <span className="text-muted-foreground">الهاتف: </span>
-            <span dir="ltr">{customer.phone}</span>
-          </p>
-          {customer.email && (
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>{ar.customers.personalInfo}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
             <p>
-              <span className="text-muted-foreground">البريد الإلكتروني: </span>
-              <span dir="ltr">{customer.email}</span>
+              <span className="text-muted-foreground">الاسم: </span>
+              {customer.name}
             </p>
-          )}
-          {customer.address && (
             <p>
-              <span className="text-muted-foreground">العنوان: </span>
-              {customer.address}
+              <span className="text-muted-foreground">الهاتف: </span>
+              <span dir="ltr">{customer.phone}</span>
             </p>
-          )}
-          {customer.notes && (
+            {customer.email && (
+              <p>
+                <span className="text-muted-foreground">
+                  البريد الإلكتروني:{" "}
+                </span>
+                <span dir="ltr">{customer.email}</span>
+              </p>
+            )}
+            {customer.address && (
+              <p>
+                <span className="text-muted-foreground">العنوان: </span>
+                {customer.address}
+              </p>
+            )}
+            {customer.notes && (
+              <p>
+                <span className="text-muted-foreground">ملاحظات: </span>
+                {customer.notes}
+              </p>
+            )}
             <p>
-              <span className="text-muted-foreground">ملاحظات: </span>
-              {customer.notes}
+              <span className="text-muted-foreground">تاريخ التسجيل: </span>
+              {formatDate(customer.createdAt)}
             </p>
-          )}
-          <p>
-            <span className="text-muted-foreground">تاريخ التسجيل: </span>
-            {formatDate(customer.createdAt)}
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            render={<Link href={`/dashboard/customers?edit=${customer.id}`} />}
-          >
-            {ar.customers.editCustomerInfo}
-          </Button>
-        </CardContent>
-      </Card>
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={
+                <Link href={`/dashboard/customers?edit=${customer.id}`} />
+              }
+            >
+              {ar.customers.editCustomerInfo}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <CustomerStatementPanel customerId={customer.id} />
+      </div>
 
       <Card>
         <CardHeader>
