@@ -12,6 +12,7 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
+import { DataTableSearch } from "@/components/data-table/data-table-search";
 import { getInventoryMovementsPage } from "@/features/inventory/queries";
 import {
   getLowStockProductsPage,
@@ -27,11 +28,12 @@ export const dynamic = "force-dynamic";
 export default async function InventoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; lowStockPage?: string }>;
+  searchParams: Promise<{ page?: string; lowStockPage?: string; q?: string }>;
 }) {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
   const lowStockPage = Math.max(1, Number(params.lowStockPage) || 1);
+  const query = params.q?.trim() || undefined;
 
   const [
     { items: lowStockProducts, total: lowStockTotal, pageSize: lowStockPageSize },
@@ -40,7 +42,7 @@ export default async function InventoryPage({
   ] = await Promise.all([
     getLowStockProductsPage({ page: lowStockPage }),
     getProductSelectOptions(),
-    getInventoryMovementsPage({ page }),
+    getInventoryMovementsPage({ page, query }),
   ]);
 
   return (
@@ -98,7 +100,7 @@ export default async function InventoryPage({
                 total={lowStockTotal}
                 basePath="/dashboard/inventory"
                 pageParam="lowStockPage"
-                searchParams={{ page: params.page }}
+                searchParams={{ page: params.page, q: query }}
               />
             </div>
           )}
@@ -110,11 +112,18 @@ export default async function InventoryPage({
           <CardTitle>سجل حركة المخزون</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <DataTableSearch placeholder="ابحث باسم المنتج أو SKU أو السبب..." />
           {items.length === 0 ? (
             <EmptyState
               icon={Boxes}
-              title="لا توجد حركات مخزون بعد"
-              description="ستظهر هنا عمليات الإدخال والإخراج والتسوية"
+              title={
+                query ? "لا توجد نتائج مطابقة للبحث" : "لا توجد حركات مخزون بعد"
+              }
+              description={
+                query
+                  ? `لم يتم العثور على حركات مخزون تطابق "${query}"`
+                  : "ستظهر هنا عمليات الإدخال والإخراج والتسوية"
+              }
             />
           ) : (
             <>
@@ -167,7 +176,7 @@ export default async function InventoryPage({
                 pageSize={pageSize}
                 total={total}
                 basePath="/dashboard/inventory"
-                searchParams={{ lowStockPage: params.lowStockPage }}
+                searchParams={{ lowStockPage: params.lowStockPage, q: query }}
               />
             </>
           )}
