@@ -248,25 +248,34 @@ export async function getCustomerProfile(id: string) {
   const customer = await prisma.customer.findUnique({ where: { id } });
   if (!customer) return null;
 
-  const [orders, invoices, balanceHistory] = await Promise.all([
-    prisma.order.findMany({
-      where: { customerId: id },
-      orderBy: { createdAt: "desc" },
-      include: { items: { include: { product: { select: { name: true } } } } },
-    }),
-    prisma.invoice.findMany({
-      where: { customerId: id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        items: true,
-        payments: { orderBy: { createdAt: "desc" } },
-      },
-    }),
-    prisma.customerBalanceHistory.findMany({
-      where: { customerId: id },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  const [orders, invoices, balanceHistory, paymentTransactions] =
+    await Promise.all([
+      prisma.order.findMany({
+        where: { customerId: id },
+        orderBy: { createdAt: "desc" },
+        include: { items: { include: { product: { select: { name: true } } } } },
+      }),
+      prisma.invoice.findMany({
+        where: { customerId: id },
+        orderBy: { createdAt: "desc" },
+        include: {
+          items: true,
+          payments: { orderBy: { createdAt: "desc" } },
+        },
+      }),
+      prisma.customerBalanceHistory.findMany({
+        where: { customerId: id },
+        orderBy: { createdAt: "desc" },
+      }),
+      // Raw amount actually handed over per transaction (e.g. 450 even when
+      // recordPaymentAcrossInvoices split it into 100+200+150 across
+      // invoices) — see PaymentTransaction in schema.prisma. Purely
+      // additional context; not used in any total above.
+      prisma.paymentTransaction.findMany({
+        where: { customerId: id },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
   const totalPurchased = invoices.reduce(
     (sum, invoice) => sum + Number(invoice.total),
@@ -304,6 +313,7 @@ export async function getCustomerProfile(id: string) {
     invoices,
     payments,
     balanceHistory,
+    paymentTransactions,
     totals: { totalPurchased, totalPaid, balance: Number(customer.balance) },
   };
 }

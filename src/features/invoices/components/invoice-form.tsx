@@ -64,6 +64,7 @@ import {
 } from "@/features/customers/components/customer-picker";
 import { PaymentFieldsSection } from "@/features/invoices/components/payment-fields";
 import { PaymentHistory } from "@/features/invoices/components/payment-history";
+import { PaymentTransactionsCard } from "@/features/invoices/components/payment-transactions-card";
 import { BalanceConfirmDialog } from "@/features/invoices/components/balance-confirm-dialog";
 import {
   DistributeExcessDialog,
@@ -228,6 +229,7 @@ export function InvoiceForm({
   brands,
   orderId,
   payments,
+  paymentTransactions,
 }: {
   invoice?: InvoiceRecord;
   products: ProductOption[];
@@ -243,6 +245,13 @@ export function InvoiceForm({
     note: string | null;
     createdAt: Date;
     invoiceNumber?: string;
+  }[];
+  paymentTransactions?: {
+    id: string;
+    amount: number;
+    method: string;
+    note: string | null;
+    createdAt: Date;
   }[];
 }) {
   const [isPending, startTransition] = useTransition();
@@ -871,6 +880,9 @@ export function InvoiceForm({
           <>
             <div className="space-y-6">
               <PaymentHistory payments={payments ?? []} />
+              <PaymentTransactionsCard
+                transactions={paymentTransactions ?? []}
+              />
             </div>
             <div className="space-y-6 hidden lg:block">
               <CategoryQuickAddPanel

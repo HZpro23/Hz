@@ -35,7 +35,19 @@ export default async function CustomerStatementPage({
 
   const profile = await getCustomerProfile(id);
   if (!profile) notFound();
-  const { customer, invoices } = profile;
+  const { customer, invoices, paymentTransactions } = profile;
+
+  // Raw amount actually handed over per invoice (e.g. 450 on an invoice
+  // whose own paidAmount only shows 150, because the rest was spread across
+  // other invoices) — shown alongside paidAmount, not instead of it.
+  const rawPaidByInvoiceId = new Map<string, number>();
+  for (const transaction of paymentTransactions) {
+    const previous = rawPaidByInvoiceId.get(transaction.invoiceId) ?? 0;
+    rawPaidByInvoiceId.set(
+      transaction.invoiceId,
+      previous + Number(transaction.amount),
+    );
+  }
 
   const backHref = `/dashboard/customers/${id}`;
   const hasValidRange =
@@ -149,6 +161,7 @@ export default async function CustomerStatementPage({
               {filteredInvoices.map((invoice) => {
                 const total = Number(invoice.total);
                 const paid = Number(invoice.paidAmount);
+                const rawPaid = rawPaidByInvoiceId.get(invoice.id) ?? null;
                 return (
                   <tr key={invoice.id} className="border-b">
                     <td className="border-e py-1.5 pe-4">
@@ -168,6 +181,11 @@ export default async function CustomerStatementPage({
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold">
                           {formatCurrency(paid)}
+                          {rawPaid !== null && (
+                            <span className="ms-1 text-xs font-normal text-muted-foreground">
+                              ({formatCurrency(rawPaid)})
+                            </span>
+                          )}
                         </span>
                         <PaymentStatusBadge status={invoice.paymentStatus} />
                       </div>
@@ -177,6 +195,13 @@ export default async function CustomerStatementPage({
               })}
             </tbody>
           </table>
+        )}
+
+        {rawPaidByInvoiceId.size > 0 && (
+          <p className="text-xs text-muted-foreground">
+            الرقم بين قوسين هو المبلغ الفعلي الذي دفعه العميل في تلك العملية،
+            حتى لو تم توزيعه على أكثر من فاتورة.
+          </p>
         )}
 
         <div className="grid gap-3 border-t pt-4 sm:grid-cols-3">

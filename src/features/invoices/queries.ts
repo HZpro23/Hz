@@ -52,6 +52,10 @@ export async function getInvoiceById(id: string) {
       },
       order: { select: { id: true } },
       payments: { orderBy: { createdAt: "desc" } },
+      // Raw amount actually handed over per transaction (e.g. 450 even when
+      // the payment was split into 100+200+150 across invoices) — purely an
+      // audit record, doesn't feed paidAmount/paymentStatus/رصيد.
+      paymentTransactions: { orderBy: { createdAt: "desc" } },
     },
   });
 }

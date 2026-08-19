@@ -131,6 +131,12 @@ export default async function InvoiceEditPage({
             ...payment,
             amount: Number(payment.amount),
           }))}
+          paymentTransactions={invoice.paymentTransactions.map(
+            (transaction) => ({
+              ...transaction,
+              amount: Number(transaction.amount),
+            }),
+          )}
         />
       </div>
     </div>

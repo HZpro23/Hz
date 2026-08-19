@@ -179,6 +179,7 @@ export function RecordPaymentDialog({
         note,
         excessToBalance: options?.excessToBalance,
         allowNegativeBalance: options?.allowNegativeBalance,
+        primaryInvoiceId: invoiceId,
       });
       if (result.error) {
         toast.error(result.error);

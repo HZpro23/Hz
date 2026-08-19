@@ -605,6 +605,13 @@ export async function recordPayment(
  * credit (not tied to any one invoice), or drop it entirely. This replaces
  * the old implicit behavior where paying more than a single invoice's total
  * always became رصيد automatically.
+ *
+ * This splitting is unchanged by `primaryInvoiceId` below — it only adds an
+ * extra audit row (see PaymentTransaction) that records the untouched raw
+ * amount the admin actually entered, since the split Payment rows above
+ * never show that number on their own (450 becomes 100+200+150 across three
+ * rows). Nothing reads PaymentTransaction today, so it can't affect
+ * paidAmount, paymentStatus, رصيد, or any existing total.
  */
 export async function recordPaymentAcrossInvoices(
   customerId: string,
@@ -621,6 +628,14 @@ export async function recordPaymentAcrossInvoices(
      * of starting a fresh one — lets two separate action calls still be
      * recognized as "the same payment session" later. */
     batchId?: string;
+    /** The invoice the admin was actually paying against (e.g. the invoice
+     * page this payment was recorded from), even though the payment may end
+     * up spread across others. When given, the full raw amount is logged as
+     * one PaymentTransaction row against this invoice — purely an audit
+     * record, not used by any invoice/رصيد calculation. Omit to skip it
+     * (e.g. the new-invoice excess-distribution call, which has no invoice
+     * to attribute to yet). */
+    primaryInvoiceId?: string;
   },
 ): Promise<ActionResult & { batchId?: string }> {
   const session = await auth();
@@ -714,6 +729,19 @@ export async function recordPaymentAcrossInvoices(
         await adjustCustomerBalance(tx, customerId, excess, {
           reason: "OVERPAYMENT_CREDIT",
           note: `فائض دفعة موزعة على ${allocations.length} فاتورة`,
+        });
+      }
+
+      if (input.primaryInvoiceId) {
+        await tx.paymentTransaction.create({
+          data: {
+            customerId,
+            invoiceId: input.primaryInvoiceId,
+            amount: input.amount,
+            method: input.method,
+            note: input.note || null,
+            batchId,
+          },
         });
       }
     });
@@ -889,5 +917,107 @@ export async function deletePayment(
   if (invoice.customerId) {
     revalidatePath(`/dashboard/customers/${invoice.customerId}`);
   }
+  return { success: true };
+}
+
+/**
+ * Deletes a PaymentTransaction audit row AND reverses everything it paid:
+ * every Payment row sharing its batchId (however many invoices
+ * recordPaymentAcrossInvoices spread the 450 across), recomputing each
+ * affected invoice's paidAmount/paymentStatus/balanceEffectApplied from its
+ * *other* payments only — same delta-against-balanceEffectApplied approach
+ * deletePayment uses, just for every invoice in the batch instead of one.
+ *
+ * Known gap: if the original payment had money left over after every
+ * selected invoice was fully paid (`excessToBalance`), that leftover was
+ * credited to رصيد directly, with no Payment row and no batchId on its
+ * CustomerBalanceHistory entry — so it can't be traced back here and won't
+ * be reversed. Rare in practice (only happens on a genuine overpayment
+ * beyond every invoice in the batch), but worth knowing before relying on
+ * this for that case.
+ */
+export async function deletePaymentTransaction(
+  id: string,
+  password: string,
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" };
+  if (!isDeletePasswordValid(password)) return { error: DELETE_PASSWORD_ERROR };
+
+  const transaction = await prisma.paymentTransaction.findUnique({
+    where: { id },
+  });
+  if (!transaction) return { error: "هذا السجل غير موجود" };
+
+  const batchId = transaction.batchId;
+  const batchPayments = batchId
+    ? await prisma.payment.findMany({
+        where: { batchId },
+        include: { invoice: { include: { payments: true } } },
+      })
+    : [];
+
+  const affectedInvoiceIds = [
+    ...new Set(batchPayments.map((payment) => payment.invoiceId)),
+  ];
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const invoiceId of affectedInvoiceIds) {
+        const invoice = batchPayments.find(
+          (payment) => payment.invoiceId === invoiceId,
+        )!.invoice;
+        const total = Number(invoice.total);
+        const remainingPayments = invoice.payments.filter(
+          (payment) => payment.batchId !== batchId,
+        );
+        const newPaidAmount = remainingPayments.reduce(
+          (sum, payment) => sum + Number(payment.amount),
+          0,
+        );
+        const paymentStatus = computePaymentStatus(total, newPaidAmount);
+        const newBalanceEffect = computeBalanceEffect(
+          total,
+          remainingPayments.map((payment) => ({
+            amount: Number(payment.amount),
+            method: payment.method as string,
+          })),
+        );
+        const previousBalanceEffect = Number(invoice.balanceEffectApplied);
+        const delta = newBalanceEffect - previousBalanceEffect;
+
+        await tx.invoice.update({
+          where: { id: invoiceId },
+          data: {
+            paidAmount: newPaidAmount,
+            paymentStatus,
+            balanceEffectApplied: newBalanceEffect,
+          },
+        });
+
+        if (invoice.customerId) {
+          await adjustCustomerBalance(tx, invoice.customerId, delta, {
+            reason: "INVOICE_EDIT",
+            invoiceId,
+            invoiceNumber: invoice.invoiceNumber,
+          });
+        }
+      }
+
+      if (batchId) {
+        await tx.payment.deleteMany({ where: { batchId } });
+      }
+      await tx.paymentTransaction.delete({ where: { id } });
+    });
+  } catch {
+    return { error: "حدث خطأ أثناء حذف السجل وإلغاء الدفعات المرتبطة به" };
+  }
+
+  revalidatePath(`/dashboard/invoices/${transaction.invoiceId}`);
+  for (const invoiceId of affectedInvoiceIds) {
+    revalidatePath(`/dashboard/invoices/${invoiceId}`);
+  }
+  revalidatePath("/dashboard/invoices");
+  revalidatePath(`/dashboard/customers/${transaction.customerId}`);
   return { success: true };
 }
