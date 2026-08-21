@@ -253,7 +253,12 @@ export async function getCustomerProfile(id: string) {
       prisma.order.findMany({
         where: { customerId: id },
         orderBy: { createdAt: "desc" },
-        include: { items: { include: { product: { select: { name: true } } } } },
+        include: {
+          items: {
+            orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+            include: { product: { select: { name: true } } },
+          },
+        },
       }),
       prisma.invoice.findMany({
         where: { customerId: id },

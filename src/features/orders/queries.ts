@@ -62,6 +62,7 @@ export async function getOrderById(id: string) {
     where: { id },
     include: {
       items: {
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
         include: {
           product: {
             select: {

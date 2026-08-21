@@ -119,10 +119,17 @@ export async function updateOrderItems(
   if (!order) return { error: "الطلب غير موجود" };
 
   const existingIds = new Set(order.items.map((item) => item.id));
-  const updates = parsed.data.items.filter(
+  // Position comes from each item's index in the submitted (possibly
+  // drag-reordered) array, so the saved order matches what the admin
+  // arranged rather than reverting to insertion order on reload.
+  const itemsWithPosition = parsed.data.items.map((item, index) => ({
+    ...item,
+    position: index + 1,
+  }));
+  const updates = itemsWithPosition.filter(
     (item) => item.id && existingIds.has(item.id),
   );
-  const newItems = parsed.data.items.filter((item) => !item.id);
+  const newItems = itemsWithPosition.filter((item) => !item.id);
 
   if (newItems.length > 0) {
     const products = await prisma.product.findMany({
@@ -147,7 +154,11 @@ export async function updateOrderItems(
     ...updates.map((item) =>
       prisma.orderItem.update({
         where: { id: item.id! },
-        data: { price: item.price, quantity: item.quantity },
+        data: {
+          price: item.price,
+          quantity: item.quantity,
+          position: item.position,
+        },
       }),
     ),
     ...(newItems.length > 0
@@ -158,6 +169,7 @@ export async function updateOrderItems(
               productId: item.productId,
               quantity: item.quantity,
               price: item.price,
+              position: item.position,
             })),
           }),
         ]
@@ -367,10 +379,11 @@ export async function createOrder(
         notes: parsed.data.notes || null,
         total,
         items: {
-          create: parsed.data.items.map((item) => ({
+          create: parsed.data.items.map((item, index) => ({
             productId: item.productId,
             quantity: item.quantity,
             price: item.price,
+            position: index + 1,
           })),
         },
       },

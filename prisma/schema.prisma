@@ -134,13 +134,15 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
-  price     Decimal @db.Decimal(10, 2)
+  price     Decimal  @db.Decimal(10, 2)
+  position  Int      @default(1)
+  createdAt DateTime @default(now())
 
   @@index([orderId])
   @@index([productId])
@@ -304,20 +306,19 @@ model Payment {
   @@index([batchId])
 }
 
-
 model PaymentTransaction {
-  id         String        @id @default(cuid())
+  id         String   @id @default(cuid())
   customerId String
-  customer   Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  
-  invoiceId  String
-  invoice    Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  amount     Decimal       @db.Decimal(10, 2)
-  method     PaymentMethod
-  note       String?
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
-  batchId    String?
-  createdAt  DateTime      @default(now())
+  invoiceId String
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount    Decimal       @db.Decimal(10, 2)
+  method    PaymentMethod
+  note      String?
+
+  batchId   String?
+  createdAt DateTime @default(now())
 
   @@index([customerId])
   @@index([invoiceId])
