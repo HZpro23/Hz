@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Printer } from "lucide-react";
+import { Printer, Send } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { BackButton } from "@/components/shared/back-button";
@@ -83,6 +84,12 @@ export default async function InvoiceEditPage({
 
       <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
         <PaymentStatusBadge status={invoice.paymentStatus} />
+        {invoice.createdByBot && (
+          <Badge variant="secondary">
+            <Send className="size-3" />
+            {ar.telegram.createdByBotBadge}
+          </Badge>
+        )}
         <p className="text-sm">
           <span className="text-muted-foreground">
             {ar.invoices.remainingBalance}:{" "}

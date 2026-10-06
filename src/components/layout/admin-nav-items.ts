@@ -11,6 +11,7 @@ import {
   Receipt,
   BarChart3,
   FileText,
+  Send,
   type LucideIcon,
 } from "lucide-react";
 import { ar } from "@/i18n/ar";
@@ -87,6 +88,16 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       { href: "/dashboard/expenses", label: ar.admin.expenses, icon: Receipt },
       { href: "/dashboard/reports", label: ar.admin.reports, icon: BarChart3 },
+    ],
+  },
+  {
+    label: "الإعدادات",
+    items: [
+      {
+        href: "/dashboard/settings/telegram",
+        label: ar.admin.telegram,
+        icon: Send,
+      },
     ],
   },
 ];

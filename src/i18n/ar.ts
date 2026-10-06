@@ -1,4 +1,24 @@
 export const ar = {
+  telegram: {
+    description:
+      "اربط حسابك بحساب Telegram الخاص بك لإنشاء فواتير عبر رسائل صوتية أو نصية للبوت.",
+    connectedLabel: "متصل",
+    notConnectedLabel: "غير متصل",
+    connectButton: "ربط الحساب",
+    unlinkButton: "إلغاء الربط",
+    unlinkConfirmTitle: "إلغاء ربط Telegram",
+    unlinkConfirmDescription:
+      "لن يتمكن هذا الحساب بعد الآن من إنشاء فواتير عبر البوت حتى يُربط من جديد.",
+    openInTelegram: "فتح في Telegram",
+    linkExpiresNote: "ينتهي هذا الرابط خلال 15 دقيقة. افتحه من حساب Telegram الذي تريد ربطه.",
+    generateError: "تعذّر إنشاء رابط الربط. تأكد من إعداد البوت من طرف مدير النظام.",
+    unlinkSuccess: "تم إلغاء ربط الحساب",
+    createdByBotBadge: "أُنشئت عبر بوت Telegram",
+    cancel: "إلغاء",
+    noAccounts: "لا توجد حسابات Telegram مرتبطة بعد.",
+    addAccountButton: "إضافة حساب آخر",
+    unnamed: "حساب بدون اسم",
+  },
   common: {
     save: "حفظ",
     cancel: "إلغاء",
@@ -37,6 +57,7 @@ export const ar = {
     purchases: "المشتريات",
     expenses: "المصروفات",
     reports: "التقارير",
+    telegram: "Telegram",
     logout: "تسجيل الخروج",
   },
   dashboardCards: {

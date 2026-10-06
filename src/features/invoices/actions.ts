@@ -59,13 +59,39 @@ export async function createInvoice(
      * overpayment on this new invoice was distributed to older ones via
      * recordPaymentAcrossInvoices under the same batch). */
     batchId?: string;
+    /** Set to false to get `{ invoiceId }` back instead of redirecting to
+     * the invoice page (Telegram bot flow). Defaults to true. */
+    redirect?: boolean;
+    /** Idempotency token (Invoice.posSaleToken). A repeated call with the
+     * same token resolves to the existing invoice instead of creating a
+     * second one. */
+    posSaleToken?: string;
+    /** Pre-authenticated caller with no NextAuth session (the Telegram bot
+     * webhook / Mini App, which verified the caller themselves). When set,
+     * skips the `auth()` check. */
+    actingAdminId?: string;
+    /** Marks the invoice as created by the Telegram bot. */
+    createdByBot?: boolean;
   },
-): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user) return { error: "غير مصرح" };
+): Promise<ActionResult & { invoiceId?: string }> {
+  if (!options?.actingAdminId) {
+    const session = await auth();
+    if (!session?.user) return { error: "غير مصرح" };
+  }
 
   const parsed = invoiceSchema.safeParse(input);
   if (!parsed.success) return { error: "الرجاء التحقق من البيانات المدخلة" };
+
+  if (options?.posSaleToken) {
+    const existing = await prisma.invoice.findUnique({
+      where: { posSaleToken: options.posSaleToken },
+      select: { id: true },
+    });
+    if (existing) {
+      if (options.redirect === false) return { success: true, invoiceId: existing.id };
+      redirect(`/dashboard/invoices/${existing.id}`);
+    }
+  }
 
   const total = computeTotal(parsed.data.items);
   const payments = parsed.data.payments.filter((line) => line.amount > 0);
@@ -102,6 +128,8 @@ export async function createInvoice(
           paymentStatus,
           paidAmount,
           balanceEffectApplied: balanceEffect,
+          posSaleToken: options?.posSaleToken ?? null,
+          createdByBot: options?.createdByBot ?? false,
           items: {
             create: parsed.data.items.map((item, index) => ({
               productId: item.productId || null,
@@ -153,12 +181,22 @@ export async function createInvoice(
       return created.id;
     });
   } catch {
+    // A concurrent retry with the same idempotency token loses the unique
+    // race — resolve to the invoice the winner created.
+    if (options?.posSaleToken) {
+      const existing = await prisma.invoice.findUnique({
+        where: { posSaleToken: options.posSaleToken },
+        select: { id: true },
+      });
+      if (existing) return { success: true, invoiceId: existing.id };
+    }
     return { error: "حدث خطأ أثناء إنشاء الفاتورة" };
   }
 
   revalidatePath("/dashboard/invoices");
   revalidatePath(`/dashboard/customers/${customerId}`);
   revalidatePath("/dashboard/inventory");
+  if (options?.redirect === false) return { success: true, invoiceId };
   redirect(`/dashboard/invoices/${invoiceId}`);
 }
 

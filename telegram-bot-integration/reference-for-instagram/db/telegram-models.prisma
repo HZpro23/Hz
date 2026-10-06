@@ -1,0 +1,95 @@
+// Reference only — models of the Telegram bot. Adapt names/relations to your own schema.
+
+enum TelegramDraftStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
+enum TelegramMatchStatus {
+  EXACT
+  STRONG
+  AMBIGUOUS
+  NOT_FOUND
+}
+
+model TelegramAccount {
+  id                   String                 @id @default(cuid())
+  telegramUserId       BigInt                 @unique
+  adminId              String
+  admin                Admin                  @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  isActive             Boolean                @default(true)
+  linkedAt             DateTime               @default(now())
+  drafts               TelegramInvoiceDraft[]
+  chatMessages         TelegramChatMessage[]
+  conversationSummary  String?
+  messagesSinceSummary Int                    @default(0)
+  name                 String?
+  username             String?
+
+  @@index([adminId])
+}
+
+model TelegramChatMessage {
+  id                String          @id @default(cuid())
+  telegramAccountId String
+  telegramAccount   TelegramAccount @relation(fields: [telegramAccountId], references: [id], onDelete: Cascade)
+  content           String
+  createdAt         DateTime        @default(now())
+
+  @@index([telegramAccountId, createdAt])
+}
+
+model TelegramLinkToken {
+  id         String    @id @default(cuid())
+  token      String    @unique
+  adminId    String
+  admin      Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([adminId])
+}
+
+model TelegramInvoiceDraft {
+  id                String                     @id @default(cuid())
+  token             String                     @unique
+  telegramAccountId String
+  telegramAccount   TelegramAccount            @relation(fields: [telegramAccountId], references: [id], onDelete: Cascade)
+  status            TelegramDraftStatus        @default(PENDING)
+  paymentMethod     PaymentMethod?
+  paymentAmount     Decimal?                   @db.Decimal(10, 2)
+  paidInFull        Boolean                    @default(false)
+  respeakItemId     String?
+  rawTranscript     String?
+  customerId        String?
+  customer          Customer?                  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  invoiceId         String?                    @unique
+  invoice           Invoice?                   @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  expiresAt         DateTime
+  confirmedAt       DateTime?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  items             TelegramInvoiceDraftItem[]
+
+  @@index([telegramAccountId, status])
+}
+
+model TelegramInvoiceDraftItem {
+  id               String               @id @default(cuid())
+  draftId          String
+  draft            TelegramInvoiceDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  spokenName       String
+  quantity         Int
+  matchStatus      TelegramMatchStatus
+  matchedProductId String?
+  matchedProduct   Product?             @relation(fields: [matchedProductId], references: [id], onDelete: SetNull)
+
+  candidateProductIds String[] @default([])
+  position            Int      @default(1)
+
+  @@index([draftId])
+  @@index([matchedProductId])
+}
